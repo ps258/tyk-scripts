@@ -26,6 +26,7 @@ import json
 import sys
 import getopt
 import datetime
+import os
 
 
 listKeys = 0
@@ -40,9 +41,10 @@ delpol = None
 delapi = None
 orgid = None
 redisPassword = None
+scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print('purge-expired-keys.py [--delete|--list] --host <hostname> --port <portnum> --epoch <epoch> --orgid <orgid> --password <redisPassword> --api <APIID> --policy <POLICYID>')
+    print(f'{scriptName} [--delete|--list] --host <hostname> --port <portnum> --password <redisPassword> --epoch <epoch> --orgid <orgid> --api <APIID> --policy <POLICYID>')
     sys.exit(2)
 
 try:
@@ -101,8 +103,12 @@ def shoulddel(apikey, apiid, polid, orgid):
             # print(f"apiid mismatch: {apiid!r} not in {apikey['access_rights']!r}")
             return False
     if polid is not None:
-        if polid not in apikey['apply_policies']:
-            # print(f"polid mismatch: {polid} not in {apikey['apply_policies']!r}")
+        if apikey['apply_policies'] is not None:
+            if polid not in apikey['apply_policies']:
+                # print(f"polid mismatch: {polid} not in {apikey['apply_policies']!r}")
+                return False
+        else:
+            # polid is defined but the apikey has no policy. No match
             return False
     return True
 
