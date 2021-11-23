@@ -21,6 +21,12 @@
 # The script is not redis cluster aware. It must be pointed at a master redis replica (if replication is active)
 # If redis is sharded the script must be used on each master in turn
 
+# Be aware that the database may change between --list and --delete in a live environment
+
+## THIS SCRIPT IS UNSUPPORTED AT ANY LEVEL
+## THIS SCRIPT IS UNSUPPORTED AT ANY LEVEL
+## THIS SCRIPT IS UNSUPPORTED AT ANY LEVEL
+
 import redis
 import json
 import sys
@@ -129,8 +135,8 @@ for key in r.scan_iter("apikey-*"):
     keyString = key.decode('utf-8')
     expires = int(apikey["expires"])
     if maxAge > 0:
-        # ignore the ones with 'expires' equal to 0, they are the non-expiring apikeys
-        if expires == 0:
+        # ignore the ones with 'expires' less than or equal to 0, they are the non-expiring apikeys
+        if expires <= 0:
             # skip because this is a non-expiring key
             next
         elif expires <= maxAge:
@@ -145,8 +151,8 @@ for key in r.scan_iter("apikey-*"):
                     r.delete(key)
                     deletedKeys += 1
     else:
-        # list or delete all the non-expiring keys (maxAge == 0 and expires == 0)
-        if expires == 0:
+        # list or delete all the non-expiring keys (maxAge == 0 and expires <= 0)
+        if expires <= 0:
             if shoulddel(apikey, delapi, delpol, orgid):
                 if listKeys:
                     print(keyString, expires, '<=', maxAge)
