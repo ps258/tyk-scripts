@@ -1,6 +1,6 @@
-#!/usr/bin/python3 
+#!/usr/bin/python3
 
-# This is a script to help with tidying up unwanted Tyk API keys directly from Redis. 
+# This is a script to help with tidying up unwanted Tyk API keys directly from Redis.
 # It does not use tyk APIs at all.
 # It supports both delete or list mode. Use the --list option to explore what keys exist and what ones should
 # be deleted before replacing --list with --delete to purge the unwanted keys.
@@ -15,25 +15,25 @@
 
 # USE THIS OPTION WITH CAUTION:
 # Keys with an expiery of 0 are set to never expire. They are dealt with as a special case and only considered
-# when '--epoch 0' is given. 
+# when '--epoch 0' is given.
 # Using the --api and --policy options will allow the non-expiring keys for a particular API or policy to be removed
 
 # The script is not redis cluster aware. It must be pointed at a master redis replica (if replication is active)
 # If redis is sharded the script must be used on each master in turn
 
-import redis 
-import json 
-import sys 
-import getopt 
+import redis
+import json
+import sys
+import getopt
 import datetime
 
 
-listKeys = 0 
-deleteKeys = 0 
-listedKeys = 0 
-deletedKeys = 0 
+listKeys = 0
+deleteKeys = 0
+listedKeys = 0
+deletedKeys = 0
 
-maxAge = -1 
+maxAge = -1
 host = ""
 port = ""
 delpol = None
@@ -41,26 +41,26 @@ delapi = None
 orgid = None
 redisPassword = None
 
-def printhelp(): 
-    print('purge-expired-keys.py [--delete|--list] --host <hostname> --port <portnum> --epoch <epoch> --orgid <orgid> --password <redisPassword> --api <APIID> --policy <POLICYID>') 
-    sys.exit(2) 
+def printhelp():
+    print('purge-expired-keys.py [--delete|--list] --host <hostname> --port <portnum> --epoch <epoch> --orgid <orgid> --password <redisPassword> --api <APIID> --policy <POLICYID>')
+    sys.exit(2)
 
-try: 
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "delete", "list", "epoch=", "host=", "port=", "password=", "api=", "policy=", "orgid="]) 
-except getopt.GetoptError: 
-    printhelp() 
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "delete", "list", "epoch=", "host=", "port=", "password=", "api=", "policy=", "orgid="])
+except getopt.GetoptError:
+    printhelp()
 
-for opt, arg in opts: 
-    if opt == '--delete': 
-        deleteKeys = 1 
-    elif opt == '--list': 
-        listKeys = 1 
-    elif opt == '--epoch': 
-        maxAge = int(arg) 
-    elif opt == '--host': 
-        host = arg 
-    elif opt == '--port': 
-        port = arg 
+for opt, arg in opts:
+    if opt == '--delete':
+        deleteKeys = 1
+    elif opt == '--list':
+        listKeys = 1
+    elif opt == '--epoch':
+        maxAge = int(arg)
+    elif opt == '--host':
+        host = arg
+    elif opt == '--port':
+        port = arg
     elif opt == '--api':
         delapi = arg
     elif opt == '--policy':
@@ -70,11 +70,11 @@ for opt, arg in opts:
     elif opt == '--password':
         redisPassword = arg
 
-if deleteKeys and listKeys: 
-    print('Cannot both list and delete keys. Choose one') 
-    printhelp() 
+if deleteKeys and listKeys:
+    print('Cannot both list and delete keys. Choose one')
+    printhelp()
 
-if not (deleteKeys or listKeys): 
+if not (deleteKeys or listKeys):
     print('Must specify delete or list')
     printhelp()
 
