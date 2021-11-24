@@ -37,6 +37,7 @@ import os
 
 listKeys = 0
 deleteKeys = 0
+dumpJSON = False
 listedKeys = 0
 deletedKeys = 0
 
@@ -47,14 +48,15 @@ delpol = None
 delapi = None
 orgid = None
 redisPassword = None
+
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} [--delete|--list] --host <hostname> --port <portnum> --password <redisPassword> --epoch <epoch> --orgid <orgid> --api <APIID> --policy <POLICYID>')
+    print(f'{scriptName} [--delete|--list] --host <hostname> --port <portnum> --password <redisPassword> --epoch <epoch> --orgid <orgid> --api <APIID> --policy <POLICYID> --dump')
     sys.exit(2)
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "delete", "list", "epoch=", "host=", "port=", "password=", "api=", "policy=", "orgid="])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "delete", "list", "dump", "epoch=", "host=", "port=", "password=", "api=", "policy=", "orgid="])
 except getopt.GetoptError:
     printhelp()
 
@@ -63,6 +65,8 @@ for opt, arg in opts:
         deleteKeys = 1
     elif opt == '--list':
         listKeys = 1
+    elif opt == '--dump':
+        dumpJSON = True
     elif opt == '--epoch':
         maxAge = int(arg)
     elif opt == '--host':
@@ -84,6 +88,10 @@ if deleteKeys and listKeys:
 
 if not (deleteKeys or listKeys):
     print('Must specify delete or list')
+    printhelp()
+
+if dumpJSON and not listKeys:
+    print('Can only dump apikey JSON when --list is used')
     printhelp()
 
 if maxAge < 0:
@@ -142,9 +150,11 @@ for key in r.scan_iter("apikey-*"):
         elif expires <= maxAge:
             if shoulddel(apikey, delapi, delpol, orgid):
                 if listKeys:
+                    listedKeys += 1
                     expiresDateTime = datetime.datetime.fromtimestamp( expires )
                     print(f"{keyString} expires {expires} ({expiresDateTime}) <= {maxAge} ({maxDateTime})")
-                    listedKeys += 1
+                    if dumpJSON:
+                        print(json.dumps(apikey, indent=4, sort_keys=True))
                 else:
                     # expiresDateTime = datetime.datetime.fromtimestamp( expires )
                     # print(f"Deleting: {keyString} expires {expires} ({expiresDateTime}) <= {maxAge} ({maxDateTime})")
@@ -155,8 +165,10 @@ for key in r.scan_iter("apikey-*"):
         if expires <= 0:
             if shoulddel(apikey, delapi, delpol, orgid):
                 if listKeys:
-                    print(keyString, expires, '<=', maxAge)
                     listedKeys += 1
+                    print(keyString, expires, '<=', maxAge)
+                    if dumpJSON:
+                        print(json.dumps(apikey, indent=4, sort_keys=True))
                 else:
                     # print('Deleting: ', keyString, expires, '<=', maxAge)
                     r.delete(key)
