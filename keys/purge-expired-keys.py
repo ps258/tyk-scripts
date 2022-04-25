@@ -142,7 +142,6 @@ def shoulddel(apikey, apiid, polid, orgid):
     #if apikey['meta_data']['TykJWTSessionID'] is not None and not includeJWTsessions:
     if 'TykJWTSessionID' in apikey['meta_data'] and not includeJWTsessions:
         # This key is a JWT session for a particular sub. Deleting it will mean it just gets recreated on the next call
-        print(f"got one with a jwt session")
         return False
     return True
 
