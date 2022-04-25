@@ -18,6 +18,18 @@
 # when '--epoch 0' is given.
 # Using the --api and --policy options will allow the non-expiring keys for a particular API or policy to be removed
 
+# USE THIS OPTION WITH CAUTION:
+# --include-jwt-sessions means that keys created as JWT session objects will be considered for deletion.
+# Deleting these will allow them to be recreated when a JWT with the corresponding sub is presented 
+# as an auth token to the gateway. This is almost certainly not was you want.
+# For example: 
+#    JWT auth is setup with a policy that defaults to a 1 hour key life.
+#    A JWT is presented with a particular subject and the corresponding key is created.
+#    That key expires in an hour
+#    This script is used to remove that expired key
+#    A JWT is presented with a the same subject and the corresponding key is created.
+#    This has restored access rather than removed it.
+
 # The script is not redis cluster aware. It must be pointed at a master redis replica (if replication is active)
 # If redis is sharded the script must be used on each master in turn
 
@@ -40,6 +52,7 @@ deleteKeys = 0
 dumpJSON = False
 listedKeys = 0
 deletedKeys = 0
+includeJWTsessions = 0
 
 maxAge = -1
 host = ""
@@ -52,11 +65,11 @@ redisPassword = None
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} [--delete|--list] --host <hostname> --port <portnum> --password <redisPassword> --epoch <epoch> --orgid <orgid> --api <APIID> --policy <POLICYID> --dump')
+    print(f'{scriptName} [--delete|--list] --host <hostname> --port <portnum> --password <redisPassword> --epoch <epoch> --orgid <orgid> --api <APIID> --policy <POLICYID> --include-jwt-sessions --dump')
     sys.exit(2)
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "delete", "list", "dump", "epoch=", "host=", "port=", "password=", "api=", "policy=", "orgid="])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "delete", "list", "dump", "epoch=", "host=", "port=", "password=", "api=", "policy=", "orgid=", "include-jwt-sessions"])
 except getopt.GetoptError:
     printhelp()
 
@@ -81,6 +94,8 @@ for opt, arg in opts:
         orgid = arg
     elif opt == '--password':
         redisPassword = arg
+    elif opt == '--include-jwt-sessions':
+        includeJWTsessions = 1
 
 if deleteKeys and listKeys:
     print('Cannot both list and delete keys. Choose one')
@@ -124,6 +139,11 @@ def shoulddel(apikey, apiid, polid, orgid):
         else:
             # polid is defined but the apikey has no policy. No match
             return False
+    #if apikey['meta_data']['TykJWTSessionID'] is not None and not includeJWTsessions:
+    if 'TykJWTSessionID' in apikey['meta_data'] and not includeJWTsessions:
+        # This key is a JWT session for a particular sub. Deleting it will mean it just gets recreated on the next call
+        print(f"got one with a jwt session")
+        return False
     return True
 
 print(f"Attempting to connect to redis on {host}:{port}")
