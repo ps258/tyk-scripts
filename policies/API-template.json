@@ -1,0 +1,28 @@
+{
+  "api_model": {},
+  "api_definition": {
+    "name": "httpbin",
+    "use_keyless": true,
+    "auth": {
+      "auth_header_name": "Authorization"
+    },
+    "version_data": {
+      "not_versioned": true,
+      "versions": {
+        "Default": {
+          "name": "Default",
+          "use_extended_paths": true
+        }
+      }
+    },
+    "proxy": {
+      "listen_path": "/httpbin/",
+      "target_url": "http://httpbin.org/anything",
+      "strip_listen_path": true
+    },
+    "active": true
+  },
+  "hook_references": [],
+  "is_site": false,
+  "sort_by": 0
+}
