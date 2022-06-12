@@ -31,7 +31,7 @@ for opt, arg in opts:
     elif opt == '--template':
         templateFile = arg
     elif opt == '--dashboard':
-        dshb = arg
+        dshb = arg.strip().strip('/')
     elif opt == '--cred':
         auth = arg
     elif opt == '--number':
@@ -45,6 +45,7 @@ if not (dshb or templateFile or auth or toAdd):
 # read the API defn
 with open(templateFile) as APIFile:
     APIjson=json.load(APIFile)
+    APIFile.close()
 APIName = APIjson["api_definition"]["name"]
 
 headers = {'Authorization' : auth}
@@ -68,5 +69,5 @@ for apiIndex in range(1, toAdd+1):
     APIjson["api_definition"]["name"] = newname
     APIjson["api_definition"]["proxy"]["listen_path"] = '/'+newname+'/'
     print(f'Adding {APIjson["api_definition"]["name"]}, {APIjson["api_definition"]["proxy"]["listen_path"]}')
-    resp = requests.post(f'{dshb}/api/apis', data=json.dumps(APIjson), headers=headers)
+    resp = requests.post(f'{dshb}/api/apis', data=json.dumps(APIjson), headers=headers, allow_redirects=False)
     print(resp.text)
