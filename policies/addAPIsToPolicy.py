@@ -31,7 +31,7 @@ for opt, arg in opts:
     elif opt == '--policy':
         policyID = arg
     elif opt == '--dashboard':
-        dshb = arg
+        dshb = arg.strip().strip('/')
     elif opt == '--cred':
         auth = arg
     elif opt == '--number':
