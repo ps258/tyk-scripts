@@ -12,6 +12,7 @@ scriptName = os.path.basename(__file__)
 
 def printhelp():
     print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials> --number <number of APIs to add generate> --template <API template file> --verbose')
+    print("    Will take the template and increment its name and listen path so that they do not clash, then add it as an API to the dashboard")
     sys.exit(2)
 
 dshb = ""

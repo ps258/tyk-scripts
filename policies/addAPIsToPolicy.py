@@ -12,6 +12,7 @@ scriptName = os.path.basename(__file__)
 
 def printhelp():
     print(f'{scriptName} --policy <policy ID> --dashboard <dashboard URL> --cred <Dashboard API credentials> --number <number of APIs to add to the policy> --verbose')
+    print("    Will add any available APIs into the policy named. There is no way to select which APIs are added")
     sys.exit(2)
 
 dshb = ""
