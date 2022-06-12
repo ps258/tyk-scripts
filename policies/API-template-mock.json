@@ -12,7 +12,23 @@
       "versions": {
         "Default": {
           "name": "Default",
-          "use_extended_paths": true
+          "use_extended_paths": true,
+          "extended_paths": {
+            "white_list": [
+              {
+                "ignore_case": false,
+                "method_actions": {
+                  "GET": {
+                    "action": "reply",
+                    "code": 200,
+                    "data": "Ok",
+                    "headers": {}
+                  }
+                },
+                "path": ""
+              }
+            ]
+          }
         }
       }
     },
