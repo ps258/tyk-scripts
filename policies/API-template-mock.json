@@ -2,8 +2,8 @@
   "api_model": {},
   "api_definition": {
     "name": "httpbin",
-    "use_keyless": false,
-    "use_standard_auth": true,
+    "use_keyless": true,
+    "use_standard_auth": false,
     "auth": {
       "auth_header_name": "Authorization"
     },
