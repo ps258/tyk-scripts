@@ -62,17 +62,17 @@ for api in apis['apis']:
         if not apiid in policy["access_rights"].keys():
             if verbose:
                 print(f'Adding {apiid}, {apiName}')
-            policy["access_rights"][apiid] = {
-                "api_name": apiName,
-                "api_id": apiid,
-                "versions": [
-                    "Default"
-                ],
-                "allowed_urls": [],
-                "restricted_types": [],
-                "limit": None,
-                "allowance_scope": ""
-            }
+            #policy["access_rights"][apiid] = {
+            #    "api_name": apiName,
+            #    "api_id": apiid,
+            #    "versions": [
+            #        "Default"
+            #    ],
+            #    "allowed_urls": [],
+            #    "restricted_types": [],
+            #    "limit": None,
+            #    "allowance_scope": ""
+            #}
             policy["access_rights_array"].append({
                 "allowance_scope": "",
                 "allowed_urls": [],
@@ -92,7 +92,7 @@ for api in apis['apis']:
         continue
 if addedCount < toAdd:
     print(f'Only able to add {addedCount} APIs because because there too fews APIs defined')
-print(f'Policy {policyID} will have a total of {len(policy["access_rights"])} APIs attached')
+print(f'Policy {policyID} will have a total of {len(policy["access_rights_array"])} APIs attached')
 #print(json.dumps(policy, indent=4, sort_keys=True))
 print("Uploading policy to dashboard")
 headers["Content-Type"] = "application/json"
