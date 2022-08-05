@@ -4,10 +4,6 @@
 # imagine you have 2 customers. You issue 3 keys to each and add tags for each customer to each key
 # then you want to know the total consumption by each customer.
 
-# This script depends on the ability to list the keys so '"hash_keys": false' is needed.
-# If the keys are hashed you would need to implement a way to get those keys into the script
-# perhaps add a --keys option which stops the attempt to retrieve the keys
-
 import json
 import requests
 import sys
