@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
-from audioop import add
-from curses import tparm
+#from audioop import add
+#from curses import tparm
 import json
 import requests
 import os
