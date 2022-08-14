@@ -87,7 +87,7 @@ for key in keys['keys']:
         api_id = keyAPI['api_id'] 
 
         # Check that all APIs in the keys exist
-        print(f"Checking {api_id}")
+        print(f"KEY: Checking {api_id}")
         if not api_id in APIdetails:
             print(f"[FATAL]Key {key_id} refers to deleted API {api_id}")
         else:
@@ -96,12 +96,36 @@ for key in keys['keys']:
             if not APIdetails[api_id]['active']:
                 print(f"[FATAL]Key {key_id} refers to inactive API {api_id}")
 
-            # Check that all APIs in the keys from the same org
+            # Check that all APIs in the keys are from the same org
             # this is unlikely to detect anything because unless a super user (account with no org_id)
             # is used the APIs will all be from the same org and the account making the request
             api_org = APIdetails[api_id]['org_id']
             if key_org != api_org:
                 print(f"[FATAL]Key is in org {key_org} but API is in org {api_org}")
-# Check that access_rights_array and access_rights match?
 
 # Policy checks
+for policy in policies['Data']:
+    policy_id = policy['_id']
+    policy_org = policy['org_id']
+    for policyAPI in policy['access_rights_array']:
+        api_id = policyAPI['api_id'] 
+
+        # Check that all APIs in the policy exist
+        print(f"POL: Checking {api_id}")
+        if not api_id in APIdetails:
+            print(f"[FATAL]Policy {policy_id} refers to deleted API {api_id}")
+        else:
+
+            # Check that all APIs in the policy are enabled.
+            if not APIdetails[api_id]['active']:
+                print(f"[FATAL]Policy {policy_id} refers to inactive API {api_id}")
+
+            # Check that all APIs in the policy are from the same org
+            # this is unlikely to detect anything because unless a super user (account with no org_id)
+            # is used the APIs will all be from the same org and the account making the request
+            api_org = APIdetails[api_id]['org_id']
+            if policy_org != api_org:
+                print(f"[FATAL]Policy is in org {policy_org} but API is in org {api_org}")
+
+# Check that access_rights_array and access_rights match?
+
