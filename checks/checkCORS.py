@@ -41,13 +41,22 @@ for opt, arg in opts:
 if not (url or len(origins)):
     printhelp()
 
-origin_header = {'Origin' : 'http://localhost'}
-method_header = {'Access-control-request-method': 'GET'}
-
 for origin in origins:
     print(f"Testing Origin: {origin}")
     for method in ['GET', 'PUT', 'POST', 'OPTIONS', 'DELETE', 'HEAD', 'CONNECT', 'TRACE']:
+        #resp = requests.options(f'{url}', headers={'Origin' : origin, 'Access-control-request-method': method, 'Access-control-request-headers': 'origin'}, verify=False)
         resp = requests.options(f'{url}', headers={'Origin' : origin, 'Access-control-request-method': method}, verify=False)
         #print(resp.headers)
-        if "Access-Control-Allow-Methods" in resp.headers:
-            print(f"    Method allowed: {method}")
+
+        # Current understading only, might be wrong:
+        #  if Access-Control-Allow-Origin is populated, it has to contain the domain from Origin, '*' isn't good enough
+        if 'Access-Control-Allow-Origin' in resp.headers:
+            #print(resp.headers['Access-Control-Allow-Origin'])
+            if resp.headers['Access-Control-Allow-Origin'] == origin:
+                if "Access-Control-Allow-Methods" in resp.headers:
+                    print(f"    Method allowed: {method}")
+        else:
+            # if Access-Control-Allow-Origin doesn't exist, just do with the answer in Access-Control-Allow-Methods
+            # I don't know if this is correct or not
+            if "Access-Control-Allow-Methods" in resp.headers:
+                print(f"    Method allowed: {method}")
