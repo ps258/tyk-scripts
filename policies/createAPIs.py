@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 
-#from audioop import add
-#from curses import tparm
 import json
 import requests
 import os
@@ -56,7 +54,7 @@ if resp.status_code != 200:
     print(resp.text)
     sys.exit(1)
 apis = json.loads(resp.text)
-# create a dictionary of all names
+# create a dictionary of all API names
 allnames = dict()
 for api in apis['apis']:
     name = api["api_definition"]["name"]
@@ -67,7 +65,7 @@ headers["Content-Type"] = "application/json"
 i = 1
 for apiIndex in range(1, toAdd+1):
     while APIName+str(i) in allnames:
-        i = i + 1
+        i += 1
     newname=APIName+str(i)
     allnames[newname] = 1
     APIjson["api_definition"]["name"] = newname
