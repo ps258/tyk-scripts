@@ -1,0 +1,55 @@
+{
+    "auth_type": "authToken",
+    "auth_types": [
+        "authToken"
+    ],
+    "state": "active",
+    "access_rights_array": [
+        {
+            "api_name": "httpbin1018",
+            "api_id": "0e2e6601a69f4a617b69441ae5e9ac1d",
+            "versions": [
+                "Default"
+            ],
+            "allowed_urls": [],
+            "restricted_types": [],
+            "limit": null,
+            "allowance_scope": ""
+        },
+        {
+            "api_name": "httpbin1019",
+            "api_id": "da9c9e72bada4ccf5548d23e1afe8fea",
+            "versions": [
+                "Default"
+            ],
+            "allowed_urls": [],
+            "restricted_types": [],
+            "limit": null,
+            "allowance_scope": ""
+        }
+    ],
+    "graphql_enabled": false,
+    "name": "policy1",
+    "rate": 1000,
+    "per": 60,
+    "quota_max": -1,
+    "quota_renewal_rate": -1,
+    "throttle_interval": -1,
+    "throttle_retry_limit": -1,
+    "max_query_depth": -1,
+    "hmac_enabled": false,
+    "active": true,
+    "is_inactive": false,
+    "date_created": "2023-01-30T11:21:42.041Z",
+    "tags": [],
+    "key_expires_in": 0,
+    "partitions": {
+        "quota": true,
+        "rate_limit": true,
+        "complexity": false,
+        "acl": true,
+        "per_api": false
+    },
+    "last_updated": "1675078797",
+    "meta_data": {}
+}
