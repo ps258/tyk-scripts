@@ -40,7 +40,7 @@ for opt, arg in opts:
     elif opt == '--verbose':
         verbose = 1
 
-if not (dshb or templateFile or auth or toAdd):
+if not (dshb and templateFile and auth and toAdd):
     printhelp()
 
 # read the API defn
@@ -52,6 +52,9 @@ APIName = APIjson["api_definition"]["name"]
 headers = {'Authorization' : auth}
 # get the existing APIs
 resp = requests.get(f'{dshb}/api/apis/?p=-1', headers=headers)
+if resp.status_code != 200:
+    print(resp.text)
+    sys.exit(1)
 apis = json.loads(resp.text)
 # create a dictionary of all names
 allnames = dict()
