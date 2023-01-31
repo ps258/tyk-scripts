@@ -72,5 +72,6 @@ if verbose:
     print(json.dumps(catalogue, indent=2))
 
 
+print(f'Creating entry {EntryName+str(i)}')
 resp = requests.put(f'{dshb}/api/portal/catalogue', data=json.dumps(catalogue), headers=headers, allow_redirects=False)
 print(resp.text)
