@@ -70,6 +70,6 @@ for apiIndex in range(1, toAdd+1):
     allnames[newname] = 1
     APIjson["api_definition"]["name"] = newname
     APIjson["api_definition"]["proxy"]["listen_path"] = '/'+newname+'/'
-    print(f'Adding {APIjson["api_definition"]["name"]}, {APIjson["api_definition"]["proxy"]["listen_path"]}')
+    print(f'Adding API {APIjson["api_definition"]["name"]}, {APIjson["api_definition"]["proxy"]["listen_path"]}')
     resp = requests.post(f'{dshb}/api/apis', data=json.dumps(APIjson), headers=headers, allow_redirects=False)
     print(resp.text)
