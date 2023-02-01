@@ -9,7 +9,7 @@ import sys
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials> --template <API template file> --apiid --verbose')
+    print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials> --template <Policy template file> --apiid --verbose')
     print("    Will create a new unique policy for the API_ID given")
     sys.exit(2)
 
