@@ -1,0 +1,63 @@
+#!/bin/ksh -u
+
+SCRIPTNAME=$0
+DSHB=""
+AUTH=""
+COUNT=0
+SHOW=""
+
+SCRIPTDIR=$(
+  cd "$(dirname $SCRIPTNAME)"
+  echo $PWD
+)
+
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:$PATH
+
+function help {
+	echo "$SCRIPTNAME: -d <dashboard url> -a <dashboard admin credentials> -c <number of APIs> -n"
+	echo "   Populate the dashboard with the given number of APIs and policies and add the policies to the portal catalogue"
+	echo "   -n sets the catalogue entry to disabled (no show)"
+}
+
+while getopts :a:c:d:n arg; do
+	case $arg in
+		d)
+			DSHB=$OPTARG
+			;;
+		a)
+			AUTH=$OPTARG
+			;;
+		c)
+			COUNT=$OPTARG
+			;;
+		n)
+			SHOW='--noShow'
+			;;
+		:)
+			echo "Option -$OPTARG requires an arguement."
+			help
+			exit 1
+			;;
+		\?)
+			echo "Invalid option: -$OPTARG"
+			help
+			exit 1
+			;;
+	esac
+done
+
+if [[ -z $DSHB || -z $AUTH || $COUNT == 0 ]]; then
+	help
+	exit 1
+fi
+
+$SCRIPTDIR/createAPIs.py --dashboard $DSHB --cred $AUTH --template $SCRIPTDIR/API-template.json --number $COUNT
+
+for api in $(./getAPIs.py --dashboard $DSHB --cred $AUTH | cut -d, -f2 | head -$COUNT); do
+  $SCRIPTDIR/createPolicy.py --dashboard $DSHB --cred $AUTH --template $SCRIPTDIR/policy-template.json --apiid $api
+done
+
+for policy in $(./getPolicies.py --dashboard $DSHB --cred $AUTH | cut -d, -f2 | head -$COUNT); do
+  $SCRIPTDIR/createCatalogue.py --dashboard $DSHB --cred $AUTH --policy $policy $SHOW
+done
+
