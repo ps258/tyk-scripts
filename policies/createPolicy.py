@@ -68,7 +68,7 @@ while PolicyName+str(i) in allnames:
 PolicyJSON["name"]=PolicyName+str(i)
 PolicyJSON["access_rights_array"] = json.loads('[{ "api_id": "' + apiid + '", "versions": [ "Default" ], "allowed_urls": [], "restricted_types": [], "limit": null, "allowance_scope": "" }]')
 
-print(f'Adding {PolicyJSON["name"]}')
+print(f'Adding policy {PolicyJSON["name"]}')
 if verbose:
     print(json.dumps(PolicyJSON, indent=2))
 
