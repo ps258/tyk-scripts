@@ -17,9 +17,10 @@ dshb = ""
 auth = ""
 policyId = ""
 verbose = 0
+show = True
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "cred=", "policyId=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "cred=", "policyId=", "noShow", "verbose"])
 except getopt.GetoptError:
     printhelp()
 
@@ -30,6 +31,8 @@ for opt, arg in opts:
         dshb = arg.strip().strip('/')
     elif opt == '--cred':
         auth = arg
+    elif opt == '--noShow':
+        show = False
     elif opt == '--policyId':
         policyId = arg
     elif opt == '--verbose':
@@ -63,7 +66,7 @@ while EntryName+str(i) in allnames:
 catalogue["apis"].append({"name": EntryName+str(i),\
         "short_description": short_description+str(i),\
         "long_description": long_description+str(i),\
-        "show": True,\
+        "show": show,\
         "policy_id": policyId,\
         "version": "v2"})
 
@@ -72,6 +75,6 @@ if verbose:
     print(json.dumps(catalogue, indent=2))
 
 
-print(f'Creating catalogue entry {EntryName+str(i)}')
+print(f'Adding catalogue entry {EntryName+str(i)}')
 resp = requests.put(f'{dshb}/api/portal/catalogue', data=json.dumps(catalogue), headers=headers, allow_redirects=False)
 print(resp.text)
