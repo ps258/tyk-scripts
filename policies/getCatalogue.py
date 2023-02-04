@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
 import json
-import requests
 import os
 import getopt
 import sys
+from tykUtil import *
 
 scriptName = os.path.basename(__file__)
 
@@ -35,12 +35,6 @@ for opt, arg in opts:
 if not (dshb and auth):
     printhelp()
 
-# read the policy defn
-headers = {'Authorization' : auth}
-# get the existing catalogue entries
-resp = requests.get(f'{dshb}/api/portal/catalogue', headers=headers)
-if resp.status_code != 200:
-    print(resp.text)
-    sys.exit(1)
-catalogue = json.loads(resp.text)
+# Get the existing catalogue entries
+catalogue = getCatalogue(dshb, auth)
 print(json.dumps(catalogue, indent=2))

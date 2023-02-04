@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
 import json
-import requests
 import os
 import getopt
 import sys
+from tykUtil import *
 
 scriptName = os.path.basename(__file__)
 
@@ -41,21 +41,13 @@ for opt, arg in opts:
 if not (dshb and auth and policyId):
     printhelp()
 
-# read the policy defn
-headers = {'Authorization' : auth}
-# get the existing catalogue entries
-resp = requests.get(f'{dshb}/api/portal/catalogue', headers=headers)
-if resp.status_code != 200:
-    print(resp.text)
-    sys.exit(1)
-catalogue = json.loads(resp.text)
+catalogue = getCatalogue(dshb, auth)
 # create a dictionary of all entry names
 allnames = dict()
 for policy in catalogue['apis']:
     name = policy["name"]
     allnames[name] = 1
 
-headers["Content-Type"] = "application/json"
 EntryName='api'
 short_description = 'Short description for '
 long_description = 'Long description for '
@@ -76,5 +68,5 @@ if verbose:
 
 
 print(f'Adding catalogue entry {EntryName+str(i)}')
-resp = requests.put(f'{dshb}/api/portal/catalogue', data=json.dumps(catalogue), headers=headers, allow_redirects=False)
+resp = updateCatalogue(dshb, auth, json.dumps(catalogue))
 print(resp.text)

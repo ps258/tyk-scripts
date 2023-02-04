@@ -1,12 +1,10 @@
 #!/usr/bin/python3
 
-#from audioop import add
-#from curses import tparm
 import json
-import requests
 import os
 import getopt
 import sys
+from tykUtil import *
 
 scriptName = os.path.basename(__file__)
 
@@ -37,12 +35,6 @@ for opt, arg in opts:
 if not (dshb and auth):
     printhelp()
 
-headers = {'Authorization' : auth}
-# get the existing APIs
-resp = requests.get(f'{dshb}/api/apis/?p=-1', headers=headers)
-if resp.status_code != 200:
-    print(resp.text)
-    sys.exit(1)
-apis = json.loads(resp.text)
+apis = getAPIs(dshb, auth)
 for api in apis['apis']:
     print(f'{api["api_definition"]["name"]},{api["api_definition"]["api_id"]}')

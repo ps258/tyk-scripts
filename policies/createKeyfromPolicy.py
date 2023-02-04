@@ -1,12 +1,10 @@
 #!/usr/bin/python3
 
-from audioop import add
-from curses import tparm
 import json
-import requests
 import os
 import getopt
 import sys
+from tykUtil import *
 
 scriptName = os.path.basename(__file__)
 
@@ -50,7 +48,5 @@ TykKey = {
 }
 
 TykKey["apply_policies"].append(policyID)
-headers = {'Authorization' : auth}
-headers["Content-Type"] = "application/json"
-resp = requests.post(f'{dshb}/api/keys', data=json.dumps(TykKey, indent=4), headers=headers)
-print(resp.text)
+resp = createKey(dshb, auth, json.dumps(TykKey))
+print(resp)

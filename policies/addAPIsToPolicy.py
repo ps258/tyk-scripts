@@ -1,12 +1,10 @@
 #!/usr/bin/python3
 
-from audioop import add
-from curses import tparm
 import json
-import requests
 import os
 import getopt
 import sys
+from tykUtil import *
 
 scriptName = os.path.basename(__file__)
 
@@ -44,15 +42,12 @@ if not (dshb or policyID or auth or toAdd):
     printhelp()
 
 # get the polcy
-headers = {'Authorization' : auth}
-resp = requests.get(f'{dshb}/api/portal/policies/{policyID}', headers=headers)
-policy = json.loads(resp.text)
+policy = getPolicy(dshb, auth, policyID)
 if verbose:
     keycount = len(policy["access_rights"])
     print(f'Policy {policyID} has {keycount} APIs attached')
 # get the APIs
-resp = requests.get(f'{dshb}/api/apis/?p=-1', headers=headers)
-apis = json.loads(resp.text)
+apis = getAPIs(dshb, auth)
 # print(json.dumps(apis, indent=4, sort_keys=True))
 addedCount = 0
 for api in apis['apis']:
@@ -95,6 +90,6 @@ if addedCount < toAdd:
 print(f'Policy {policyID} will have a total of {len(policy["access_rights_array"])} APIs attached')
 #print(json.dumps(policy, indent=4, sort_keys=True))
 print("Uploading policy to dashboard")
-headers["Content-Type"] = "application/json"
-resp = requests.put(f'{dshb}/api/portal/policies/{policyID}', data=json.dumps(policy, indent=4), headers=headers)
-print(resp.text)
+#resp = requests.put(f'{dshb}/api/portal/policies/{policyID}', data=json.dumps(policy, indent=4), headers=headers)
+resp = updatePolicy(dshb, auth, policyID, json.dumps(policy))
+print(resp)

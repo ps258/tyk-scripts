@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
 import json
-import requests
 import os
 import getopt
 import sys
+from tykUtil import *
 
 scriptName = os.path.basename(__file__)
 
@@ -35,15 +35,8 @@ for opt, arg in opts:
 if not (dshb and auth):
     printhelp()
 
-headers = {'Authorization' : auth}
 # get the existing Policies
-resp = requests.get(f'{dshb}/api/portal/policies/?p=-1', headers=headers)
-if resp.status_code != 200:
-    print(resp.text)
-    sys.exit(1)
-#print(resp.text)
-policies = json.loads(resp.text)
-#print(policies)
+policies = getPolicies(dshb, auth)
 for policy in policies['Data']:
     if verbose:
         print(json.dumps(policy, indent=4))

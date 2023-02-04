@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
 import json
-import requests
 import os
 import getopt
 import sys
+from tykUtil import *
 
 scriptName = os.path.basename(__file__)
 
@@ -47,29 +47,25 @@ with open(templateFile) as APIFile:
     APIFile.close()
 APIName = APIjson["api_definition"]["name"]
 
-headers = {'Authorization' : auth}
 # get the existing APIs
-resp = requests.get(f'{dshb}/api/apis/?p=-1', headers=headers)
-if resp.status_code != 200:
-    print(resp.text)
-    sys.exit(1)
-apis = json.loads(resp.text)
+apis = getAPIs(dshb, auth)
+
 # create a dictionary of all API names
 allnames = dict()
 for api in apis['apis']:
     name = api["api_definition"]["name"]
     allnames[name] = 1
 
-headers["Content-Type"] = "application/json"
 # find the first available name
 i = 1
 for apiIndex in range(1, toAdd+1):
     while APIName+str(i) in allnames:
         i += 1
+    # create the API with the first available index
     newname=APIName+str(i)
     allnames[newname] = 1
     APIjson["api_definition"]["name"] = newname
     APIjson["api_definition"]["proxy"]["listen_path"] = '/'+newname+'/'
     print(f'Adding API {APIjson["api_definition"]["name"]}, {APIjson["api_definition"]["proxy"]["listen_path"]}')
-    resp = requests.post(f'{dshb}/api/apis', data=json.dumps(APIjson), headers=headers, allow_redirects=False)
-    print(resp.text)
+    resp = createAPI(dshb, auth, json.dumps(APIjson))
+    print(json.dumps(resp))
