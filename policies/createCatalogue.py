@@ -4,7 +4,7 @@ import json
 import os
 import getopt
 import sys
-from tykUtil import *
+import tyk
 
 scriptName = os.path.basename(__file__)
 
@@ -41,7 +41,9 @@ for opt, arg in opts:
 if not (dshb and auth and policyId):
     printhelp()
 
-catalogue = getCatalogue(dshb, auth)
+dashboard = tyk.dashboard(dshb, auth)
+
+catalogue = dashboard.getCatalogue()
 # create a dictionary of all entry names
 allnames = dict()
 for policy in catalogue['apis']:
@@ -68,5 +70,5 @@ if verbose:
 
 
 print(f'Adding catalogue entry {EntryName+str(i)}')
-resp = updateCatalogue(dshb, auth, json.dumps(catalogue))
+resp = dashboard.updateCatalogue(json.dumps(catalogue))
 print(resp.text)

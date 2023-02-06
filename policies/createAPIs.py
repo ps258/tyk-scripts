@@ -4,7 +4,7 @@ import json
 import os
 import getopt
 import sys
-from tykUtil import *
+import tyk
 
 scriptName = os.path.basename(__file__)
 
@@ -41,6 +41,9 @@ for opt, arg in opts:
 if not (dshb and templateFile and auth and toAdd):
     printhelp()
 
+# create a new dashboard object
+dashboard = tyk.dashboard(dshb, auth)
+
 # read the API defn
 with open(templateFile) as APIFile:
     APIjson=json.load(APIFile)
@@ -48,7 +51,7 @@ with open(templateFile) as APIFile:
 APIName = APIjson["api_definition"]["name"]
 
 # get the existing APIs
-apis = getAPIs(dshb, auth)
+apis = dashboard.getAPIs()
 
 # create a dictionary of all API names
 allnames = dict()
@@ -67,5 +70,5 @@ for apiIndex in range(1, toAdd+1):
     APIjson["api_definition"]["name"] = newname
     APIjson["api_definition"]["proxy"]["listen_path"] = '/'+newname+'/'
     print(f'Adding API {APIjson["api_definition"]["name"]}, {APIjson["api_definition"]["proxy"]["listen_path"]}')
-    resp = createAPI(dshb, auth, json.dumps(APIjson))
+    resp = dashboard.createAPI(json.dumps(APIjson))
     print(json.dumps(resp))

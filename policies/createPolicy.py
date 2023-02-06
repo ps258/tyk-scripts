@@ -4,7 +4,7 @@ import json
 import os
 import getopt
 import sys
-from tykUtil import *
+import tyk
 
 scriptName = os.path.basename(__file__)
 
@@ -41,13 +41,15 @@ for opt, arg in opts:
 if not (dshb and templateFile and auth and apiid):
     printhelp()
 
+dashboard = tyk.dashboard(dshb, auth)
+
 # read the policy defn
 with open(templateFile) as PolicyFile:
     PolicyJSON=json.load(PolicyFile)
     PolicyFile.close()
 PolicyName = "Policy"
 # get the existing Policies
-policies = getPolicies(dshb, auth)
+policies = dashboard.getPolicies()
 # create a dictionary of all policy names
 allnames = dict()
 for policy in policies['Data']:
@@ -65,5 +67,5 @@ print(f'Adding policy {PolicyJSON["name"]}')
 if verbose:
     print(json.dumps(PolicyJSON, indent=2))
 
-resp = createPolicy(dshb, auth, json.dumps(PolicyJSON))
+resp = dashboard.createPolicy(json.dumps(PolicyJSON))
 print(json.dumps(resp))

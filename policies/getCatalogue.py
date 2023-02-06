@@ -4,7 +4,7 @@ import json
 import os
 import getopt
 import sys
-from tykUtil import *
+import tyk
 
 scriptName = os.path.basename(__file__)
 
@@ -35,6 +35,8 @@ for opt, arg in opts:
 if not (dshb and auth):
     printhelp()
 
+dashboard = tyk.dashboard(dshb, auth)
+
 # Get the existing catalogue entries
-catalogue = getCatalogue(dshb, auth)
+catalogue = dashboard.getCatalogue()
 print(json.dumps(catalogue, indent=2))

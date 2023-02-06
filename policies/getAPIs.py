@@ -4,7 +4,7 @@ import json
 import os
 import getopt
 import sys
-from tykUtil import *
+import tyk
 
 scriptName = os.path.basename(__file__)
 
@@ -35,6 +35,8 @@ for opt, arg in opts:
 if not (dshb and auth):
     printhelp()
 
-apis = getAPIs(dshb, auth)
+dashboard = tyk.dashboard(dshb, auth)
+
+apis = dashboard.getAPIs()
 for api in apis['apis']:
     print(f'{api["api_definition"]["name"]},{api["api_definition"]["api_id"]}')

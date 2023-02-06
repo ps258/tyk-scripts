@@ -4,7 +4,7 @@ import json
 import os
 import getopt
 import sys
-from tykUtil import *
+import tyk
 
 scriptName = os.path.basename(__file__)
 
@@ -35,8 +35,10 @@ for opt, arg in opts:
 if not (dshb and auth):
     printhelp()
 
+dashboard = tyk.dashboard(dshb, auth)
+
 # get the existing Policies
-policies = getPolicies(dshb, auth)
+policies = dashboard.getPolicies()
 for policy in policies['Data']:
     if verbose:
         print(json.dumps(policy, indent=4))

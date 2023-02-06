@@ -4,7 +4,7 @@ import json
 import os
 import getopt
 import sys
-from tykUtil import *
+import tyk
 
 scriptName = os.path.basename(__file__)
 
@@ -38,6 +38,8 @@ for opt, arg in opts:
 if not (dshb or policyID or auth):
     printhelp()
 
+dashboard = tyk.dashboard(dshb, auth)
+
 TykKey = {
   "apply_policies": [],
   "allowance": 0,
@@ -48,5 +50,5 @@ TykKey = {
 }
 
 TykKey["apply_policies"].append(policyID)
-resp = createKey(dshb, auth, json.dumps(TykKey))
+resp = dashboard.createKey(json.dumps(TykKey))
 print(resp)
