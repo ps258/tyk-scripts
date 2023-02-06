@@ -7,10 +7,22 @@ import requests
 import sys
 
 class dashboard:
-    def __init__(self, URL, authKey, name = "N/A"):
+    def __init__(self, URL, authKey, description = "N/A"):
         self.URL = URL.strip('/')
         self.authKey = authKey
-        self.name = name
+        self.description = description
+
+    def __str__(self):
+        return f"Dashboard URL: {self.URL}, Auth token: {self.authkey}, Description: {self.description}"
+
+    def url(self):
+        return self.URL
+
+    def authkey(self):
+        return self.authkey
+
+    def description(self):
+        return self.description
 
     # API functions
     def getAPIs(self):
