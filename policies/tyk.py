@@ -43,7 +43,7 @@ class dashboard:
     def createAPI(self, APIdefinition):
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
-        resp = requests.post(f'{self.URL}/api/apis', data=APIdefinition, headers=headers, allow_redirects=False)
+        resp = requests.post(f'{self.URL}/api/apis', data=APIdefinition, headers=headers)
         if resp.status_code != 200:
             print(resp.text)
             sys.exit(1)
@@ -52,7 +52,7 @@ class dashboard:
     def updateAPI(self, APIid, APIdefinition):
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
-        resp = requests.put(f'{self.URL}/api/apis/{APIid}', data=APIdefinition, headers=headers, allow_redirects=False)
+        resp = requests.put(f'{self.URL}/api/apis/{APIid}', data=APIdefinition, headers=headers)
         if resp.status_code != 200:
             print(resp.text)
             sys.exit(1)
@@ -86,7 +86,7 @@ class dashboard:
     def createPolicy(self, policyDefinition):
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
-        resp = requests.post(f'{self.URL}/api/portal/policies', data=policyDefinition, headers=headers, allow_redirects=False)
+        resp = requests.post(f'{self.URL}/api/portal/policies', data=policyDefinition, headers=headers)
         if resp.status_code != 200:
             print(resp.text)
             sys.exit(1)
@@ -95,7 +95,7 @@ class dashboard:
     def updatePolicy(self, policyID, policyDefinition):
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
-        resp = requests.put(f'{self.URL}/api/portal/policies/{policyID}', data=policyDefinition, headers=headers, allow_redirects=False)
+        resp = requests.put(f'{self.URL}/api/portal/policies/{policyID}', data=policyDefinition, headers=headers)
         if resp.status_code != 200:
             print(resp.text)
             sys.exit(1)
@@ -111,10 +111,26 @@ class dashboard:
         return json.loads(resp.text)
 
     # Key functions
+    def getKeys(self):
+        headers = {'Authorization' : self.authKey}
+        resp = requests.get(f'{self.URL}/api/apis/-/keys', headers=headers)
+        if resp.status_code != 200:
+            print(resp.text)
+            sys.exit(1)
+        return json.loads(resp.text)
+
+    def getKey(self, keyID):
+        headers = {'Authorization' : self.authKey}
+        resp = requests.get(f'{self.URL}/api/apis/-/keys/{keyID}', headers=headers)
+        if resp.status_code != 200:
+            print(resp.text)
+            sys.exit(1)
+        return json.loads(resp.text)
+
     def createKey(self, keyDefinition):
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
-        resp = requests.post(f'{self.URL}/api/keys', data=keyDefinition, headers=headers, allow_redirects=False)
+        resp = requests.post(f'{self.URL}/api/keys', data=keyDefinition, headers=headers)
         if resp.status_code != 200:
             print(resp.text)
             sys.exit(1)
