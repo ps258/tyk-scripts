@@ -55,9 +55,9 @@ class dashboard:
         APIName = APIdefinition["api_definition"]["name"]
         allnames = dict()
         for api in apis['apis']:
-            name = api["api_definition"]["name"]
-            allnames[name] = 1
+            allnames[api["api_definition"]["name"]] = 1
         i = 1
+        numberCreated = 0
         while numberCreated < numberToCreate:
             # work out the next free name (format is name-i)
             while APIName+str(i) in allnames:
@@ -66,11 +66,15 @@ class dashboard:
             allnames[newname] = 1
             APIdefinition["api_definition"]["name"] = newname
             APIdefinition["api_definition"]["slug"] = newname
-            APIjson["api_definition"]["proxy"]["listen_path"] = '/'+newname+'/'
-            print(f'Adding API {APIjson["api_definition"]["name"]}, {APIjson["api_definition"]["proxy"]["listen_path"]}')
-            resp = self.createAPI(json.dumps(APIjson))
+            APIdefinition["api_definition"]["proxy"]["listen_path"] = '/'+newname+'/'
+            print(f'Adding API {APIdefinition["api_definition"]["name"]}, {APIdefinition["api_definition"]["proxy"]["listen_path"]}')
+            resp = self.createAPI(json.dumps(APIdefinition))
             print(json.dumps(resp))
             numberCreated += 1
+        if numberCreated == numberToCreate:
+            return True
+        else:
+            return False
 
     def updateAPI(self, APIid, APIdefinition):
         headers = {'Authorization' : self.authKey}
@@ -116,24 +120,29 @@ class dashboard:
         return json.loads(resp.text)
 
     def createPolicies(self, policyDefinition, APIid, numberToCreate):
-        policies = self.getPoliciesi()
-        # create a dictionary of all policy
+        policies = self.getPolicies()
+        # create a dictionary of all policy names
         PolicyName = policyDefinition["name"]
         allnames = dict()
-        for policy in policies['data']:
+        for policy in policies['Data']:
             allnames[policy["name"]] = 1
         i = 1
+        numberCreated = 0
         while numberCreated < numberToCreate:
             # work out the next free name (format is name-i)
             while PolicyName+str(i) in allnames:
                 i += 1
             newname=PolicyName+str(i)
             allnames[newname] = 1
-            PolicyJSON["name"]=PolicyName+str(i)
-            PolicyJSON["access_rights_array"] = json.loads('[{ "api_id": "' + Apiid + '", "versions": [ "Default" ], "allowed_urls": [], "restricted_types": [], "limit": null, "allowance_scope": "" }]')
-            resp = self.createAPI(json.dumps(PolicyJSON))
+            policyDefinition["name"]=PolicyName+str(i)
+            policyDefinition["access_rights_array"] = json.loads('[{ "api_id": "' + APIid + '", "versions": [ "Default" ], "allowed_urls": [], "restricted_types": [], "limit": null, "allowance_scope": "" }]')
+            resp = self.createPolicy(json.dumps(policyDefinition))
             print(json.dumps(resp))
             numberCreated += 1
+        if numberCreated == numberToCreate:
+            return True
+        else:
+            return False
 
     def updatePolicy(self, policyID, policyDefinition):
         headers = {'Authorization' : self.authKey}
