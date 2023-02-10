@@ -71,4 +71,4 @@ if verbose:
 
 print(f'Adding catalogue entry {EntryName+str(i)}')
 resp = dashboard.updateCatalogue(json.dumps(catalogue))
-print(resp.text)
+print(resp)
