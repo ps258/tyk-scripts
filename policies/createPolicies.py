@@ -9,18 +9,19 @@ import tyk
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials> --number <number of APIs to add generate> --template <API template file> --verbose')
-    print("    Will take the template and increment its name and listen path so that they do not clash, then add it as an API to the dashboard")
+    print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials> --template <Policy template file> --apiid <apiid> --verbose --number <number to receate>')
+    print("    Will create a new policies for the API_ID given")
     sys.exit(2)
 
 dshb = ""
 auth = ""
 templateFile = ""
-toAdd = 0
+apiid = ""
 verbose = 0
+toAdd = 0
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "template=", "dashboard=", "cred=", "number=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "template=", "dashboard=", "cred=", "apiid=", "number=", "verbose"])
 except getopt.GetoptError:
     printhelp()
 
@@ -33,27 +34,26 @@ for opt, arg in opts:
         dshb = arg.strip().strip('/')
     elif opt == '--cred':
         auth = arg
+    elif opt == '--apiid':
+        apiid = arg
     elif opt == '--number':
         toAdd = int(arg)
     elif opt == '--verbose':
         verbose = 1
 
-if not (dshb and templateFile and auth and toAdd):
+if not (dshb and templateFile and auth and apiid):
     printhelp()
 
-# create a new dashboard object
 dashboard = tyk.dashboard(dshb, auth)
 
-# read the API defn
-with open(templateFile) as APIFile:
-    APIjson=json.load(APIFile)
-    APIFile.close()
-APIName = APIjson["api_definition"]["name"]
+# read the policy defn
+with open(templateFile) as PolicyFile:
+    PolicyJSON=json.load(PolicyFile)
+    PolicyFile.close()
 
-if dashboard.createAPIs(APIjson, toAdd):
+if dashboard.createPolicies(PolicyJSON, apiid, toAdd):
     print("Success")
     sys.exit(0)
 else:
     print("Failure")
     sys.exit(1)
-
