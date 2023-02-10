@@ -147,7 +147,7 @@ class dashboard:
 
     def updateCatalogue(self, catalogue):
         headers = {'Authorization' : self.authKey}
-        resp = requests.put(f'{self.URL}/api/portal/catalogue', date=catalogue, headers=headers)
+        resp = requests.put(f'{self.URL}/api/portal/catalogue', data=catalogue, headers=headers)
         if resp.status_code != 200:
             print(resp.text)
             sys.exit(1)
