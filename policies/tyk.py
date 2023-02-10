@@ -49,6 +49,29 @@ class dashboard:
             sys.exit(1)
         return json.loads(resp.text)
 
+    def createAPIs(self, APIdefinition, numberToCreate):
+        apis = self.getAPIs()
+        # create a dictionary of all API names
+        APIName = APIdefinition["api_definition"]["name"]
+        allnames = dict()
+        for api in apis['apis']:
+            name = api["api_definition"]["name"]
+            allnames[name] = 1
+        i = 1
+        while numberCreated < numberToCreate:
+            # work out the next free name (format is name-i)
+            while APIName+str(i) in allnames:
+                i += 1
+            newname=APIName+str(i)
+            allnames[newname] = 1
+            APIdefinition["api_definition"]["name"] = newname
+            APIdefinition["api_definition"]["slug"] = newname
+            APIjson["api_definition"]["proxy"]["listen_path"] = '/'+newname+'/'
+            print(f'Adding API {APIjson["api_definition"]["name"]}, {APIjson["api_definition"]["proxy"]["listen_path"]}')
+            resp = self.createAPI(json.dumps(APIjson))
+            print(json.dumps(resp))
+            numberCreated += 1
+
     def updateAPI(self, APIid, APIdefinition):
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
@@ -91,6 +114,26 @@ class dashboard:
             print(resp.text)
             sys.exit(1)
         return json.loads(resp.text)
+
+    def createPolicies(self, policyDefinition, APIid, numberToCreate):
+        policies = self.getPoliciesi()
+        # create a dictionary of all policy
+        PolicyName = policyDefinition["name"]
+        allnames = dict()
+        for policy in policies['data']:
+            allnames[policy["name"]] = 1
+        i = 1
+        while numberCreated < numberToCreate:
+            # work out the next free name (format is name-i)
+            while PolicyName+str(i) in allnames:
+                i += 1
+            newname=PolicyName+str(i)
+            allnames[newname] = 1
+            PolicyJSON["name"]=PolicyName+str(i)
+            PolicyJSON["access_rights_array"] = json.loads('[{ "api_id": "' + Apiid + '", "versions": [ "Default" ], "allowed_urls": [], "restricted_types": [], "limit": null, "allowance_scope": "" }]')
+            resp = self.createAPI(json.dumps(PolicyJSON))
+            print(json.dumps(resp))
+            numberCreated += 1
 
     def updatePolicy(self, policyID, policyDefinition):
         headers = {'Authorization' : self.authKey}
