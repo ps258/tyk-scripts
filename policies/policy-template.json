@@ -29,7 +29,7 @@
         }
     ],
     "graphql_enabled": false,
-    "name": "policy1",
+    "name": "policy",
     "rate": 1000,
     "per": 60,
     "quota_max": -1,
