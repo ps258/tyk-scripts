@@ -93,6 +93,14 @@ class dashboard:
             sys.exit(1)
         return json.loads(resp.text)
 
+    def deleteAllAPIs(self):
+        apis = self.getAPIs()
+        for api in apis['apis']:
+            resp = self.deleteAPI(api["api_definition"]["api_id"])
+            print(f'Deleting API: {api["api_definition"]["api_id"]}')
+            print(json.dumps(resp))
+
+
     # Policy function
     def getPolicies(self):
         headers = {'Authorization' : self.authKey}
@@ -136,6 +144,7 @@ class dashboard:
             allnames[newname] = 1
             policyDefinition["name"]=PolicyName+str(i)
             policyDefinition["access_rights_array"] = json.loads('[{ "api_id": "' + APIid + '", "versions": [ "Default" ], "allowed_urls": [], "restricted_types": [], "limit": null, "allowance_scope": "" }]')
+            print(f'Creating policy: {policyDefinition["name"]}')
             resp = self.createPolicy(json.dumps(policyDefinition))
             print(json.dumps(resp))
             numberCreated += 1
@@ -161,6 +170,13 @@ class dashboard:
             print(resp.text)
             sys.exit(1)
         return json.loads(resp.text)
+
+    def deleteAllPolicies(self):
+        policies = self.getPolicies()
+        for policy in policies['Data']:
+            print(f'Deleting policy: {policy["_id"]}')
+            resp = self.deletePolicy(policy["_id"])
+            print(json.dumps(resp))
 
     # Key functions
     def getKeys(self):
