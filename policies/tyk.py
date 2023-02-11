@@ -24,6 +24,7 @@ class dashboard:
     def description(self):
         return self.description
 
+
     # API functions
     def getAPIs(self):
         headers = {'Authorization' : self.authKey}
@@ -178,6 +179,7 @@ class dashboard:
             resp = self.deletePolicy(policy["_id"])
             print(json.dumps(resp))
 
+
     # Key functions
     def getKeys(self):
         headers = {'Authorization' : self.authKey}
@@ -203,6 +205,32 @@ class dashboard:
             print(resp.text)
             sys.exit(1)
         return json.loads(resp.text)
+
+    def updateKey(self, keyDefinition):
+        headers = {'Authorization' : self.authKey}
+        headers["Content-Type"] = "application/json"
+        resp = requests.put(f'{self.URL}/api/apis/-/keys/{keyDefinition["key_id"]}', data=keyDefinition, headers=headers)
+        if resp.status_code != 200:
+            print(resp.text)
+            sys.exit(1)
+        return json.loads(resp.text)
+
+    def deleteKey(self, keyID):
+        headers = {'Authorization' : self.authKey}
+        headers["Content-Type"] = "application/json"
+        resp = requests.delete(f'{self.URL}/api/apis/-/keys/{keyID}', headers=headers)
+        if resp.status_code != 200:
+            print(resp.text)
+            sys.exit(1)
+        return json.loads(resp.text)
+
+    def deleteAllKeys(self):
+        keys = self.getKeys()
+        for keyID in keys['data']['keys']:
+            print(f'Deleting key: {keyID}')
+            resp = self.deleteKey(keyID)
+            print(json.dumps(resp))
+
 
     # Portal Catalogue functions
     def getCatalogue(self):
