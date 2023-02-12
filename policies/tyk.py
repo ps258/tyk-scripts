@@ -183,7 +183,7 @@ class dashboard:
     # Key functions
     def getKeys(self):
         headers = {'Authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/api/apis/-/keys', headers=headers)
+        resp = requests.get(f'{self.URL}/api/apis/-/keys?p=-1', headers=headers)
         if resp.status_code != 200:
             print(resp.text)
             sys.exit(1)
@@ -206,10 +206,10 @@ class dashboard:
             sys.exit(1)
         return json.loads(resp.text)
 
-    def updateKey(self, keyDefinition):
+    def updateKey(self, keyDefinition, KeyID):
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
-        resp = requests.put(f'{self.URL}/api/apis/-/keys/{keyDefinition["key_id"]}', data=keyDefinition, headers=headers)
+        resp = requests.put(f'{self.URL}/api/apis/-/keys/{KeyID}', data=keyDefinition, headers=headers)
         if resp.status_code != 200:
             print(resp.text)
             sys.exit(1)
