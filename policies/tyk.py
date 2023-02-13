@@ -218,7 +218,8 @@ class dashboard:
     def deleteKey(self, keyID):
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
-        resp = requests.delete(f'{self.URL}/api/apis/-/keys/{keyID}', headers=headers)
+        # not sure where ?auto_guess=true comes from but it works when keys are encrypted
+        resp = requests.delete(f'{self.URL}/api/keys/{keyID}/?auto_guess=true', headers=headers)
         if resp.status_code != 200:
             print(resp.text)
             sys.exit(1)
