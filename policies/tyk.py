@@ -7,10 +7,11 @@ import requests
 import sys
 
 class dashboard:
-    def __init__(self, URL, authKey, description = "N/A"):
+    def __init__(self, URL, authKey, adminSecret = "N/A" , description = "N/A"):
         self.URL = URL.strip('/')
         self.authKey = authKey
         self.description = description
+        self.adminSecret = adminSecret
 
     def __str__(self):
         return f"Dashboard URL: {self.URL}, Auth token: {self.authkey}, Description: {self.description}"
@@ -23,6 +24,13 @@ class dashboard:
 
     def description(self):
         return self.description
+
+    def adminSecret(self):
+        return self.adminSecret
+
+    def setAdminSecret(self, adminSecret):
+        self.adminSecret = adminSecret
+        return adminSecret
 
 
     # API functions
@@ -248,4 +256,80 @@ class dashboard:
         if resp.status_code != 200:
             print(resp.text)
             sys.exit(1)
+        return json.loads(resp.text)
+
+
+    # Organisation functions
+    def getOrganisations(self):
+        headers = {'admin-auth': self.adminSecret}
+        headers["Content-Type"] = "application/json"
+        resp = requests.get(f'{self.URL}/admin/organisations?p=-1', headers=headers)
+        if resp.status_code != 200:
+            print(resp.text)
+            sys.exit(1)
+        return json.loads(resp.text)
+
+    def getOrganisation(self, orgID):
+        headers = {'admin-auth': self.adminSecret}
+        headers["Content-Type"] = "application/json"
+        resp = requests.get(f'{self.URL}/admin/organisations/{orgID}', headers=headers)
+        if resp.status_code != 200:
+            print(resp.text)
+            sys.exit(1)
+        return json.loads(resp.text)
+
+    def createOrganisation(self, orgDefinition):
+        headers = {'admin-auth': self.adminSecret}
+        headers["Content-Type"] = "application/json"
+        resp = requests.post(f'{self.URL}/admin/organisations', data=orgDefinition, headers=headers)
+        if resp.status_code != 200:
+            print(resp.text)
+            sys.exit(1)
+        return json.loads(resp.text)
+
+    def createOrganisations(self, orgDefinition, numberToCreate):
+        orgs = self.getOrganisations()
+        # create a dictionary of all policy names
+        orgSlug = orgDefinition["owner_slug"]
+        orgOwner = orgDefinition["owner_name"]
+        allSlugs = dict()
+        for org in orgs['organisations']:
+            allSlugs[org["owner_slug"]] = 1
+        i = 1
+        numberCreated = 0
+        while numberCreated < numberToCreate:
+            # work out the next free name (format is name-i)
+            while orgSlug+str(i) in allSlugs:
+                i += 1
+            newSlug=orgSlug+str(i)
+            allSlugs[newSlug] = 1
+            orgDefinition["owner_name"]=orgOwner+str(i)
+            orgDefinition["owner_slug"]=orgSlug+str(i)
+            print(f'Creating Organisation: {orgDefinition["owner_slug"]}')
+            resp = self.createOrganisation(json.dumps(orgDefinition))
+            print(json.dumps(resp))
+            numberCreated += 1
+        if numberCreated == numberToCreate:
+            return True
+        else:
+            return False
+
+
+    # Users
+    def createAdminUser(self, userEmail, userPass, orgID):
+        headers = {'admin-auth': self.adminSecret}
+        headers["Content-Type"] = "application/json"
+        userDefinition = {
+                "first_name": "Tyk",
+                "last_name": "Admin",
+                "email_address": userEmail,
+                "password": userPass,
+                "active": True,
+                "org_id": orgID,
+                "user_permissions": { "ResetPassword" : "admin", "IsAdmin": "admin" }}
+        resp = requests.post(f'{self.URL}/admin/users', data=json.dumps(userDefinition), headers=headers)
+        # need to send a reset to for the user
+        if resp.status_code != 200:
+            print(resp.text)
+            #sys.exit(1)
         return json.loads(resp.text)
