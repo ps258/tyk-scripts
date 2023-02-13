@@ -38,7 +38,6 @@ def printhelp():
 
 dshb = ""
 auth = ""
-policyID = ""
 verbose = 0
 
 try:
@@ -66,14 +65,10 @@ for opt, arg in opts:
     elif opt == '--verbose':
         verbose = 1
 
-if not (dshb or policyID or auth):
+if not (dshb or API1 or API2 or Pol1 or Pol2 or gateway or auth):
     printhelp()
 
 dashboard = tyk.dashboard(dshb, auth)
-
-# fetch Policies in preparation for updating the key after the first API call
-pol1JSON = dashboard.getPolicy(Pol1)
-pol2JSON = dashboard.getPolicy(Pol2)
 
 # create key based on Pol1
 KeyTemplate = {
@@ -85,18 +80,25 @@ KeyTemplate = {
   "meta_data": {"Created by": scriptName}
 }
 
+print(f'Creating key from the first policy: {Pol1}')
 KeyTemplate["apply_policies"].append(Pol1)
 resp = dashboard.createKey(json.dumps(KeyTemplate))
 APIKey=resp["key_id"]
 print(f'Key created: {APIKey}')
 
+# Show the key to verify it
+if verbose:
+    print(f'Contents of {APIKey}')
+    print(json.dumps(dashboard.getKey(APIKey), indent=2))
+
 # test that API1 works
-print(f'Calling {gateway}/{API1}')
+print(f'Calling {gateway}/{API1} with that key')
 headers = {'Authorization' : APIKey}
 resp = requests.get(f'{gateway}/{API1}', verify=False, headers=headers)
-print(resp.text)
+print(f'[{resp.status_code}], {resp.text}')
 
 # add the second Policy to the key
+print(f'Adding Policy {Pol2} to key {APIKey}')
 KeyTemplate = {
   "apply_policies": [],
   "allowance": 0,
@@ -105,16 +107,16 @@ KeyTemplate = {
   "rate": 0,
   "meta_data": {"Created by": scriptName}
 }
-KeyTemplate["apply_policies"].append(Pol1)
 KeyTemplate["apply_policies"].append(Pol2)
+KeyTemplate["apply_policies"].append(Pol1)
 resp = dashboard.updateKey(json.dumps(KeyTemplate), APIKey)
 
-# show the results
-#TykKey = dashboard.getKey(APIKey)
-#print(json.dumps(TykKey, indent=2))
-#resp = requests.get(f'{gateway}/{API1}', verify=False, headers=headers)
+# Show the key to verify it
+if verbose:
+    print(f'Contents of {APIKey}')
+    print(json.dumps(dashboard.getKey(APIKey), indent=2))
 
 # test that the key work against API2
-print(f'Calling {gateway}/{API2}')
+print(f'Calling {gateway}/{API2} with the same keyid')
 resp = requests.get(f'{gateway}/{API2}', verify=False, headers=headers)
-print(resp.text)
+print(f'[{resp.status_code}], {resp.text}')
