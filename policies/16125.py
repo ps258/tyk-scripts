@@ -24,6 +24,7 @@ import os
 import getopt
 import sys
 import time
+sys.path.append('/home/pstubbs/code/tyk-scripts/module')
 import tyk
 # Suppress the warnings from urllib3 when using a self signed certs
 from urllib3.exceptions import InsecureRequestWarning

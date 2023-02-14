@@ -10,6 +10,7 @@ import os
 import getopt
 import sys
 import time
+sys.path.append('/home/pstubbs/code/tyk-scripts/module')
 import tyk
 
 # Suppress the warnings from urllib3 when using a self signed certs
@@ -66,5 +67,5 @@ orgJson = {"owner_name": "Default Org.","owner_slug": "default", "cname_enabled"
 dashboard.createOrganisations(orgJson, toAdd)
 organisations = dashboard.getOrganisations()
 for org in organisations["organisations"]:
-    resp = dashboard.createAdminUser("useremail", "userpass", org["id"])
+    resp = dashboard.createAdminUser(useremail, userpass, org["id"])
     print(json.dumps(resp))
