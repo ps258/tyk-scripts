@@ -1,4 +1,4 @@
-# A mmodule to speed up writing scripts to do stuff with the tyk dashboard
+# A module to speed up writing scripts to do stuff with the tyk dashboard
 # This is not supported by anyone at any level but is just my efforts to make my life easier
 # USE AT YOUR OWN RISK
 
@@ -8,18 +8,22 @@ import sys
 
 class dashboard:
     def __init__(self, URL, authKey, adminSecret = "N/A" , description = "N/A"):
-        self.URL = URL.strip('/')
-        self.authKey = authKey
-        self.description = description
-        self.adminSecret = adminSecret
+        self.URL = URL.strip('/')       # The dashboard URL
+        self.authKey = authKey          # User key to authenticate API calls
+        self.description = description  # description of this dashboard
+        self.adminSecret = adminSecret  # The admin secret for the admin API (admin_secret in tyk_analytics.conf, AdminSecret in tyk.conf)
 
     def __str__(self):
-        return f"Dashboard URL: {self.URL}, Auth token: {self.authkey}, Description: {self.description}"
+        return f"Dashboard URL: {self.URL}, Auth token: {self.authkey}, Admin Secret: {self.adminSecret}, Description: {self.description}"
 
     def url(self):
         return self.URL
 
     def authkey(self):
+        return self.authkey
+
+    def setAuthkey(self, authkey):
+        self.authkey = authkey
         return self.authkey
 
     def description(self):
@@ -50,6 +54,8 @@ class dashboard:
         return json.loads(resp.text)
 
     def createAPI(self, APIdefinition):
+        if type(APIdefinition) is dict:
+            APIdefinition = json.dumps(APIdefinition)
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
         resp = requests.post(f'{self.URL}/api/apis', data=APIdefinition, headers=headers)
@@ -86,6 +92,8 @@ class dashboard:
             return False
 
     def updateAPI(self, APIid, APIdefinition):
+        if type(APIdefinition) is dict:
+            APIdefinition = json.dumps(APIdefinition)
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
         resp = requests.put(f'{self.URL}/api/apis/{APIid}', data=APIdefinition, headers=headers)
@@ -128,6 +136,8 @@ class dashboard:
         return json.loads(resp.text)
 
     def createPolicy(self, policyDefinition):
+        if type(policyDefinition) is dict:
+            policyDefinition = json.dumps(policyDefinition)
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
         resp = requests.post(f'{self.URL}/api/portal/policies', data=policyDefinition, headers=headers)
@@ -137,8 +147,8 @@ class dashboard:
         return json.loads(resp.text)
 
     def createPolicies(self, policyDefinition, APIid, numberToCreate):
-        policies = self.getPolicies()
         # create a dictionary of all policy names
+        policies = self.getPolicies()
         PolicyName = policyDefinition["name"]
         allnames = dict()
         for policy in policies['Data']:
@@ -163,6 +173,8 @@ class dashboard:
             return False
 
     def updatePolicy(self, policyID, policyDefinition):
+        if type(policyDefinition) is dict:
+            policyDefinition = json.dumps(policyDefinition)
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
         resp = requests.put(f'{self.URL}/api/portal/policies/{policyID}', data=policyDefinition, headers=headers)
@@ -206,6 +218,8 @@ class dashboard:
         return json.loads(resp.text)
 
     def createKey(self, keyDefinition):
+        if type(keyDefinition) is dict:
+            keyDefinition = json.dumps(keyDefinition)
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
         resp = requests.post(f'{self.URL}/api/keys', data=keyDefinition, headers=headers)
@@ -215,6 +229,8 @@ class dashboard:
         return json.loads(resp.text)
 
     def updateKey(self, keyDefinition, KeyID):
+        if type(keyDefinition) is dict:
+            keyDefinition = json.dumps(keyDefinition)
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
         resp = requests.put(f'{self.URL}/api/apis/-/keys/{KeyID}', data=keyDefinition, headers=headers)
@@ -251,6 +267,8 @@ class dashboard:
         return json.loads(resp.text)
 
     def updateCatalogue(self, catalogue):
+        if type(catalogue) is dict:
+            catalogue = json.dumps(catalogue)
         headers = {'Authorization' : self.authKey}
         resp = requests.put(f'{self.URL}/api/portal/catalogue', data=catalogue, headers=headers)
         if resp.status_code != 200:
@@ -279,6 +297,8 @@ class dashboard:
         return json.loads(resp.text)
 
     def createOrganisation(self, orgDefinition):
+        if type(orgDefinition) is dict:
+            orgDefinition = json.dumps(orgDefinition)
         headers = {'admin-auth': self.adminSecret}
         headers["Content-Type"] = "application/json"
         resp = requests.post(f'{self.URL}/admin/organisations', data=orgDefinition, headers=headers)
