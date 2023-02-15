@@ -7,18 +7,19 @@
 
 # For caution the orgid of the keys to be considered must be given even when there is only one org id in redis.
 
-# Keys have an expiery timestamp in epoch seconds. Keys which expired before the timestamp given in --epoch will
+# Keys have an expiry timestamp in epoch seconds. Keys which expired before the timestamp given in --epoch will
 # be considered for listing or deletion.
 
 # The selected keys can be further narrowed down using the --policy and --api options. Either or both can be given.
 # Only apikeys which match the given --policy and/or --api options will be included but only at most one of each can be given.
 
-# USE THIS OPTION WITH CAUTION:
-# Keys with an expiery of 0 are set to never expire. They are dealt with as a special case and only considered
+# USE THIS OPTION WITH CAUTION: '--epoch 0'
+# Keys with an expiry of 0 are set to never expire. They are dealt with as a special case and only considered
 # when '--epoch 0' is given.
 # Using the --api and --policy options will allow the non-expiring keys for a particular API or policy to be removed
+# when they are combined with '--epoch 0'
 
-# USE THIS OPTION WITH CAUTION:
+# USE THIS OPTION WITH CAUTION: --include-jwt-sessions
 # --include-jwt-sessions means that keys created as JWT session objects will be considered for deletion.
 # Deleting these will allow them to be recreated when a JWT with the corresponding sub is presented 
 # as an auth token to the gateway. This is almost certainly not was you want.
