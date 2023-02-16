@@ -347,9 +347,15 @@ class dashboard:
                 "active": True,
                 "org_id": orgID,
                 "user_permissions": { "ResetPassword" : "admin", "IsAdmin": "admin" }}
-        resp = requests.post(f'{self.URL}/admin/users', data=json.dumps(userDefinition), headers=headers)
+        createResp = requests.post(f'{self.URL}/admin/users', data=json.dumps(userDefinition), headers=headers)
+        if createResp.status_code != 200:
+            print(createResp.text)
+            return json.loads(createResp.text)
         # need to send a reset to for the user
-        if resp.status_code != 200:
-            print(resp.text)
-            #sys.exit(1)
-        return json.loads(resp.text)
+        userdata = json.loads(createResp.text)
+        headers = {'Authorization' : userdata["Meta"]["access_key"]}
+        headers["Content-Type"] = "application/json"
+        resetResp = requests.post(f'{self.URL}/api/users/{userdata["Meta"]["id"]}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers)
+        if resetResp.status_code != 200:
+            print(resetResp.text)
+        return json.loads(createResp.text)
