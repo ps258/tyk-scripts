@@ -171,15 +171,11 @@ class dashboard:
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
         resp = requests.put(f'{self.URL}/api/portal/policies/{policyID}', data=policyDefinition, headers=headers)
-        if resp.status_code != 200:
-            print(resp.json())
         return resp
 
     def deletePolicy(self, policyID):
         headers = {'Authorization' : self.authKey}
         resp = requests.delete(f'{self.URL}/api/portal/policies/{policyID}', headers=headers)
-        if resp.status_code != 200:
-            print(resp.text)
         return resp
 
     def deleteAllPolicies(self):
