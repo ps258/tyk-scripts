@@ -41,15 +41,11 @@ class dashboard:
     def getAPI(self, APIid):
         headers = {'Authorization' : self.authKey}
         resp = requests.get(f'{self.URL}/api/apis/{APIid}', headers=headers)
-        if resp.status_code != 200:
-            print(resp.json())
         return resp
 
     def getAPIs(self):
         headers = {'Authorization' : self.authKey}
         resp = requests.get(f'{self.URL}/api/apis/?p=-1', headers=headers)
-        if resp.status_code != 200:
-            print(resp.json())
         return resp
 
     def createAPI(self, APIdefinition):
@@ -58,8 +54,6 @@ class dashboard:
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
         resp = requests.post(f'{self.URL}/api/apis', data=APIdefinition, headers=headers)
-        if resp.status_code != 200:
-            print(resp.json())
         return resp
 
     def createAPIs(self, APIdefinition, numberToCreate):
@@ -82,9 +76,11 @@ class dashboard:
             APIdefinition["api_definition"]["proxy"]["listen_path"] = '/'+newname+'/'
             print(f'Adding API {APIdefinition["api_definition"]["name"]}, {APIdefinition["api_definition"]["proxy"]["listen_path"]}')
             resp = self.createAPI(APIdefinition)
-            if resp.status_code == 200:
-                print(json.dumps(resp.json()))
-                numberCreated += 1
+            print(resp.json())
+            # if a call fails, stop and return the number of successes
+            if resp.status_code != 200:
+                break
+            numberCreated += 1
         return numberCreated
 
     def updateAPI(self, APIdefinition, APIid):
@@ -93,15 +89,11 @@ class dashboard:
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
         resp = requests.put(f'{self.URL}/api/apis/{APIid}', data=APIdefinition, headers=headers)
-        if resp.status_code != 200:
-            print(resp.json())
         return resp
 
     def deleteAPI(self, APIid):
         headers = {'Authorization' : self.authKey}
         resp = requests.delete(f'{self.URL}/api/apis/{APIid}', headers=headers)
-        if resp.status_code != 200:
-            print(resp.json())
         return resp
 
     def deleteAllAPIs(self):
@@ -120,15 +112,11 @@ class dashboard:
     def getPolicy(self, policyID):
         headers = {'Authorization' : self.authKey}
         resp = requests.get(f'{self.URL}/api/portal/policies/{policyID}', headers=headers)
-        if resp.status_code != 200:
-            print(resp.text)
         return resp
 
     def getPolicies(self):
         headers = {'Authorization' : self.authKey}
         resp = requests.get(f'{self.URL}/api/portal/policies/?p=-1', headers=headers)
-        if resp.status_code != 200:
-            print(resp.json())
         return resp
 
     def createPolicy(self, policyDefinition):
@@ -137,8 +125,6 @@ class dashboard:
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
         resp = requests.post(f'{self.URL}/api/portal/policies', data=policyDefinition, headers=headers)
-        if resp.status_code != 200:
-            print(resp.json())
         return resp
 
     def createPolicies(self, policyDefinition, APIid, numberToCreate):
@@ -160,9 +146,11 @@ class dashboard:
             policyDefinition["access_rights_array"] = json.loads('[{ "api_id": "' + APIid + '", "versions": [ "Default" ], "allowed_urls": [], "restricted_types": [], "limit": null, "allowance_scope": "" }]')
             print(f'Creating policy: {policyDefinition["name"]}')
             resp = self.createPolicy(json.dumps(policyDefinition))
-            if resp.status_code == 200:
-                print(json.dumps(resp.json()))
-                numberCreated += 1
+            print(resp.json())
+            # if a call fails, stop and return the number of successes
+            if resp.status_code != 200:
+                break
+            numberCreated += 1
         return numberCreated
 
     def updatePolicy(self, policyDefinition, policyID):
@@ -194,18 +182,12 @@ class dashboard:
     def getKeys(self):
         headers = {'Authorization' : self.authKey}
         resp = requests.get(f'{self.URL}/api/apis/-/keys?p=-1', headers=headers)
-        if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+        return resp
 
     def getKey(self, keyID):
         headers = {'Authorization' : self.authKey}
         resp = requests.get(f'{self.URL}/api/apis/-/keys/{keyID}', headers=headers)
-        if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+        return resp
 
     def createKey(self, keyDefinition):
         if type(keyDefinition) is dict:
@@ -213,10 +195,7 @@ class dashboard:
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
         resp = requests.post(f'{self.URL}/api/keys', data=keyDefinition, headers=headers)
-        if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+        return resp
 
     def updateKey(self, keyDefinition, KeyID):
         if type(keyDefinition) is dict:
@@ -224,47 +203,39 @@ class dashboard:
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
         resp = requests.put(f'{self.URL}/api/apis/-/keys/{KeyID}', data=keyDefinition, headers=headers)
-        if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+        return resp
 
     def deleteKey(self, keyID):
         headers = {'Authorization' : self.authKey}
         headers["Content-Type"] = "application/json"
         # not sure where ?auto_guess=true comes from but it works when keys are encrypted
         resp = requests.delete(f'{self.URL}/api/keys/{keyID}/?auto_guess=true', headers=headers)
-        if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+        return resp
 
     def deleteAllKeys(self):
-        keys = self.getKeys()
+        allDeleted = True
+        keys = self.getKeys().json()
         for keyID in keys['data']['keys']:
             print(f'Deleting key: {keyID}')
             resp = self.deleteKey(keyID)
-            print(json.dumps(resp))
+            print(resp.json())
+            if resp.status_code != 200:
+                allDeleted = False
+        return allDeleted
 
 
     # Portal Catalogue functions
     def getCatalogue(self):
         headers = {'Authorization' : self.authKey}
         resp = requests.get(f'{self.URL}/api/portal/catalogue', headers=headers)
-        if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+        return resp
 
     def updateCatalogue(self, catalogue):
         if type(catalogue) is dict:
             catalogue = json.dumps(catalogue)
         headers = {'Authorization' : self.authKey}
         resp = requests.put(f'{self.URL}/api/portal/catalogue', data=catalogue, headers=headers)
-        if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+        return resp
 
 
     # Organisation functions
@@ -272,19 +243,13 @@ class dashboard:
         headers = {'admin-auth': self.adminSecret}
         headers["Content-Type"] = "application/json"
         resp = requests.get(f'{self.URL}/admin/organisations?p=-1', headers=headers)
-        if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+        return resp
 
     def getOrganisation(self, orgID):
         headers = {'admin-auth': self.adminSecret}
         headers["Content-Type"] = "application/json"
         resp = requests.get(f'{self.URL}/admin/organisations/{orgID}', headers=headers)
-        if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+        return resp
 
     def createOrganisation(self, orgDefinition):
         if type(orgDefinition) is dict:
@@ -292,13 +257,10 @@ class dashboard:
         headers = {'admin-auth': self.adminSecret}
         headers["Content-Type"] = "application/json"
         resp = requests.post(f'{self.URL}/admin/organisations', data=orgDefinition, headers=headers)
-        if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+        return resp
 
     def createOrganisations(self, orgDefinition, numberToCreate):
-        orgs = self.getOrganisations()
+        orgs = self.getOrganisations().json()
         # create a dictionary of all policy names
         orgSlug = orgDefinition["owner_slug"]
         orgOwner = orgDefinition["owner_name"]
@@ -317,12 +279,12 @@ class dashboard:
             orgDefinition["owner_slug"]=orgSlug+str(i)
             print(f'Creating Organisation: {orgDefinition["owner_slug"]}')
             resp = self.createOrganisation(json.dumps(orgDefinition))
-            print(json.dumps(resp))
+            print(resp.json())
+            # if a call fails, stop and return the number of successes
+            if resp.status_code != 200:
+                break
             numberCreated += 1
-        if numberCreated == numberToCreate:
-            return True
-        else:
-            return False
+        return numberCreated
 
 
     # Users
@@ -339,13 +301,13 @@ class dashboard:
                 "user_permissions": { "ResetPassword" : "admin", "IsAdmin": "admin" }}
         createResp = requests.post(f'{self.URL}/admin/users', data=json.dumps(userDefinition), headers=headers)
         if createResp.status_code != 200:
-            print(createResp.text)
-            return json.loads(createResp.text)
+            print(createResp.json())
+            return createResp
         # need to send a reset to for the user
-        userdata = json.loads(createResp.text)
+        userdata = createResp.json()
         headers = {'Authorization' : userdata["Meta"]["access_key"]}
         headers["Content-Type"] = "application/json"
         resetResp = requests.post(f'{self.URL}/api/users/{userdata["Meta"]["id"]}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers)
         if resetResp.status_code != 200:
-            print(resetResp.text)
-        return json.loads(createResp.text)
+            print(resetResp.json())
+        return createResp
