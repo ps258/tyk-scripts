@@ -10,7 +10,7 @@ import tyk
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials> --number <number of APIs to add generate> --template <API template file> --verbose')
+    print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials> --number <number of APIs to add generate> --template <API template file> --name <base name of API> --verbose')
     print("    Will take the template and increment its name and listen path so that they do not clash, then add it as an API to the dashboard")
     sys.exit(2)
 
@@ -19,9 +19,10 @@ auth = ""
 templateFile = ""
 toAdd = 0
 verbose = 0
+name = ""
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "template=", "dashboard=", "cred=", "number=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "template=", "dashboard=", "cred=", "number=", "name=", "verbose"])
 except getopt.GetoptError:
     printhelp()
 
@@ -34,6 +35,8 @@ for opt, arg in opts:
         dshb = arg.strip().strip('/')
     elif opt == '--cred':
         auth = arg
+    elif opt == '--name':
+        name = arg
     elif opt == '--number':
         toAdd = int(arg)
     elif opt == '--verbose':
@@ -49,12 +52,15 @@ dashboard = tyk.dashboard(dshb, auth)
 with open(templateFile) as APIFile:
     APIjson=json.load(APIFile)
     APIFile.close()
-APIName = APIjson["api_definition"]["name"]
+    if name:
+        APIjson["api_definition"]["name"] = name
 
-if dashboard.createAPIs(APIjson, toAdd):
+numberCreated = dashboard.createAPIs(APIjson, toAdd)
+
+if numberCreated == toAdd:
     print("Success")
     sys.exit(0)
 else:
-    print("Failure")
+    print(f'Failure only created {numberCreated}')
     sys.exit(1)
 

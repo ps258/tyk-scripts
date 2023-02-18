@@ -39,5 +39,8 @@ if not (dshb and auth):
 dashboard = tyk.dashboard(dshb, auth)
 
 apis = dashboard.getAPIs()
-for api in apis['apis']:
-    print(f'{api["api_definition"]["name"]},{api["api_definition"]["api_id"]}')
+for api in apis.json()['apis']:
+    if verbose:
+        print(json.dumps(api, indent=2))
+    else:
+        print(f'{api["api_definition"]["name"]},{api["api_definition"]["api_id"]}')

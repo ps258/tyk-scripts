@@ -42,16 +42,15 @@ class dashboard:
         headers = {'Authorization' : self.authKey}
         resp = requests.get(f'{self.URL}/api/apis/?p=-1', headers=headers)
         if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+            print(resp.json())
+        return resp
 
     def getAPI(self, APIid):
+        headers = {'Authorization' : self.authKey}
         resp = requests.get(f'{self.URL}/api/apis/{APIid}', headers=headers)
         if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+            print(resp.json())
+        return resp
 
     def createAPI(self, APIdefinition):
         if type(APIdefinition) is dict:
@@ -60,12 +59,11 @@ class dashboard:
         headers["Content-Type"] = "application/json"
         resp = requests.post(f'{self.URL}/api/apis', data=APIdefinition, headers=headers)
         if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+            print(resp.json())
+        return resp
 
     def createAPIs(self, APIdefinition, numberToCreate):
-        apis = self.getAPIs()
+        apis = self.getAPIs().json()
         # create a dictionary of all API names
         APIName = APIdefinition["api_definition"]["name"]
         allnames = dict()
@@ -83,13 +81,11 @@ class dashboard:
             APIdefinition["api_definition"]["slug"] = newname
             APIdefinition["api_definition"]["proxy"]["listen_path"] = '/'+newname+'/'
             print(f'Adding API {APIdefinition["api_definition"]["name"]}, {APIdefinition["api_definition"]["proxy"]["listen_path"]}')
-            resp = self.createAPI(json.dumps(APIdefinition))
-            print(json.dumps(resp))
-            numberCreated += 1
-        if numberCreated == numberToCreate:
-            return True
-        else:
-            return False
+            resp = self.createAPI(APIdefinition)
+            if resp.status_code == 200:
+                print(json.dumps(resp.json()))
+                numberCreated += 1
+        return numberCreated
 
     def updateAPI(self, APIid, APIdefinition):
         if type(APIdefinition) is dict:
@@ -98,24 +94,22 @@ class dashboard:
         headers["Content-Type"] = "application/json"
         resp = requests.put(f'{self.URL}/api/apis/{APIid}', data=APIdefinition, headers=headers)
         if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+            print(resp.json())
+        return resp
 
     def deleteAPI(self, APIid):
         headers = {'Authorization' : self.authKey}
         resp = requests.delete(f'{self.URL}/api/apis/{APIid}', headers=headers)
         if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+            print(resp.json())
+        return resp
 
     def deleteAllAPIs(self):
-        apis = self.getAPIs()
+        apis = self.getAPIs().json()
         for api in apis['apis']:
             resp = self.deleteAPI(api["api_definition"]["api_id"])
-            print(f'Deleting API: {api["api_definition"]["api_id"]}')
-            print(json.dumps(resp))
+            print(f'Deleting API: {api["api_definition"]["name"]}: {api["api_definition"]["api_id"]}')
+            print(resp.json())
 
 
     # Policy function
