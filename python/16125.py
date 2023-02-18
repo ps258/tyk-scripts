@@ -35,7 +35,7 @@ scriptName = os.path.basename(__file__)
 def printhelp():
     print(f'{scriptName} --API1 <API1_listen_path> --API2 <API2_listen_path> --Pol1 <policy_for_API1> --Pol2 <policy_for_API2> --dashboard <dashboard URL> --gateway <gateway URL> --cred <dashboard credentials>')
     print("    trying to resolve a ticket issue")
-    sys.exit(2)
+    sys.exit(1)
 
 dshb = ""
 auth = ""

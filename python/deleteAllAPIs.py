@@ -12,7 +12,7 @@ scriptName = os.path.basename(__file__)
 def printhelp():
     print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials>')
     print("    Will delete ALL APIs from the dashboard")
-    sys.exit(2)
+    sys.exit(1)
 
 dshb = ""
 auth = ""
@@ -38,4 +38,5 @@ if not (dshb and auth):
 
 dashboard = tyk.dashboard(dshb, auth)
 
-dashboard.deleteAllAPIs()
+if not dashboard.deleteAllAPIs():
+    sys.exit(1)

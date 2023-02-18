@@ -12,7 +12,7 @@ scriptName = os.path.basename(__file__)
 def printhelp():
     print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials>')
     print("    Will list all keys found")
-    sys.exit(2)
+    sys.exit(1)
 
 dshb = ""
 auth = ""
@@ -40,4 +40,4 @@ dashboard = tyk.dashboard(dshb, auth)
 
 keys = dashboard.getKeys()
 for key in keys['data']['keys']:
-    print(json.dumps(dashboard.getKey(key), indent=4))
+    print(json.dumps(dashboard.getKey(key), indent=2))

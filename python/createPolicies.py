@@ -12,7 +12,7 @@ scriptName = os.path.basename(__file__)
 def printhelp():
     print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials> --template <Policy template file> --apiid <apiid> --verbose --number <number to receate>')
     print("    Will create a new policies for the API_ID given")
-    sys.exit(2)
+    sys.exit(1)
 
 dshb = ""
 auth = ""
@@ -54,7 +54,6 @@ with open(templateFile) as PolicyFile:
 
 if dashboard.createPolicies(PolicyJSON, apiid, toAdd):
     print("Success")
-    sys.exit(0)
 else:
     print("Failure")
     sys.exit(1)

@@ -12,7 +12,7 @@ scriptName = os.path.basename(__file__)
 def printhelp():
     print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials>')
     print("    Will list Policyid, name and apiids of each Policy found")
-    sys.exit(2)
+    sys.exit(1)
 
 dshb = ""
 auth = ""
@@ -42,7 +42,7 @@ dashboard = tyk.dashboard(dshb, auth)
 policies = dashboard.getPolicies()
 for policy in policies['Data']:
     if verbose:
-        print(json.dumps(policy, indent=4))
+        print(json.dumps(policy, indent=2))
     else:
         print(f'{policy["name"]},{policy["_id"]}',end='')
         firstAPI=True

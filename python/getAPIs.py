@@ -12,7 +12,7 @@ scriptName = os.path.basename(__file__)
 def printhelp():
     print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials>')
     print("    Will list APIID and name of each API found")
-    sys.exit(2)
+    sys.exit(1)
 
 dshb = ""
 auth = ""
@@ -39,6 +39,9 @@ if not (dshb and auth):
 dashboard = tyk.dashboard(dshb, auth)
 
 apis = dashboard.getAPIs()
+if resp.status_code != 200:
+    print(json.dumps(api.json())
+    sys.exit(1)
 for api in apis.json()['apis']:
     if verbose:
         print(json.dumps(api, indent=2))

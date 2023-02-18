@@ -12,7 +12,7 @@ scriptName = os.path.basename(__file__)
 def printhelp():
     print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials> --number <number of APIs to add generate> --template <API template file> --name <base name of API> --verbose')
     print("    Will take the template and increment its name and listen path so that they do not clash, then add it as an API to the dashboard")
-    sys.exit(2)
+    sys.exit(1)
 
 dshb = ""
 auth = ""
@@ -59,8 +59,6 @@ numberCreated = dashboard.createAPIs(APIjson, toAdd)
 
 if numberCreated == toAdd:
     print("Success")
-    sys.exit(0)
 else:
     print(f'Failure only created {numberCreated}')
     sys.exit(1)
-

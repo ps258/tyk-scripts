@@ -12,7 +12,7 @@ scriptName = os.path.basename(__file__)
 def printhelp():
     print(f'{scriptName} --policy <policy ID> --dashboard <dashboard URL> --cred <Dashboard API credentials> --verbose')
     print("    Will create a key from the given policy taking the defaults from it")
-    sys.exit(2)
+    sys.exit(1)
 
 dshb = ""
 auth = ""

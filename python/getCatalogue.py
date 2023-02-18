@@ -12,7 +12,7 @@ scriptName = os.path.basename(__file__)
 def printhelp():
     print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials>')
     print("    Will retrieve the catalogue from the portal")
-    sys.exit(2)
+    sys.exit(1)
 
 dshb = ""
 auth = ""

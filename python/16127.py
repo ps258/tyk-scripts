@@ -22,7 +22,7 @@ scriptName = os.path.basename(__file__)
 def printhelp():
     print(f'{scriptName} --dashboard <dashboard URL> URL> --cred <dashboard credentials> --adminsecret <admin secret> --useremail <user email> --userpass <user password> --number <number of orgs to create>')
     print("    create <count> Organisations and create the same user in each")
-    sys.exit(2)
+    sys.exit(1)
 
 dshb = ""
 auth = ""

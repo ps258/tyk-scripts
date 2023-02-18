@@ -12,7 +12,7 @@ scriptName = os.path.basename(__file__)
 def printhelp():
     print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials> --policy <policy id to fetch>')
     print("    Retrieve and print the policy")
-    sys.exit(2)
+    sys.exit(1)
 
 dshb = ""
 auth = ""
