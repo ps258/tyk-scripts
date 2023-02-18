@@ -38,4 +38,5 @@ if not (dshb and auth):
 
 dashboard = tyk.dashboard(dshb, auth)
 
-dashboard.deleteAllPolicies()
+if not dashboard.deleteAllPolicies():
+    sys.exit(1)

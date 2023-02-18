@@ -17,8 +17,8 @@ def printhelp():
 dshb = ""
 auth = ""
 templateFile = ""
-verbose = 0
 name = ""
+verbose = 0
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["help", "template=", "dashboard=", "cred=", "number=", "name=", "verbose"])

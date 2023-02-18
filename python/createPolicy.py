@@ -50,7 +50,7 @@ with open(templateFile) as PolicyFile:
     PolicyFile.close()
 PolicyName = "Policy"
 # get the existing Policies
-policies = dashboard.getPolicies()
+policies = dashboard.getPolicies().json()
 # create a dictionary of all policy names
 allnames = dict()
 for policy in policies['Data']:
@@ -69,4 +69,6 @@ if verbose:
     print(json.dumps(PolicyJSON, indent=2))
 
 resp = dashboard.createPolicy(json.dumps(PolicyJSON))
-print(json.dumps(resp))
+print(resp.json())
+if resp.status_code != 200:
+    sys.exit(1)

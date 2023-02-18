@@ -16,8 +16,8 @@ def printhelp():
 
 dshb = ""
 auth = ""
-verbose = 0
 apiid = ""
+verbose = 0
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "cred=", "apiid=", "verbose"])

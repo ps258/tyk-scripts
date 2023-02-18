@@ -42,7 +42,7 @@ for opt, arg in opts:
     elif opt == '--verbose':
         verbose = 1
 
-if not (dshb and templateFile and auth and apiid):
+if not (dshb and templateFile and auth and apiid and toAdd):
     printhelp()
 
 dashboard = tyk.dashboard(dshb, auth)
@@ -52,8 +52,10 @@ with open(templateFile) as PolicyFile:
     PolicyJSON=json.load(PolicyFile)
     PolicyFile.close()
 
-if dashboard.createPolicies(PolicyJSON, apiid, toAdd):
-    print("Success")
+numberCreated = dashboard.createPolicies(PolicyJSON, apiid, toAdd)
+
+if numberCreated == toAdd:
+    print(f'Success: {numberCreated} Policies created')
 else:
-    print("Failure")
+    print(f'Failure: Only {numberCreated} of {toAdd} policies created')
     sys.exit(1)

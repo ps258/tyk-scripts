@@ -117,21 +117,19 @@ class dashboard:
 
 
     # Policy function
-    def getPolicies(self):
-        headers = {'Authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/api/portal/policies/?p=-1', headers=headers)
-        if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
-
     def getPolicy(self, policyID):
         headers = {'Authorization' : self.authKey}
         resp = requests.get(f'{self.URL}/api/portal/policies/{policyID}', headers=headers)
         if resp.status_code != 200:
             print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+        return resp
+
+    def getPolicies(self):
+        headers = {'Authorization' : self.authKey}
+        resp = requests.get(f'{self.URL}/api/portal/policies/?p=-1', headers=headers)
+        if resp.status_code != 200:
+            print(resp.json())
+        return resp
 
     def createPolicy(self, policyDefinition):
         if type(policyDefinition) is dict:
@@ -140,13 +138,12 @@ class dashboard:
         headers["Content-Type"] = "application/json"
         resp = requests.post(f'{self.URL}/api/portal/policies', data=policyDefinition, headers=headers)
         if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+            print(resp.json())
+        return resp
 
     def createPolicies(self, policyDefinition, APIid, numberToCreate):
+        policies = self.getPolicies().json()
         # create a dictionary of all policy names
-        policies = self.getPolicies()
         PolicyName = policyDefinition["name"]
         allnames = dict()
         for policy in policies['Data']:
@@ -163,12 +160,10 @@ class dashboard:
             policyDefinition["access_rights_array"] = json.loads('[{ "api_id": "' + APIid + '", "versions": [ "Default" ], "allowed_urls": [], "restricted_types": [], "limit": null, "allowance_scope": "" }]')
             print(f'Creating policy: {policyDefinition["name"]}')
             resp = self.createPolicy(json.dumps(policyDefinition))
-            print(json.dumps(resp))
-            numberCreated += 1
-        if numberCreated == numberToCreate:
-            return True
-        else:
-            return False
+            if resp.status_code == 200:
+                print(json.dumps(resp.json()))
+                numberCreated += 1
+        return numberCreated
 
     def updatePolicy(self, policyID, policyDefinition):
         if type(policyDefinition) is dict:
@@ -177,25 +172,26 @@ class dashboard:
         headers["Content-Type"] = "application/json"
         resp = requests.put(f'{self.URL}/api/portal/policies/{policyID}', data=policyDefinition, headers=headers)
         if resp.status_code != 200:
-            print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+            print(resp.json())
+        return resp
 
     def deletePolicy(self, policyID):
         headers = {'Authorization' : self.authKey}
-        headers["Content-Type"] = "application/json"
         resp = requests.delete(f'{self.URL}/api/portal/policies/{policyID}', headers=headers)
         if resp.status_code != 200:
             print(resp.text)
-            sys.exit(1)
-        return json.loads(resp.text)
+        return resp
 
     def deleteAllPolicies(self):
-        policies = self.getPolicies()
+        allDeleted = True
+        policies = self.getPolicies().json()
         for policy in policies['Data']:
             print(f'Deleting policy: {policy["_id"]}')
             resp = self.deletePolicy(policy["_id"])
-            print(json.dumps(resp))
+            print(resp.json())
+            if resp.status_code != 200:
+                allDeleted = False
+        return allDeleted
 
 
     # Key functions

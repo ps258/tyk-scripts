@@ -39,7 +39,8 @@ if not (dshb and auth):
 dashboard = tyk.dashboard(dshb, auth)
 
 # get the existing Policies
-policies = dashboard.getPolicies()
+policies = dashboard.getPolicies().json()
+print('# Name, policyID, APIs')
 for policy in policies['Data']:
     if verbose:
         print(json.dumps(policy, indent=2))

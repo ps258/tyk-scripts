@@ -58,7 +58,7 @@ with open(templateFile) as APIFile:
 numberCreated = dashboard.createAPIs(APIjson, toAdd)
 
 if numberCreated == toAdd:
-    print("Success")
+    print(f'Success: {numberCreated} APIs created')
 else:
-    print(f'Failure only created {numberCreated}')
+    print(f'Failure: Only {numberCreated} of {toAdd} APIs created')
     sys.exit(1)

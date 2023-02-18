@@ -36,9 +36,12 @@ for opt, arg in opts:
     elif opt == '--verbose':
         verbose = 1
 
-if not (dshb and auth):
+if not (dshb and auth and policy):
     printhelp()
 
 dashboard = tyk.dashboard(dshb, auth)
-policyJSON = dashboard.getPolicy(policy)
-print(json.dumps(policyJSON, indent=2))
+
+resp = dashboard.getPolicy(policy)
+print(json.dumps(resp.json(), indent=2))
+if resp.status_code != 200:
+    sys.exit(1)
