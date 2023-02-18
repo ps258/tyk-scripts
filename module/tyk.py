@@ -165,7 +165,7 @@ class dashboard:
                 numberCreated += 1
         return numberCreated
 
-    def updatePolicy(self, policyID, policyDefinition):
+    def updatePolicy(self, policyDefinition, policyID):
         if type(policyDefinition) is dict:
             policyDefinition = json.dumps(policyDefinition)
         headers = {'Authorization' : self.authKey}
