@@ -38,11 +38,11 @@ if not (dshb and auth):
 
 dashboard = tyk.dashboard(dshb, auth)
 
-apis = dashboard.getAPIs()
+resp = dashboard.getAPIs()
 if resp.status_code != 200:
-    print(json.dumps(api.json())
+    print(json.dumps(resp.json()))
     sys.exit(1)
-for api in apis.json()['apis']:
+for api in resp.json()['apis']:
     if verbose:
         print(json.dumps(api, indent=2))
     else:

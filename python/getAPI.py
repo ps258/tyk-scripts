@@ -41,7 +41,7 @@ if not (dshb and auth and apiid):
 
 dashboard = tyk.dashboard(dshb, auth)
 
-api = dashboard.getAPI(apiid)
-print(json.dumps(api.json(), indent=2))
+resp = dashboard.getAPI(apiid)
+print(json.dumps(resp.json(), indent=2))
 if resp.status_code != 200:
     sys.exit(1)

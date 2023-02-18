@@ -38,16 +38,16 @@ class dashboard:
 
 
     # API functions
-    def getAPIs(self):
+    def getAPI(self, APIid):
         headers = {'Authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/api/apis/?p=-1', headers=headers)
+        resp = requests.get(f'{self.URL}/api/apis/{APIid}', headers=headers)
         if resp.status_code != 200:
             print(resp.json())
         return resp
 
-    def getAPI(self, APIid):
+    def getAPIs(self):
         headers = {'Authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/api/apis/{APIid}', headers=headers)
+        resp = requests.get(f'{self.URL}/api/apis/?p=-1', headers=headers)
         if resp.status_code != 200:
             print(resp.json())
         return resp
@@ -87,7 +87,7 @@ class dashboard:
                 numberCreated += 1
         return numberCreated
 
-    def updateAPI(self, APIid, APIdefinition):
+    def updateAPI(self, APIdefinition, APIid):
         if type(APIdefinition) is dict:
             APIdefinition = json.dumps(APIdefinition)
         headers = {'Authorization' : self.authKey}
