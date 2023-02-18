@@ -105,11 +105,15 @@ class dashboard:
         return resp
 
     def deleteAllAPIs(self):
+        allDeleted = True
         apis = self.getAPIs().json()
         for api in apis['apis']:
-            resp = self.deleteAPI(api["api_definition"]["api_id"])
             print(f'Deleting API: {api["api_definition"]["name"]}: {api["api_definition"]["api_id"]}')
+            resp = self.deleteAPI(api["api_definition"]["api_id"])
             print(resp.json())
+            if resp.status_code != 200:
+                allDeleted = False
+        return allDeleted
 
 
     # Policy function
