@@ -301,13 +301,10 @@ class dashboard:
                 "user_permissions": { "ResetPassword" : "admin", "IsAdmin": "admin" }}
         createResp = requests.post(f'{self.URL}/admin/users', data=json.dumps(userDefinition), headers=headers)
         if createResp.status_code != 200:
-            print(createResp.json())
             return createResp
         # need to send a reset to for the user
         userdata = createResp.json()
         headers = {'Authorization' : userdata["Meta"]["access_key"]}
         headers["Content-Type"] = "application/json"
         resetResp = requests.post(f'{self.URL}/api/users/{userdata["Meta"]["id"]}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers)
-        if resetResp.status_code != 200:
-            print(resetResp.json())
         return createResp

@@ -65,7 +65,7 @@ dashboard = tyk.dashboard(dshb, auth, adminsecret)
 orgJson = {"owner_name": "Default Org.","owner_slug": "default", "cname_enabled": True, "cname": ""}
 
 dashboard.createOrganisations(orgJson, toAdd)
-organisations = dashboard.getOrganisations()
+organisations = dashboard.getOrganisations().json()
 for org in organisations["organisations"]:
     resp = dashboard.createAdminUser(useremail, userpass, org["id"])
-    print(json.dumps(resp))
+    print(resp.json())
