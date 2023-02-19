@@ -86,25 +86,25 @@ KeyTemplate = {
   "meta_data": {"Created by": scriptName}
 }
 
-print(f'Creating key from the first policy: {Pol1}')
+print(f'[INFO]Creating key from the first policy: {Pol1}')
 KeyTemplate["apply_policies"].append(Pol1)
-resp = dashboard.createKey(json.dumps(KeyTemplate))
-APIKey=resp["key_id"]
-print(f'Key created: {APIKey}')
+resp = dashboard.createKey(KeyTemplate)
+APIKey=resp.json()["key_id"]
+print(f'[INFO]Key created: {APIKey}')
 
 # Show the key to verify it
 if verbose:
-    print(f'Contents of {APIKey}')
-    print(json.dumps(dashboard.getKey(APIKey), indent=2))
+    print(f'[INFO]Contents of key {APIKey} with only pol1')
+    print(json.dumps(dashboard.getKey(APIKey).json(), indent=2))
 
 # test that API1 works
-print(f'Calling {gateway}/{API1} with that key')
+print(f'[INFO]Calling {gateway}/{API1} with that key')
 headers = {'Authorization' : APIKey}
 resp = requests.get(f'{gateway}/{API1}', verify=False, headers=headers)
 print(f'[{resp.status_code}], {resp.text}')
 
 # add the second Policy to the key
-print(f'Adding Policy {Pol2} to key {APIKey}')
+print(f'[INFO]Adding Policy {Pol2} to key {APIKey}')
 KeyTemplate = {
   "apply_policies": [],
   "allowance": 0,
@@ -119,10 +119,10 @@ resp = dashboard.updateKey(json.dumps(KeyTemplate), APIKey)
 
 # Show the key to verify it
 if verbose:
-    print(f'Contents of {APIKey}')
-    print(json.dumps(dashboard.getKey(APIKey), indent=2))
+    print(f'[INFO]Contents of {APIKey} after adding Pol2')
+    print(json.dumps(dashboard.getKey(APIKey).json(), indent=2))
 
 # test that the key work against API2
-print(f'Calling {gateway}/{API2} with the same keyid')
+print(f'[INFO]Calling {gateway}/{API2} with the same keyid')
 resp = requests.get(f'{gateway}/{API2}', verify=False, headers=headers)
 print(f'[{resp.status_code}], {resp.text}')
