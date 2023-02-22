@@ -52,4 +52,10 @@ TykKey = {
 
 TykKey["apply_policies"].append(policyID)
 resp = dashboard.createKey(json.dumps(TykKey))
-print(resp)
+
+if verbose:
+    print(json.dumps(resp.json()), indent=2)
+else:
+    print(resp.json()["key_id"])
+if resp.status_code != 200:
+    sys.exit(1)
