@@ -38,6 +38,7 @@ if not (dshb and auth):
 
 dashboard = tyk.dashboard(dshb, auth)
 
-keys = dashboard.getKeys()
-for key in keys['data']['keys']:
-    print(json.dumps(dashboard.getKey(key), indent=2))
+resp = dashboard.getKeys()
+print(json.dumps(resp.json(), indent=2))
+#for key in resp.json()['keys']:
+#    print(json.dumps(key, indent=2))
