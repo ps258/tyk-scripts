@@ -5,6 +5,7 @@
 import json
 import requests
 import sys
+import time
 
 class dashboard:
     def __init__(self, URL, authKey, adminSecret = "N/A" , description = "N/A"):
@@ -308,3 +309,22 @@ class dashboard:
         headers["Content-Type"] = "application/json"
         resetResp = requests.post(f'{self.URL}/api/users/{userdata["Meta"]["id"]}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers)
         return createResp
+
+
+    # Analytics
+    # get the usage of all APIs for a period (defaults to today)
+    def getAPIUsage(self, startday = time.strftime("%d"), startmonth = time.strftime("%m"), startyear = time.strftime("%Y"), endday = time.strftime("%d"), endmonth = time.strftime("%m"), endyear = time.strftime("%Y")):
+        if type(startday) == 'int':
+            startday = str(startday)
+        if type(startmonth) == 'int':
+            startmonth = str(startmonth)
+        if type(startyear) == 'int':
+            startyear = str(startyear)
+        if type(endday) == 'int':
+            endday = str(endday)
+        if type(endmonth) == 'int':
+            endmonth = str(endmonth)
+        headers = {'Authorization' : self.authKey}
+        resp = requests.get(f'{self.URL}/api/usage/apis/{startday}/{startmonth}/{startyear}/{endday}/{endmonth}/{endyear}?by=Hits&sort=1&p=-1', headers=headers)
+        return resp
+
