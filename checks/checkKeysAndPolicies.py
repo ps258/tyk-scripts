@@ -11,6 +11,8 @@ import requests
 import sys
 import getopt
 import os
+sys.path.append(f'{os.environ.get("HOME")}/code/tyk-scripts/module')
+import tyk
 
 # globals
 dshb = ""
@@ -56,35 +58,27 @@ for opt, arg in opts:
 if not (dshb or auth ):
     printhelp()
 
-auth_header = {'Authorization' : auth}
+dashboard = tyk.dashboard(dshb, auth)
 
 # get keys
-# options are to call:
 # /api/apis/keys/?p=-1 which just lists the key ids
 # /api/keys/detailed/?p=-1 which dump the details of all the keys
-resp = requests.get(f'{dshb}/api/keys/detailed/?p=-1', headers=auth_header)
-keys = json.loads(resp.text)
+resp = dashboard.getKeys()
+keys = resp.json()
 # get policies
-resp = requests.get(f'{dshb}/api/portal/policies/?p=-1', headers=auth_header)
-policies = json.loads(resp.text)
+resp = dashboard.getPolicies()
+policies = resp.json()
 # get APIs
-resp = requests.get(f'{dshb}/api/apis/?p=-1', headers=auth_header)
-APIs = json.loads(resp.text)
-
-# load from files:
-#f = open ('keys', "r")
-#keys = json.loads(f.read())
-#f.close()
-#f = open ('policies', "r")
-#policies = json.loads(f.read())
-#f.close()
-#f = open ('APIs', "r")
-#APIs = json.loads(f.read())
-#f.close()
+resp = dashboard.getAPIs()
+APIs = resp.json()
+if verbose:
+    print(f'keys={keys}')
+    print(f'policies={policies}')
+    print(f'APIs={APIs}')
 
 if verbose:
     print("List of all keys:")
-    for key in keys['keys']:
+    for key in keys["keys"]:
         print(key['key_id'])
     print("List of all policies:")
     for policy in policies['Data']:

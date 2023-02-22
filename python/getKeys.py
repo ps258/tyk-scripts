@@ -40,5 +40,5 @@ dashboard = tyk.dashboard(dshb, auth)
 
 resp = dashboard.getKeys()
 print(json.dumps(resp.json(), indent=2))
-#for key in resp.json()['keys']:
-#    print(json.dumps(key, indent=2))
+if resp.status_code != 200:
+    sys.exit(1)

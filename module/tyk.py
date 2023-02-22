@@ -75,7 +75,7 @@ class dashboard:
             APIdefinition['api_definition']['name'] = newname
             APIdefinition['api_definition']['slug'] = newname
             APIdefinition['api_definition']['proxy']['listen_path'] = '/'+newname+'/'
-            print(f'Adding API {APIdefinition['api_definition']['name']}, {APIdefinition['api_definition']['proxy']['listen_path']}')
+            print(f'Adding API {APIdefinition["api_definition"]["name"]}, {APIdefinition["api_definition"]["proxy"]["listen_path"]}')
             resp = self.createAPI(APIdefinition)
             print(resp.json())
             # if a call fails, stop and return the number of successes
@@ -101,7 +101,7 @@ class dashboard:
         allDeleted = True
         apis = self.getAPIs().json()
         for api in apis['apis']:
-            print(f'Deleting API: {api['api_definition']['name']}: {api['api_definition']['api_id']}')
+            print(f'Deleting API: {api["api_definition"]["name"]}: {api["api_definition"]["api_id"]}')
             resp = self.deleteAPI(api['api_definition']['api_id'])
             print(resp.json())
             if resp.status_code != 200:
@@ -144,8 +144,8 @@ class dashboard:
             newname=PolicyName+str(i)
             allnames[newname] = 1
             policyDefinition['name']=PolicyName+str(i)
-            policyDefinition['access_rights_array'] = json.loads('[{ 'api_id': '' + APIid + '', 'versions': [ 'Default' ], 'allowed_urls': [], 'restricted_types': [], 'limit': null, 'allowance_scope': '' }]')
-            print(f'Creating policy: {policyDefinition['name']}')
+            policyDefinition['access_rights_array'] = json.loads('[{ "api_id": "' + APIid + '", "versions": [ "Default" ], "allowed_urls": [], "restricted_types": [], "limit": null, "allowance_scope": "" }]')
+            print(f'Creating policy: {policyDefinition["name"]}')
             resp = self.createPolicy(json.dumps(policyDefinition))
             print(resp.json())
             # if a call fails, stop and return the number of successes
@@ -171,7 +171,7 @@ class dashboard:
         allDeleted = True
         policies = self.getPolicies().json()
         for policy in policies['Data']:
-            print(f'Deleting policy: {policy['_id']}')
+            print(f'Deleting policy: {policy["_id"]}')
             resp = self.deletePolicy(policy['_id'])
             print(resp.json())
             if resp.status_code != 200:
@@ -180,6 +180,10 @@ class dashboard:
 
 
     # Key functions
+
+    # Two options for getting all the keys
+    # /api/apis/keys/?p=-1 which just lists the key ids
+    # /api/keys/detailed/?p=-1 which dump the details of all the keys
     def getKeys(self):
         headers = {'Authorization' : self.authKey}
         #resp = requests.get(f'{self.URL}/api/apis/-/keys?p=-1', headers=headers)
@@ -279,7 +283,7 @@ class dashboard:
             allSlugs[newSlug] = 1
             orgDefinition['owner_name']=orgOwner+str(i)
             orgDefinition['owner_slug']=orgSlug+str(i)
-            print(f'Creating Organisation: {orgDefinition['owner_slug']}')
+            print(f'Creating Organisation: {orgDefinition["owner_slug"]}')
             resp = self.createOrganisation(json.dumps(orgDefinition))
             print(resp.json())
             # if a call fails, stop and return the number of successes
@@ -308,7 +312,7 @@ class dashboard:
         userdata = createResp.json()
         headers = {'Authorization' : userdata['Meta']['access_key']}
         headers['Content-Type'] = 'application/json'
-        resetResp = requests.post(f'{self.URL}/api/users/{userdata['Meta']['id']}/actions/reset', data='{'new_password':''+userPass+''}', headers=headers)
+        resetResp = requests.post(f'{self.URL}/api/users/{userdata["Meta"]["id"]}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers)
         return createResp
 
 
