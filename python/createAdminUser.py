@@ -51,7 +51,7 @@ for opt, arg in opts:
     elif opt == '--verbose':
         verbose = 1
 
-if not (dshb or useremail or userpass or adminsecret):
+if not (dshb and useremail and userpass and adminsecret):
     printhelp()
 
 dashboard = tyk.dashboard(dshb, "", adminsecret)
