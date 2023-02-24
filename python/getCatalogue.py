@@ -39,5 +39,5 @@ if not (dshb and auth):
 dashboard = tyk.dashboard(dshb, auth)
 
 # Get the existing catalogue entries
-catalogue = dashboard.getCatalogue()
+catalogue = dashboard.getCatalogue().json()
 print(json.dumps(catalogue, indent=2))

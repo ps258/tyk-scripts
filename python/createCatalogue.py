@@ -44,7 +44,7 @@ if not (dshb and auth and policyId):
 
 dashboard = tyk.dashboard(dshb, auth)
 
-catalogue = dashboard.getCatalogue()
+catalogue = dashboard.getCatalogue().json()
 # create a dictionary of all entry names
 allnames = dict()
 for policy in catalogue['apis']:
