@@ -333,3 +333,29 @@ class dashboard:
         resp = requests.get(f'{self.URL}/api/usage/apis/{startday}/{startmonth}/{startyear}/{endday}/{endmonth}/{endyear}?by=Hits&sort=1&p=-1', headers=headers)
         return resp
 
+    # Certificates
+    def getCerts(self):
+        headers = {'Authorization' : self.authKey}
+        resp = requests.get(f'{self.URL}/api/certs?p=-1', headers=headers)
+        return resp
+
+    def getCert(self, certid):
+        headers = {'Authorization' : self.authKey}
+        resp = requests.get(f'{self.URL}/api/certs/{certid}', headers=headers)
+        return resp
+
+    def getCertsDetails(self):
+        headers = {'Authorization' : self.authKey}
+        resp = requests.get(f'{self.URL}/api/certs?p=-1&mode=detailed', headers=headers)
+        return resp
+
+    def createCert(self, certFile):
+        headers = {'Authorization' : self.authKey}
+        files={'data': open(certFile,'r')}
+        resp = requests.post(f'{self.URL}/api/certs', files=files, headers=headers, verify=False)
+        return resp
+
+    def deleteCert(self, certid):
+        headers = {'Authorization' : self.authKey}
+        resp = requests.delete(f'{self.URL}/api/certs/{certid}', headers=headers)
+        return resp 
