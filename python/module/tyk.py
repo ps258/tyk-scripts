@@ -7,6 +7,8 @@ import requests
 import sys
 import time
 
+
+###################### DASHBOARD CLASS ######################
 class dashboard:
     def __init__(self, URL, authKey, adminSecret = 'N/A' , description = 'N/A'):
         self.URL = URL.strip('/')       # The dashboard URL
@@ -359,3 +361,40 @@ class dashboard:
         headers = {'Authorization' : self.authKey}
         resp = requests.delete(f'{self.URL}/api/certs/{certid}', headers=headers)
         return resp 
+
+
+
+###################### GATEWAY CLASS ######################
+class gateway:
+    def __init__(self, URL, authKey, description = 'N/A'):
+        self.URL = URL.strip('/')       # The gateway URL
+        self.authKey = authKey          # User key to authenticate API calls ('Secret' from tyk.conf)
+        self.description = description  # description of this gateway
+
+    def __str__(self):
+        return f'Gateway URL: {self.URL}, Auth token: {self.authkey}, Description: {self.description}'
+
+    def url(self):
+        return self.URL
+
+    def authkey(self):
+        return self.authkey
+
+    def setAuthkey(self, authkey):
+        self.authkey = authkey
+        return self.authkey
+
+    def description(self):
+        return self.description
+
+    # API functions
+    def getAPI(self, APIid):
+        headers = {'x-tyk-authorization' : self.authKey}
+        resp = requests.get(f'{self.URL}/tyk/apis/{APIid}', headers=headers)
+        return resp
+
+    def getAPIs(self):
+        headers = {'x-tyk-authorization' : self.authKey}
+        resp = requests.get(f'{self.URL}/tyk/apis', headers=headers)
+        return resp
+
