@@ -11,7 +11,7 @@ import os
 import getopt
 import sys
 import time
-sys.path.append(f'{os.environ.get("HOME")}/code/tyk-scripts/module')
+sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/module')
 import tyk
 
 # Suppress the warnings from urllib3 when using a self signed certs

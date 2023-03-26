@@ -11,7 +11,7 @@ import requests
 import sys
 import getopt
 import os
-sys.path.append(f'{os.environ.get("HOME")}/code/tyk-scripts/module')
+sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/../python/module')
 import tyk
 
 # globals
