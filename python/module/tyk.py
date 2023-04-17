@@ -224,7 +224,7 @@ class dashboard:
         allDeleted = True
         keys = self.getKeys().json()
         for key in keys['keys']:
-            keyID = keyID['key_id']
+            keyID = key['key_id']
             print(f'Deleting key: {keyID}')
             resp = self.deleteKey(keyID)
             print(resp.json())
