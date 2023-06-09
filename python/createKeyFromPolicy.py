@@ -50,7 +50,8 @@ TykKey = {
   "meta_data": {"Created by": scriptName}
 }
 
-TykKey["apply_policies"].append(policyID)
+for pol in policyID.split(","):
+    TykKey["apply_policies"].append(pol)
 resp = dashboard.createKey(json.dumps(TykKey))
 
 if verbose:
