@@ -205,12 +205,21 @@ class dashboard:
         resp = requests.post(f'{self.URL}/api/keys', data=keyDefinition, headers=headers)
         return resp
 
+    def createCustomKey(self, keyDefinition, KeyID):
+        if type(keyDefinition) is dict:
+            keyDefinition = json.dumps(keyDefinition)
+        headers = {'Authorization' : self.authKey}
+        headers['Content-Type'] = 'application/json'
+        resp = requests.post(f'{self.URL}/api/keys/{KeyID}', data=keyDefinition, headers=headers)
+        return resp
+
     def updateKey(self, keyDefinition, KeyID):
         if type(keyDefinition) is dict:
             keyDefinition = json.dumps(keyDefinition)
         headers = {'Authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        resp = requests.put(f'{self.URL}/api/apis/-/keys/{KeyID}', data=keyDefinition, headers=headers)
+        #resp = requests.put(f'{self.URL}/api/apis/-/keys/{KeyID}', data=keyDefinition, headers=headers)
+        resp = requests.put(f'{self.URL}/api/keys/{KeyID}', data=keyDefinition, headers=headers)
         return resp
 
     def deleteKey(self, keyID):
