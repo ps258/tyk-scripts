@@ -22,7 +22,8 @@ show = True
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "cred=", "policyId=", "noShow", "verbose"])
-except getopt.GetoptError:
+except getopt.GetoptError as opterr:
+    print(f'Error in option: {opterr}')
     printhelp()
 
 for opt, arg in opts:

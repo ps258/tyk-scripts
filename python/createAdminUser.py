@@ -21,7 +21,7 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} --dashboard <dashboard URL> URL> --adminsecret <admin secret> --useremail <user email> --userpass <user password>')
+    print(f'{scriptName} --dashboard <dashboard URL> URL> --adminsecret <Dashboard Admin Secret> --useremail <user email> --userpass <user password>')
     print("    Create an admin user in all orgs in the dashboard instance")
     sys.exit(1)
 
@@ -34,7 +34,8 @@ adminsecret = ""
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "adminsecret=", "useremail=", "userpass=", "number=", "verbose"])
-except getopt.GetoptError:
+except getopt.GetoptError as opterr:
+    print(f'Error in option: {opterr}')
     printhelp()
 
 for opt, arg in opts:

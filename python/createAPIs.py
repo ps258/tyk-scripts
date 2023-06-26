@@ -23,7 +23,8 @@ name = ""
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["help", "template=", "dashboard=", "cred=", "number=", "name=", "verbose"])
-except getopt.GetoptError:
+except getopt.GetoptError as opterr:
+    print(f'Error in option: {opterr}')
     printhelp()
 
 for opt, arg in opts:
