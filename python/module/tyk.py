@@ -372,6 +372,17 @@ class dashboard:
         resp = requests.delete(f'{self.URL}/api/certs/{certid}', headers=headers)
         return resp 
 
+    def deleteAllCerts(self):
+        allDeleted = True
+        certs = self.getCerts().json()
+        print(certs)
+        for certid in certs['certs']:
+            print(f'Deleting certificate: {certid}')
+            resp = self.deleteCert(certid)
+            print(resp.json())
+            if resp.status_code != 200:
+                allDeleted = False
+        return allDeleted
 
 
 ###################### GATEWAY CLASS ######################
