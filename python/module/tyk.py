@@ -418,4 +418,19 @@ class gateway:
         headers = {'x-tyk-authorization' : self.authKey}
         resp = requests.get(f'{self.URL}/tyk/apis', headers=headers)
         return resp
-
+    
+    def createAPI(self, APIdefinition):        
+        if type(APIdefinition) is dict:
+            # Can't use the dashboard format with api_model etc in it. Must just be the api_definition
+            if 'api_definition' in APIdefinition:
+                APIdefinition = json.dumps(APIdefinition['api_definition'])
+            else:
+                APIdefinition = json.dumps(APIdefinition)
+        headers = {'x-tyk-authorization' : self.authKey}
+        headers['Content-Type'] = 'application/json'
+        resp = requests.post(f'{self.URL}/tyk/apis', data=APIdefinition, headers=headers)
+        # automatically call the group reload (makes things simpler for a caller)
+        reloadResp = requests.get(f'{self.URL}/tyk/reload/group', headers=headers)
+        if reloadResp.status_code != 200:
+            print(f'[WARN]The group hot reload failed with code {reloadResp.status_code}: {reloadResp.json()}')
+        return resp
