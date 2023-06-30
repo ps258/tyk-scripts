@@ -21,7 +21,7 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} --dashboard <dashboard URL> URL> --adminsecret <Dashboard Admin Secret> --useremail <user email> --userpass <user password>')
+    print(f'{scriptName} --dashboard <dashboard URL> --adminsecret <Dashboard Admin Secret> --useremail <user email> --userpass <user password>')
     print("    Create an admin user in all orgs in the dashboard instance")
     sys.exit(1)
 
