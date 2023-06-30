@@ -40,7 +40,7 @@ class dashboard:
         return adminSecret
 
 
-    # API functions
+    # Dashboard API functions
     def getAPI(self, APIid):
         headers = {'Authorization' : self.authKey}
         resp = requests.get(f'{self.URL}/api/apis/{APIid}', headers=headers)
@@ -111,7 +111,7 @@ class dashboard:
         return allDeleted
 
 
-    # Policy function
+    # Dashboard Policy function
     def getPolicy(self, policyID):
         headers = {'Authorization' : self.authKey}
         resp = requests.get(f'{self.URL}/api/portal/policies/{policyID}', headers=headers)
@@ -181,7 +181,7 @@ class dashboard:
         return allDeleted
 
 
-    # Key functions
+    # Dashboard Key functions
 
     # Two options for getting all the keys
     # /api/apis/keys/?p=-1 which just lists the key ids
@@ -242,7 +242,7 @@ class dashboard:
         return allDeleted
 
 
-    # Portal Catalogue functions
+    # Dashboard Portal Catalogue functions
     def getCatalogue(self):
         headers = {'Authorization' : self.authKey}
         resp = requests.get(f'{self.URL}/api/portal/catalogue', headers=headers)
@@ -256,7 +256,7 @@ class dashboard:
         return resp
 
 
-    # Organisation functions
+    # Dashboard Organisation functions
     def getOrganisations(self):
         headers = {'admin-auth': self.adminSecret}
         headers['Content-Type'] = 'application/json'
@@ -305,7 +305,7 @@ class dashboard:
         return numberCreated
 
 
-    # Users
+    # Dashboard User functions
     def createAdminUser(self, userEmail, userPass, orgID):
         headers = {'admin-auth': self.adminSecret}
         headers['Content-Type'] = 'application/json'
@@ -328,7 +328,8 @@ class dashboard:
         return createResp
 
 
-    # Analytics
+    # Dashboard Analytics functions
+
     # get the usage of all APIs for a period (defaults to today)
     def getAPIUsage(self, startday = time.strftime('%d'), startmonth = time.strftime('%m'), startyear = time.strftime('%Y'), endday = time.strftime('%d'), endmonth = time.strftime('%m'), endyear = time.strftime('%Y')):
         if type(startday) == 'int':
@@ -345,7 +346,7 @@ class dashboard:
         resp = requests.get(f'{self.URL}/api/usage/apis/{startday}/{startmonth}/{startyear}/{endday}/{endmonth}/{endyear}?by=Hits&sort=1&p=-1', headers=headers)
         return resp
 
-    # Certificates
+    # Dashboard Certificate functions
     def getCerts(self):
         headers = {'Authorization' : self.authKey}
         resp = requests.get(f'{self.URL}/api/certs?p=-1', headers=headers)
@@ -408,7 +409,7 @@ class gateway:
     def description(self):
         return self.description
 
-    # API functions
+    # Gateway API functions
     def getAPI(self, APIid):
         headers = {'x-tyk-authorization' : self.authKey}
         resp = requests.get(f'{self.URL}/tyk/apis/{APIid}', headers=headers)
@@ -420,8 +421,12 @@ class gateway:
         return resp
     
     def createAPI(self, APIdefinition):        
+        # need to convert it to a dict so we can check for api_definition and extract its contents
+        if type(APIdefinition) is str:
+            APIdefinition = json.loads(APIdefinition)
         if type(APIdefinition) is dict:
-            # Can't use the dashboard format with api_model etc in it. Must just be the api_definition
+            # Can't use the dashboard format with api_model etc in it.
+            # Must just be the contents of api_definition without the api_definition key
             if 'api_definition' in APIdefinition:
                 APIdefinition = json.dumps(APIdefinition['api_definition'])
             else:
@@ -434,3 +439,30 @@ class gateway:
         if reloadResp.status_code != 200:
             print(f'[WARN]The group hot reload failed with code {reloadResp.status_code}: {reloadResp.json()}')
         return resp
+
+    def createAPIs(self, APIdefinition, numberToCreate):
+        APIName = APIdefinition['api_definition']['name']
+        apis = self.getAPIs().json()
+        # create a dictionary of all API names
+        allnames = dict()
+        for api in apis:
+            allnames[api['name']] = 1
+        i = 1
+        numberCreated = 0
+        while numberCreated < numberToCreate:
+            # work out the next free name (format is name-i)
+            while APIName+str(i) in allnames:
+                i += 1
+            newname=APIName+str(i)
+            allnames[newname] = 1
+            APIdefinition['api_definition']['name'] = newname
+            APIdefinition['api_definition']['slug'] = newname
+            APIdefinition['api_definition']['proxy']['listen_path'] = '/'+newname+'/'
+            print(f'Adding API {APIdefinition["api_definition"]["name"]}, {APIdefinition["api_definition"]["proxy"]["listen_path"]}')
+            resp = self.createAPI(APIdefinition)
+            print(resp.json())
+            # if a call fails, stop and return the number of successes
+            if resp.status_code != 200:
+                break
+            numberCreated += 1
+        return numberCreated
