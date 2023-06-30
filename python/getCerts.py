@@ -43,5 +43,8 @@ resp = dashboard.getCerts()
 if resp.status_code != 200:
     print(json.dumps(resp.json()))
     sys.exit(1)
-for cert in resp.json()['certs']:
-    print(cert)
+if resp.json()['certs'] is not None:
+    for cert in resp.json()['certs']:
+        print(cert)
+else:
+    print("[INFO]No certs found")
