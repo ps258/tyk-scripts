@@ -15,7 +15,7 @@ def printhelp():
     sys.exit(1)
 
 dshb = ""
-gw   = ""
+gatw   = ""
 auth = ""
 verbose = 0
 
@@ -31,19 +31,20 @@ for opt, arg in opts:
     elif opt == '--dashboard':
         dshb = arg.strip().strip('/')
     elif opt == '--gateway':
-        gw = arg.strip().strip('/')
+        gatw = arg.strip().strip('/')
     elif opt == '--cred':
         auth = arg
     elif opt == '--verbose':
         verbose = 1
 
-if not ((bool(dshb) ^ bool(gw)) and auth):
+if not ((dshb or gatw) and auth):
     printhelp()
 
-if (dshb):
+# create a new dashboard or gateway object
+if dshb:
     tyk = tyk.dashboard(dshb, auth)
 else:
-    tyk = tyk.gateway(gw, auth)
+    tyk = tyk.gateway(gatw, auth)
 
 resp = tyk.getAPIs()
 if resp.status_code != 200:

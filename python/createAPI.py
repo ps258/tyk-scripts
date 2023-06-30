@@ -48,9 +48,9 @@ if not ((dshb or gatw) and templateFile and auth):
 
 # create a new dashboard or gateway object
 if dshb:
-    tykTarget = tyk.dashboard(dshb, auth)
+    tyk = tyk.dashboard(dshb, auth)
 else:
-    tykTarget = tyk.gateway(gatw, auth)
+    tyk = tyk.gateway(gatw, auth)
 
 # read the API defn
 with open(templateFile) as APIFile:
@@ -62,7 +62,7 @@ with open(templateFile) as APIFile:
         APIjson["api_definition"]["proxy"]["listen_path"] = '/'+name+'/'
         if verbose:
             print(f'[INFO]Creating API with name: {APIjson["api_definition"]["name"]}, slug:{APIjson["api_definition"]["slug"]}, listen_path {APIjson["api_definition"]["proxy"]["listen_path"]}')
-resp = tykTarget.createAPI(APIjson)
+resp = tyk.createAPI(APIjson)
 print(json.dumps(resp.json()))
 if resp.status_code != 200:
     sys.exit(1)

@@ -51,9 +51,9 @@ if not ((dshb or gatw) and templateFile and auth and toAdd):
 
 # create a new dashboard or gateway object
 if dshb:
-    tykTarget = tyk.dashboard(dshb, auth)
+    tyk = tyk.dashboard(dshb, auth)
 else:
-    tykTarget = tyk.gateway(gatw, auth)
+    tyk = tyk.gateway(gatw, auth)
 
 # read the API defn
 with open(templateFile) as APIFile:
@@ -62,7 +62,7 @@ with open(templateFile) as APIFile:
     if name:
         APIjson["api_definition"]["name"] = name
 
-numberCreated = tykTarget.createAPIs(APIjson, toAdd)
+numberCreated = tyk.createAPIs(APIjson, toAdd)
 
 if numberCreated == toAdd:
     print(f'Success: {numberCreated} APIs created')
