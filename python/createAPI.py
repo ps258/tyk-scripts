@@ -11,7 +11,7 @@ scriptName = os.path.basename(__file__)
 
 def printhelp():
     print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret> --template <API template file> --name <base name of API> --verbose')
-    print("    Will take the template apply the name if given then add it as an API to the dashboard")
+    print("    Will take the template apply the name (if given) then add it as an API to the dashboard or gateway")
     sys.exit(1)
 
 dshb = ""
@@ -22,7 +22,7 @@ name = ""
 verbose = 0
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "template=", "dashboard=", "gateway=", "cred=", "number=", "name=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "template=", "dashboard=", "gateway=", "cred=", "name=", "verbose"])
 except getopt.GetoptError as opterr:
     print(f'Error in option: {opterr}')
     printhelp()
