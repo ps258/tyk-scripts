@@ -17,11 +17,10 @@ def printhelp():
 dshb = ""
 auth = ""
 certFile = ""
-name = ""
 verbose = 0
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "certificate=", "dashboard=", "cred=", "number=", "name=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "certificate=", "dashboard=", "cred=", "verbose"])
 except getopt.GetoptError as opterr:
     print(f'Error in option: {opterr}')
     printhelp()
@@ -35,8 +34,6 @@ for opt, arg in opts:
         dshb = arg.strip().strip('/')
     elif opt == '--cred':
         auth = arg
-    elif opt == '--name':
-        name = arg
     elif opt == '--verbose':
         verbose = 1
 
