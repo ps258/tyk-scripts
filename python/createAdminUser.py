@@ -2,7 +2,7 @@
 
 ###############################################################
 # Reference for calling the dashboard.createAdminUser
-# arguments are dashboard, dashboard API key, admin secret, orgid, username, user password
+# arguments are dashboard, dashboard admin secret, username, user password
 ###############################################################
 
 import json
