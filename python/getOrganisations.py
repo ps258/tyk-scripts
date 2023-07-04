@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 ###############################################################
-# Reference for calling the dashboard.createAdminUser
-# arguments are dashboard, dashboard API key, admin secret, orgid, username, user password
+# Reference for calling the dashboard.getOrganisations
+# arguments are dashboard and dashboard admin secret
 ###############################################################
 
 import json
