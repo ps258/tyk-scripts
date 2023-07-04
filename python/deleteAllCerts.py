@@ -40,3 +40,4 @@ if not (dshb and auth):
 dashboard = tyk.dashboard(dshb, auth)
 
 dashboard.deleteAllCerts()
+    sys.exit(1)
