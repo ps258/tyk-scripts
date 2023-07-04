@@ -20,7 +20,7 @@ auth = ""
 templateFile = ""
 name = ""
 verbose = 0
-toAdd = 0
+toAdd = 1
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["help", "template=", "dashboard=", "gateway=", "cred=", "number=", "name=", "verbose"])
