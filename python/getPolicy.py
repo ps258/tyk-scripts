@@ -10,17 +10,18 @@ import tyk
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials> --policy <policy id to fetch>')
+    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key|Gateway secret> --policy <policy id to fetch>')
     print("    Retrieve and print the policy")
     sys.exit(1)
 
 dshb = ""
+gatw = ""
 auth = ""
 policy = ""
 verbose = 0
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "cred=", "policy=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "cred=", "policy=", "verbose"])
 except getopt.GetoptError as opterr:
     print(f'Error in option: {opterr}')
     printhelp()
@@ -30,6 +31,8 @@ for opt, arg in opts:
         printhelp()
     elif opt == '--dashboard':
         dshb = arg.strip().strip('/')
+    elif opt == '--gateway':
+        gatw = arg.strip().strip('/')
     elif opt == '--cred':
         auth = arg
     elif opt == '--policy':
@@ -37,12 +40,16 @@ for opt, arg in opts:
     elif opt == '--verbose':
         verbose = 1
 
-if not (dshb and auth and policy):
+if not ((dshb or gatw) and auth and policy):
     printhelp()
 
-dashboard = tyk.dashboard(dshb, auth)
+# create a new dashboard or gateway object
+if dshb:
+    tyk = tyk.dashboard(dshb, auth)
+else:
+    tyk = tyk.gateway(gatw, auth)
 
-resp = dashboard.getPolicy(policy)
+resp = tyk.getPolicy(policy)
 print(json.dumps(resp.json(), indent=2))
 if resp.status_code != 200:
     sys.exit(1)

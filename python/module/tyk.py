@@ -7,6 +7,10 @@ import requests
 import sys
 import time
 
+# Suppress the warnings from urllib3 when using a self signed certs
+from urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+
 
 ###################### DASHBOARD CLASS ######################
 class dashboard:
@@ -43,21 +47,18 @@ class dashboard:
     # Dashboard API functions
     def getAPI(self, APIid):
         headers = {'Authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/api/apis/{APIid}', headers=headers)
-        return resp
+        return requests.get(f'{self.URL}/api/apis/{APIid}', headers=headers, verify=False)
 
     def getAPIs(self):
         headers = {'Authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/api/apis/?p=-1', headers=headers)
-        return resp
+        return requests.get(f'{self.URL}/api/apis/?p=-1', headers=headers, verify=False)
 
     def createAPI(self, APIdefinition):
         if type(APIdefinition) is dict:
             APIdefinition = json.dumps(APIdefinition)
         headers = {'Authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        resp = requests.post(f'{self.URL}/api/apis', data=APIdefinition, headers=headers)
-        return resp
+        return requests.post(f'{self.URL}/api/apis', data=APIdefinition, headers=headers, verify=False)
 
     def createAPIs(self, APIdefinition, numberToCreate):
         apis = self.getAPIs().json()
@@ -91,13 +92,11 @@ class dashboard:
             APIdefinition = json.dumps(APIdefinition)
         headers = {'Authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        resp = requests.put(f'{self.URL}/api/apis/{APIid}', data=APIdefinition, headers=headers)
-        return resp
+        return requests.put(f'{self.URL}/api/apis/{APIid}', data=APIdefinition, headers=headers, verify=False)
 
     def deleteAPI(self, APIid):
         headers = {'Authorization' : self.authKey}
-        resp = requests.delete(f'{self.URL}/api/apis/{APIid}', headers=headers)
-        return resp
+        return requests.delete(f'{self.URL}/api/apis/{APIid}', headers=headers, verify=False)
 
     def deleteAllAPIs(self):
         allDeleted = True
@@ -111,24 +110,21 @@ class dashboard:
         return allDeleted
 
 
-    # Dashboard Policy function
+    # Dashboard Policy functions
     def getPolicy(self, policyID):
         headers = {'Authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/api/portal/policies/{policyID}', headers=headers)
-        return resp
+        return requests.get(f'{self.URL}/api/portal/policies/{policyID}', headers=headers, verify=False)
 
     def getPolicies(self):
         headers = {'Authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/api/portal/policies/?p=-1', headers=headers)
-        return resp
+        return requests.get(f'{self.URL}/api/portal/policies/?p=-1', headers=headers, verify=False)
 
     def createPolicy(self, policyDefinition):
         if type(policyDefinition) is dict:
             policyDefinition = json.dumps(policyDefinition)
         headers = {'Authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        resp = requests.post(f'{self.URL}/api/portal/policies', data=policyDefinition, headers=headers)
-        return resp
+        return requests.post(f'{self.URL}/api/portal/policies', data=policyDefinition, headers=headers, verify=False)
 
     def createPolicies(self, policyDefinition, APIid, numberToCreate):
         policies = self.getPolicies().json()
@@ -161,13 +157,11 @@ class dashboard:
             policyDefinition = json.dumps(policyDefinition)
         headers = {'Authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        resp = requests.put(f'{self.URL}/api/portal/policies/{policyID}', data=policyDefinition, headers=headers)
-        return resp
+        return requests.put(f'{self.URL}/api/portal/policies/{policyID}', data=policyDefinition, headers=headers, verify=False)
 
     def deletePolicy(self, policyID):
         headers = {'Authorization' : self.authKey}
-        resp = requests.delete(f'{self.URL}/api/portal/policies/{policyID}', headers=headers)
-        return resp
+        return requests.delete(f'{self.URL}/api/portal/policies/{policyID}', headers=headers, verify=False)
 
     def deleteAllPolicies(self):
         allDeleted = True
@@ -184,50 +178,44 @@ class dashboard:
     # Dashboard Key functions
 
     # Two options for getting all the keys
-    # /api/apis/keys/?p=-1 which just lists the key ids
+    # /api/apis/keys/?p=-1 which just lists the key IDs
     # /api/keys/detailed/?p=-1 which dump the details of all the keys
     def getKeys(self):
         headers = {'Authorization' : self.authKey}
-        #resp = requests.get(f'{self.URL}/api/apis/-/keys?p=-1', headers=headers)
-        resp = requests.get(f'{self.URL}/api/keys/detailed/?p=-1', headers=headers)
-        return resp
+        #return requests.get(f'{self.URL}/api/apis/-/keys?p=-1', headers=headers, verify=False)
+        return requests.get(f'{self.URL}/api/keys/detailed/?p=-1', headers=headers, verify=False)
 
     def getKey(self, keyID):
         headers = {'Authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/api/apis/-/keys/{keyID}', headers=headers)
-        return resp
+        return requests.get(f'{self.URL}/api/apis/-/keys/{keyID}', headers=headers, verify=False)
 
     def createKey(self, keyDefinition):
         if type(keyDefinition) is dict:
             keyDefinition = json.dumps(keyDefinition)
         headers = {'Authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        resp = requests.post(f'{self.URL}/api/keys', data=keyDefinition, headers=headers)
-        return resp
+        return requests.post(f'{self.URL}/api/keys', data=keyDefinition, headers=headers, verify=False)
 
     def createCustomKey(self, keyDefinition, KeyID):
         if type(keyDefinition) is dict:
             keyDefinition = json.dumps(keyDefinition)
         headers = {'Authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        resp = requests.post(f'{self.URL}/api/keys/{KeyID}', data=keyDefinition, headers=headers)
-        return resp
+        return requests.post(f'{self.URL}/api/keys/{KeyID}', data=keyDefinition, headers=headers, verify=False)
 
     def updateKey(self, keyDefinition, KeyID):
         if type(keyDefinition) is dict:
             keyDefinition = json.dumps(keyDefinition)
         headers = {'Authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        #resp = requests.put(f'{self.URL}/api/apis/-/keys/{KeyID}', data=keyDefinition, headers=headers)
-        resp = requests.put(f'{self.URL}/api/keys/{KeyID}', data=keyDefinition, headers=headers)
-        return resp
+        #return requests.put(f'{self.URL}/api/apis/-/keys/{KeyID}', data=keyDefinition, headers=headers, verify=False)
+        return requests.put(f'{self.URL}/api/keys/{KeyID}', data=keyDefinition, headers=headers, verify=False)
 
     def deleteKey(self, keyID):
         headers = {'Authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
         # not sure where ?auto_guess=true comes from but it works when keys are encrypted
-        resp = requests.delete(f'{self.URL}/api/keys/{keyID}/?auto_guess=true', headers=headers)
-        return resp
+        return requests.delete(f'{self.URL}/api/keys/{keyID}/?auto_guess=true', headers=headers, verify=False)
 
     def deleteAllKeys(self):
         allDeleted = True
@@ -245,37 +233,32 @@ class dashboard:
     # Dashboard Portal Catalogue functions
     def getCatalogue(self):
         headers = {'Authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/api/portal/catalogue', headers=headers)
-        return resp
+        return requests.get(f'{self.URL}/api/portal/catalogue', headers=headers, verify=False)
 
     def updateCatalogue(self, catalogue):
         if type(catalogue) is dict:
             catalogue = json.dumps(catalogue)
         headers = {'Authorization' : self.authKey}
-        resp = requests.put(f'{self.URL}/api/portal/catalogue', data=catalogue, headers=headers)
-        return resp
+        return requests.put(f'{self.URL}/api/portal/catalogue', data=catalogue, headers=headers, verify=False)
 
 
     # Dashboard Organisation functions
     def getOrganisations(self):
         headers = {'admin-auth': self.adminSecret}
         headers['Content-Type'] = 'application/json'
-        resp = requests.get(f'{self.URL}/admin/organisations?p=-1', headers=headers)
-        return resp
+        return requests.get(f'{self.URL}/admin/organisations?p=-1', headers=headers, verify=False)
 
     def getOrganisation(self, orgID):
         headers = {'admin-auth': self.adminSecret}
         headers['Content-Type'] = 'application/json'
-        resp = requests.get(f'{self.URL}/admin/organisations/{orgID}', headers=headers)
-        return resp
+        return requests.get(f'{self.URL}/admin/organisations/{orgID}', headers=headers, verify=False)
 
     def createOrganisation(self, orgDefinition):
         if type(orgDefinition) is dict:
             orgDefinition = json.dumps(orgDefinition)
         headers = {'admin-auth': self.adminSecret}
         headers['Content-Type'] = 'application/json'
-        resp = requests.post(f'{self.URL}/admin/organisations', data=orgDefinition, headers=headers)
-        return resp
+        return requests.post(f'{self.URL}/admin/organisations', data=orgDefinition, headers=headers, verify=False)
 
     def createOrganisations(self, orgDefinition, numberToCreate):
         orgs = self.getOrganisations().json()
@@ -317,14 +300,14 @@ class dashboard:
                 'active': True,
                 'org_id': orgID,
                 'user_permissions': { 'ResetPassword' : 'admin', 'IsAdmin': 'admin' }}
-        createResp = requests.post(f'{self.URL}/admin/users', data=json.dumps(userDefinition), headers=headers)
+        createResp = requests.post(f'{self.URL}/admin/users', data=json.dumps(userDefinition), headers=headers, verify=False)
         if createResp.status_code != 200:
             return createResp
         # need to send a reset to for the user
         userdata = createResp.json()
         headers = {'Authorization' : userdata['Meta']['access_key']}
         headers['Content-Type'] = 'application/json'
-        resetResp = requests.post(f'{self.URL}/api/users/{userdata["Meta"]["id"]}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers)
+        resetResp = requests.post(f'{self.URL}/api/users/{userdata["Meta"]["id"]}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers, verify=False)
         return createResp
 
 
@@ -343,35 +326,29 @@ class dashboard:
         if type(endmonth) == 'int':
             endmonth = str(endmonth)
         headers = {'Authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/api/usage/apis/{startday}/{startmonth}/{startyear}/{endday}/{endmonth}/{endyear}?by=Hits&sort=1&p=-1', headers=headers)
-        return resp
+        return requests.get(f'{self.URL}/api/usage/apis/{startday}/{startmonth}/{startyear}/{endday}/{endmonth}/{endyear}?by=Hits&sort=1&p=-1', headers=headers, verify=False)
 
     # Dashboard Certificate functions
     def getCerts(self):
         headers = {'Authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/api/certs?p=-1', headers=headers)
-        return resp
+        return requests.get(f'{self.URL}/api/certs?p=-1', headers=headers, verify=False)
 
     def getCert(self, certid):
         headers = {'Authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/api/certs/{certid}', headers=headers)
-        return resp
+        return requests.get(f'{self.URL}/api/certs/{certid}', headers=headers, verify=False)
 
     def getCertsDetails(self):
         headers = {'Authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/api/certs?p=-1&mode=detailed', headers=headers)
-        return resp
+        return requests.get(f'{self.URL}/api/certs?p=-1&mode=detailed', headers=headers, verify=False)
 
     def createCert(self, certFile):
         headers = {'Authorization' : self.authKey}
         files={'data': open(certFile,'r')}
-        resp = requests.post(f'{self.URL}/api/certs', files=files, headers=headers, verify=False)
-        return resp
+        return requests.post(f'{self.URL}/api/certs', files=files, headers=headers, verify=False)
 
     def deleteCert(self, certid):
         headers = {'Authorization' : self.authKey}
-        resp = requests.delete(f'{self.URL}/api/certs/{certid}', headers=headers)
-        return resp 
+        return requests.delete(f'{self.URL}/api/certs/{certid}', headers=headers, verify=False)
 
     def deleteAllCerts(self):
         allDeleted = True
@@ -412,13 +389,11 @@ class gateway:
     # Gateway API functions
     def getAPI(self, APIid):
         headers = {'x-tyk-authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/tyk/apis/{APIid}', headers=headers)
-        return resp
+        return requests.get(f'{self.URL}/tyk/apis/{APIid}', headers=headers, verify=False)
 
     def getAPIs(self):
         headers = {'x-tyk-authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/tyk/apis', headers=headers)
-        return resp
+        return requests.get(f'{self.URL}/tyk/apis', headers=headers, verify=False)
     
     def createAPI(self, APIdefinition):        
         # need to convert it to a dict so we can check for api_definition and extract its contents
@@ -433,9 +408,9 @@ class gateway:
                 APIdefinition = json.dumps(APIdefinition)
         headers = {'x-tyk-authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        resp = requests.post(f'{self.URL}/tyk/apis', data=APIdefinition, headers=headers)
+        resp = requests.post(f'{self.URL}/tyk/apis', data=APIdefinition, headers=headers, verify=False)
         # automatically call the group reload (makes things simpler for a caller)
-        reloadResp = requests.get(f'{self.URL}/tyk/reload/group', headers=headers)
+        reloadResp = requests.get(f'{self.URL}/tyk/reload/group', headers=headers, verify=False)
         if reloadResp.status_code != 200:
             print(f'[WARN]The group hot reload failed with code {reloadResp.status_code}: {reloadResp.json()}')
         return resp
@@ -466,3 +441,72 @@ class gateway:
                 break
             numberCreated += 1
         return numberCreated
+
+
+    # Gateway Policy functions
+    def getPolicy(self, PolicyID):
+        # Suppress the warnings from urllib3 when using a self signed certs
+        from urllib3.exceptions import InsecureRequestWarning
+        requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+        headers = {'x-tyk-authorization' : self.authKey}
+        return requests.get(f'{self.URL}/tyk/policies/{PolicyID}', headers=headers, verify=False)
+
+    def getPolicies(self):
+        headers = {'x-tyk-authorization' : self.authKey}
+        return requests.get(f'{self.URL}/tyk/policies', headers=headers, verify=False)
+
+    def createPolicy(self, policyDefinition):
+        if type(policyDefinition) is dict:
+            policyDefinition = json.dumps(policyDefinition)
+        headers = {'x-tyk-authorization' : self.authKey}
+        headers['Content-Type'] = 'application/json'
+        return requests.post(f'{self.URL}/tyk/policies', data=policyDefinition, headers=headers, verify=False)
+
+    def createPolicies(self, policyDefinition, APIid, numberToCreate):
+        policies = self.getPolicies().json()
+        # create a dictionary of all policy names
+        PolicyName = policyDefinition['name']
+        allnames = dict()
+        for policy in policies['Data']:
+            allnames[policy['name']] = 1
+        i = 1
+        numberCreated = 0
+        while numberCreated < numberToCreate:
+            # work out the next free name (format is name-i)
+            while PolicyName+str(i) in allnames:
+                i += 1
+            newname=PolicyName+str(i)
+            allnames[newname] = 1
+            policyDefinition['name']=PolicyName+str(i)
+            policyDefinition['access_rights_array'] = json.loads('[{ "api_id": "' + APIid + '", "versions": [ "Default" ], "allowed_urls": [], "restricted_types": [], "limit": null, "allowance_scope": "" }]')
+            print(f'Creating policy: {policyDefinition["name"]}')
+            resp = self.createPolicy(json.dumps(policyDefinition))
+            print(resp.json())
+            # if a call fails, stop and return the number of successes
+            if resp.status_code != 200:
+                break
+            numberCreated += 1
+        return numberCreated
+
+    def updatePolicy(self, policyDefinition, policyID):
+        if type(policyDefinition) is dict:
+            policyDefinition = json.dumps(policyDefinition)
+        headers = {'x-tyk-authorization' : self.authKey}
+        headers['Content-Type'] = 'application/json'
+        return requests.put(f'{self.URL}/tyk/policies/{policyID}', data=policyDefinition, headers=headers, verify=False)
+
+    def deletePolicy(self, policyID):
+        headers = {'x-tyk-authorization' : self.authKey}
+        return requests.delete(f'{self.URL}/tyk/policies/{policyID}', headers=headers, verify=False)
+
+    def deleteAllPolicies(self):
+        allDeleted = True
+        policies = self.getPolicies().json()
+        for policy in policies['Data']:
+            print(f'Deleting policy: {policy["_id"]}')
+            resp = self.deletePolicy(policy['_id'])
+            print(resp.json())
+            if resp.status_code != 200:
+                allDeleted = False
+        return allDeleted
+
