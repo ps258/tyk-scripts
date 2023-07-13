@@ -4,13 +4,11 @@
 
 import json
 import requests
-import sys
 import time
 
 # Suppress the warnings from urllib3 when using a self signed certs
 from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
-
 
 ###################### DASHBOARD CLASS ######################
 class dashboard:
@@ -79,10 +77,10 @@ class dashboard:
             APIdefinition['api_definition']['slug'] = newname
             APIdefinition['api_definition']['proxy']['listen_path'] = '/'+newname+'/'
             print(f'Adding API {APIdefinition["api_definition"]["name"]}, {APIdefinition["api_definition"]["proxy"]["listen_path"]}')
-            resp = self.createAPI(APIdefinition)
-            print(resp.json())
+            response = self.createAPI(APIdefinition)
+            print(response.json())
             # if a call fails, stop and return the number of successes
-            if resp.status_code != 200:
+            if response.status_code != 200:
                 break
             numberCreated += 1
         return numberCreated
@@ -103,9 +101,9 @@ class dashboard:
         apis = self.getAPIs().json()
         for api in apis['apis']:
             print(f'Deleting API: {api["api_definition"]["name"]}: {api["api_definition"]["api_id"]}')
-            resp = self.deleteAPI(api['api_definition']['api_id'])
-            print(resp.json())
-            if resp.status_code != 200:
+            response = self.deleteAPI(api['api_definition']['api_id'])
+            print(response.json())
+            if response.status_code != 200:
                 allDeleted = False
         return allDeleted
 
@@ -117,7 +115,11 @@ class dashboard:
 
     def getPolicies(self):
         headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/portal/policies/?p=-1', headers=headers, verify=False)
+        response = requests.get(f'{self.URL}/api/portal/policies/?p=-1', headers=headers, verify=False)
+        body_json = response.json()
+        # pull the policies out of the 'Data' array so that the format is the same as it is from the gateway
+        response._content = json.dumps(body_json['Data']).encode()
+        return response
 
     def createPolicy(self, policyDefinition):
         if type(policyDefinition) is dict:
@@ -131,7 +133,7 @@ class dashboard:
         # create a dictionary of all policy names
         PolicyName = policyDefinition['name']
         allnames = dict()
-        for policy in policies['Data']:
+        for policy in policies:
             allnames[policy['name']] = 1
         i = 1
         numberCreated = 0
@@ -144,10 +146,10 @@ class dashboard:
             policyDefinition['name']=PolicyName+str(i)
             policyDefinition['access_rights_array'] = json.loads('[{ "api_id": "' + APIid + '", "versions": [ "Default" ], "allowed_urls": [], "restricted_types": [], "limit": null, "allowance_scope": "" }]')
             print(f'Creating policy: {policyDefinition["name"]}')
-            resp = self.createPolicy(json.dumps(policyDefinition))
-            print(resp.json())
+            response = self.createPolicy(json.dumps(policyDefinition))
+            print(response.json())
             # if a call fails, stop and return the number of successes
-            if resp.status_code != 200:
+            if response.status_code != 200:
                 break
             numberCreated += 1
         return numberCreated
@@ -166,11 +168,11 @@ class dashboard:
     def deleteAllPolicies(self):
         allDeleted = True
         policies = self.getPolicies().json()
-        for policy in policies['Data']:
+        for policy in policies:
             print(f'Deleting policy: {policy["_id"]}')
-            resp = self.deletePolicy(policy['_id'])
-            print(resp.json())
-            if resp.status_code != 200:
+            response = self.deletePolicy(policy['_id'])
+            print(response.json())
+            if response.status_code != 200:
                 allDeleted = False
         return allDeleted
 
@@ -223,9 +225,9 @@ class dashboard:
         for key in keys['keys']:
             keyID = key['key_id']
             print(f'Deleting key: {keyID}')
-            resp = self.deleteKey(keyID)
-            print(resp.json())
-            if resp.status_code != 200:
+            response = self.deleteKey(keyID)
+            print(response.json())
+            if response.status_code != 200:
                 allDeleted = False
         return allDeleted
 
@@ -279,10 +281,10 @@ class dashboard:
             orgDefinition['owner_name']=orgOwner+str(i)
             orgDefinition['owner_slug']=orgSlug+str(i)
             print(f'Creating Organisation: {orgDefinition["owner_slug"]}')
-            resp = self.createOrganisation(json.dumps(orgDefinition))
-            print(resp.json())
+            response = self.createOrganisation(json.dumps(orgDefinition))
+            print(response.json())
             # if a call fails, stop and return the number of successes
-            if resp.status_code != 200:
+            if response.status_code != 200:
                 break
             numberCreated += 1
         return numberCreated
@@ -356,9 +358,9 @@ class dashboard:
         print(certs)
         for certid in certs['certs']:
             print(f'Deleting certificate: {certid}')
-            resp = self.deleteCert(certid)
-            print(resp.json())
-            if resp.status_code != 200:
+            response = self.deleteCert(certid)
+            print(response.json())
+            if response.status_code != 200:
                 allDeleted = False
         return allDeleted
 
@@ -408,12 +410,12 @@ class gateway:
                 APIdefinition = json.dumps(APIdefinition)
         headers = {'x-tyk-authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        resp = requests.post(f'{self.URL}/tyk/apis', data=APIdefinition, headers=headers, verify=False)
+        response = requests.post(f'{self.URL}/tyk/apis', data=APIdefinition, headers=headers, verify=False)
         # automatically call the group reload (makes things simpler for a caller)
         reloadResp = requests.get(f'{self.URL}/tyk/reload/group', headers=headers, verify=False)
         if reloadResp.status_code != 200:
             print(f'[WARN]The group hot reload failed with code {reloadResp.status_code}: {reloadResp.json()}')
-        return resp
+        return response
 
     def createAPIs(self, APIdefinition, numberToCreate):
         APIName = APIdefinition['api_definition']['name']
@@ -434,8 +436,8 @@ class gateway:
             APIdefinition['api_definition']['slug'] = newname
             APIdefinition['api_definition']['proxy']['listen_path'] = '/'+newname+'/'
             print(f'Adding API {APIdefinition["api_definition"]["name"]}, {APIdefinition["api_definition"]["proxy"]["listen_path"]}')
-            resp = self.createAPI(APIdefinition)
-            print(resp.json())
+            response = self.createAPI(APIdefinition)
+            print(response.json())
             # if a call fails, stop and return the number of successes
             if resp.status_code != 200:
                 break
@@ -444,12 +446,9 @@ class gateway:
 
 
     # Gateway Policy functions
-    def getPolicy(self, PolicyID):
-        # Suppress the warnings from urllib3 when using a self signed certs
-        from urllib3.exceptions import InsecureRequestWarning
-        requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+    def getPolicy(self, policyID):
         headers = {'x-tyk-authorization' : self.authKey}
-        return requests.get(f'{self.URL}/tyk/policies/{PolicyID}', headers=headers, verify=False)
+        return requests.get(f'{self.URL}/tyk/policies/{policyID}', headers=headers, verify=False)
 
     def getPolicies(self):
         headers = {'x-tyk-authorization' : self.authKey}
@@ -466,8 +465,7 @@ class gateway:
         policies = self.getPolicies().json()
         # create a dictionary of all policy names
         PolicyName = policyDefinition['name']
-        allnames = dict()
-        for policy in policies['Data']:
+        for policy in policies:
             allnames[policy['name']] = 1
         i = 1
         numberCreated = 0
@@ -480,10 +478,10 @@ class gateway:
             policyDefinition['name']=PolicyName+str(i)
             policyDefinition['access_rights_array'] = json.loads('[{ "api_id": "' + APIid + '", "versions": [ "Default" ], "allowed_urls": [], "restricted_types": [], "limit": null, "allowance_scope": "" }]')
             print(f'Creating policy: {policyDefinition["name"]}')
-            resp = self.createPolicy(json.dumps(policyDefinition))
-            print(resp.json())
+            response = self.createPolicy(json.dumps(policyDefinition))
+            print(response.json())
             # if a call fails, stop and return the number of successes
-            if resp.status_code != 200:
+            if response.status_code != 200:
                 break
             numberCreated += 1
         return numberCreated
@@ -502,11 +500,11 @@ class gateway:
     def deleteAllPolicies(self):
         allDeleted = True
         policies = self.getPolicies().json()
-        for policy in policies['Data']:
+        for policy in policies:
             print(f'Deleting policy: {policy["_id"]}')
-            resp = self.deletePolicy(policy['_id'])
-            print(resp.json())
-            if resp.status_code != 200:
+            response = self.deletePolicy(policy['_id'])
+            print(response.json())
+            if response.status_code != 200:
                 allDeleted = False
         return allDeleted
 
