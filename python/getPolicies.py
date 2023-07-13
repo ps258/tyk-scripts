@@ -64,12 +64,5 @@ else:
 policies = tyk.getPolicies().json()
 if not verbose:
     print('# Name, policyID, APIs')
-if 'Data' in policies:
-    # dashboard format
-    for policy in policies['Data']:
-        printPolicy(policy)
-else:
-    # gateway format
-    for policy in policies:
-        printPolicy(policy)
-
+for policy in policies:
+    printPolicy(policy)
