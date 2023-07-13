@@ -6,17 +6,11 @@
 ###############################################################
 
 import json
-import requests
 import os
 import getopt
 import sys
-import time
 sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/module')
 import tyk
-
-# Suppress the warnings from urllib3 when using a self signed certs
-from urllib3.exceptions import InsecureRequestWarning
-requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 scriptName = os.path.basename(__file__)
 
