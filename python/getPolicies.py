@@ -19,20 +19,6 @@ gatw   = ""
 auth = ""
 verbose = 0
 
-def printPolicy(policy):
-    if verbose:
-        print(json.dumps(policy, indent=2))
-    else:
-        print(f'{policy["name"]},{policy["_id"]}',end='')
-        firstAPI=True
-        for api in policy["access_rights"]:
-            if firstAPI:
-                print(f',{api}',end='')
-                firstAPI=False
-            else:
-                print(f':{api}',end='')
-        print('')
-
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "cred=", "verbose"])
 except getopt.GetoptError as opterr:
@@ -59,6 +45,20 @@ if dshb:
     tyk = tyk.dashboard(dshb, auth)
 else:
     tyk = tyk.gateway(gatw, auth)
+
+def printPolicy(policy):
+    if verbose:
+        print(json.dumps(policy, indent=2))
+    else:
+        print(f'{policy["name"]},{policy["_id"]}',end='')
+        firstAPI=True
+        for api in policy["access_rights"]:
+            if firstAPI:
+                print(f',{api}',end='')
+                firstAPI=False
+            else:
+                print(f':{api}',end='')
+        print('')
 
 # get the existing Policies
 policies = tyk.getPolicies().json()
