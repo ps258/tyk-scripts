@@ -10,18 +10,19 @@ import tyk
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials> --template <Policy template file> --apiid <apiid> --verbose')
+    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key|Gateway secret> --template <Policy template file> --apiid <apiid> --verbose')
     print("    Will create a new unique policy for the API_ID given")
     sys.exit(1)
 
 dshb = ""
+gatw = ""
 auth = ""
 templateFile = ""
 apiid = ""
 verbose = 0
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "template=", "dashboard=", "cred=", "apiid=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "template=", "cred=", "apiid=", "verbose"])
 except getopt.GetoptError as opterr:
     print(f'Error in option: {opterr}')
     printhelp()
@@ -33,6 +34,8 @@ for opt, arg in opts:
         templateFile = arg
     elif opt == '--dashboard':
         dshb = arg.strip().strip('/')
+    elif opt == '--gateway':
+        gatw = arg.strip().strip('/')
     elif opt == '--cred':
         auth = arg
     elif opt == '--apiid':
@@ -40,10 +43,14 @@ for opt, arg in opts:
     elif opt == '--verbose':
         verbose = 1
 
-if not (dshb and templateFile and auth and apiid):
+if not ((dshb or gatw) and templateFile and auth and apiid):
     printhelp()
 
-dashboard = tyk.dashboard(dshb, auth)
+# create a new dashboard or gateway object
+if dshb:
+    tyk = tyk.dashboard(dshb, auth)
+else:
+    tyk = tyk.gateway(gatw, auth)
 
 # read the policy defn
 with open(templateFile) as PolicyFile:
@@ -51,7 +58,7 @@ with open(templateFile) as PolicyFile:
     PolicyFile.close()
 PolicyName = "Policy"
 # get the existing Policies
-policies = dashboard.getPolicies().json()
+policies = tyk.getPolicies().json()
 # create a dictionary of all policy names
 allnames = dict()
 for policy in policies['Data']:
@@ -69,7 +76,7 @@ print(f'Adding policy {PolicyJSON["name"]}')
 if verbose:
     print(json.dumps(PolicyJSON, indent=2))
 
-resp = dashboard.createPolicy(json.dumps(PolicyJSON))
+resp = tyk.createPolicy(json.dumps(PolicyJSON))
 print(resp.json())
 if resp.status_code != 200:
     sys.exit(1)
