@@ -42,7 +42,7 @@ if not (dshb and auth and policyid):
 
 dashboard = tyk.dashboard(dshb, auth)
 
-resp = dashboard.deletePolicy(policyid):
+resp = dashboard.deletePolicy(policyid)
 print(resp.json())
-if resp.status_code != 200
+if resp.status_code != 200:
     sys.exit(1)
