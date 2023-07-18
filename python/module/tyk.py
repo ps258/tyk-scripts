@@ -49,7 +49,15 @@ class dashboard:
 
     def getAPIs(self):
         headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/apis/?p=-1', headers=headers, verify=False)
+        response = requests.get(f'{self.URL}/api/apis/?p=-1', headers=headers, verify=False)
+        body_json = response.json()
+        # pull the APIs out of the 'apis' array so that the format is the same as it is from the gateway
+        # also extract the API defintions out of 'api_definition' and add it to the array
+        apis = []
+        for api in body_json['apis']:
+            apis.append(api['api_definition'])
+        response._content = json.dumps(apis).encode()
+        return response
 
     def createAPI(self, APIdefinition):
         if type(APIdefinition) is dict:
