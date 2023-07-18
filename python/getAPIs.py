@@ -46,22 +46,13 @@ if dshb:
 else:
     tyk = tyk.gateway(gatw, auth)
 
-resp = tyk.getAPIs()
-if resp.status_code != 200:
-    print(json.dumps(resp.json()))
+apis = tyk.getAPIs()
+if apis.status_code != 200:
+    print(json.dumps(apis.json()))
     sys.exit(1)
 
-if 'apis' in resp.json():
-    # dashboard
-    for api in resp.json()['apis']:
-        if verbose:
-            print(json.dumps(api, indent=2))
-        else:
-            print(f'{api["api_definition"]["name"]},{api["api_definition"]["api_id"]}')
+if verbose:
+    print(json.dumps(apis.json(), indent=2))
 else:
-    # gateway
-    for api in resp.json():
-        if verbose:
-            print(json.dumps(api, indent=2))
-        else:
+    for api in apis.json():
             print(f'{api["name"]},{api["api_id"]}')

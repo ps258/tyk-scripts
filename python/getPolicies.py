@@ -47,22 +47,21 @@ else:
     tyk = tyk.gateway(gatw, auth)
 
 def printPolicy(policy):
-    if verbose:
-        print(json.dumps(policy, indent=2))
-    else:
-        print(f'{policy["name"]},{policy["_id"]}',end='')
-        firstAPI=True
-        for api in policy["access_rights"]:
-            if firstAPI:
-                print(f',{api}',end='')
-                firstAPI=False
-            else:
-                print(f':{api}',end='')
-        print('')
+    print(f'{policy["name"]},{policy["_id"]}',end='')
+    firstAPI=True
+    for api in policy["access_rights"]:
+        if firstAPI:
+            print(f',{api}',end='')
+            firstAPI=False
+        else:
+            print(f':{api}',end='')
+    print('')
 
 # get the existing Policies
 policies = tyk.getPolicies().json()
+if verbose:
+    print(json.dumps(resp.json(), indent=2))
 if not verbose:
     print('# Name, policyID, APIs')
-for policy in policies:
-    printPolicy(policy)
+    for policy in policies:
+        printPolicy(policy)
