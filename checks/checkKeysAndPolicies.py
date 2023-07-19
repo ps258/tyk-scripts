@@ -81,17 +81,17 @@ if verbose:
     for key in keys["keys"]:
         print(key['key_id'])
     print("List of all policies:")
-    for policy in policies['Data']:
+    for policy in policies:
         print(policy['name'])
     print("List of all APIs:")
-    for API in APIs['apis']:
+    for API in APIs:
         print(API['api_definition']['name'], API['api_definition']['api_id'])
 
 # load APIs into dict indexed by API ID for easy lookup
 APIdetails = {}
-for API in APIs['apis']:
-    api_id = API['api_definition']['api_id']
-    APIdetails[api_id] = API['api_definition']
+for API in APIs:
+    api_id = API['api_id']
+    APIdetails[api_id] = API
 
 # Key checks
 for key in keys['keys']:
@@ -122,7 +122,7 @@ for key in keys['keys']:
     check_access_rights("Key", key_id, key['data']['access_rights_array'], key['data']['access_rights'])
 
 # Policy checks
-for policy in policies['Data']:
+for policy in policies:
     policy_id = policy['_id']
     policy_org = policy['org_id']
     for policyAPI in policy['access_rights_array']:
