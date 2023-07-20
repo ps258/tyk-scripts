@@ -61,7 +61,7 @@ PolicyName = "Policy"
 policies = tyk.getPolicies().json()
 # create a dictionary of all policy names
 allnames = dict()
-for policy in policies['Data']:
+for policy in policies:
     name = policy["name"]
     allnames[name] = 1
 
@@ -70,7 +70,7 @@ i = 1
 while PolicyName+str(i) in allnames:
     i += 1
 PolicyJSON["name"]=PolicyName+str(i)
-PolicyJSON["access_rights_array"] = json.loads('[{ "api_id": "' + apiid + '", "versions": [ "Default" ], "allowed_urls": [], "restricted_types": [], "limit": null, "allowance_scope": "" }]')
+PolicyJSON["access_rights"][apiid] = json.loads('{ "api_id": "' + apiid + '", "versions": [ "Default" ], "allowed_urls": [], "restricted_types": [], "limit": null, "allowance_scope": "" }')
 
 print(f'Adding policy {PolicyJSON["name"]}')
 if verbose:

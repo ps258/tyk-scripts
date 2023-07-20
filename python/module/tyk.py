@@ -71,7 +71,7 @@ class dashboard:
         # create a dictionary of all API names
         APIName = APIdefinition['api_definition']['name']
         allnames = dict()
-        for api in apis['apis']:
+        for api in apis:
             allnames[api['api_definition']['name']] = 1
         i = 1
         numberCreated = 0

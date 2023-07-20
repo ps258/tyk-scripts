@@ -4,30 +4,8 @@
         "authToken"
     ],
     "state": "active",
-    "access_rights_array": [
-        {
-            "api_name": "httpbin1018",
-            "api_id": "0e2e6601a69f4a617b69441ae5e9ac1d",
-            "versions": [
-                "Default"
-            ],
-            "allowed_urls": [],
-            "restricted_types": [],
-            "limit": null,
-            "allowance_scope": ""
-        },
-        {
-            "api_name": "httpbin1019",
-            "api_id": "da9c9e72bada4ccf5548d23e1afe8fea",
-            "versions": [
-                "Default"
-            ],
-            "allowed_urls": [],
-            "restricted_types": [],
-            "limit": null,
-            "allowance_scope": ""
-        }
-    ],
+    "access_rights_array": [],
+    "access_rights": {},
     "graphql_enabled": false,
     "name": "policy",
     "rate": 1000,
