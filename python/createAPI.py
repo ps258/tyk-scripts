@@ -65,4 +65,5 @@ with open(templateFile) as APIFile:
 resp = tyk.createAPI(APIjson)
 print(json.dumps(resp.json()))
 if resp.status_code != 200:
+    print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
