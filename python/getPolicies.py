@@ -10,12 +10,12 @@ import tyk
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key|Gateway secret>')
-    print("    Will list Policyid, name and apiids of each Policy found")
+    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key|Gateway secret> [--verbose]]')
+    print("    Will list Policy Name, Policyid, and APIids of each Policy found")
     sys.exit(1)
 
 dshb = ""
-gatw   = ""
+gatw = ""
 auth = ""
 verbose = 0
 
