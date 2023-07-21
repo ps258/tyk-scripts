@@ -518,3 +518,12 @@ class gateway:
                 allDeleted = False
         return allDeleted
 
+
+    # Gateway Key functions
+    def getKeys(self):
+        headers = {'x-tyk-authorization' : self.authKey}
+        return requests.get(f'{self.URL}/tyk/keys', headers=headers, verify=False)
+
+    def getKey(self, keyID):
+        headers = {'x-tyk-authorization' : self.authKey}
+        return requests.get(f'{self.URL}/key/keys/{keyID}', headers=headers, verify=False)
