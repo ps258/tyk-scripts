@@ -58,9 +58,13 @@ def printPolicy(policy):
     print('')
 
 # get the existing Policies
-policies = tyk.getPolicies().json()
+resp = tyk.getPolicies()
+if resp.status_code != 200:
+    print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
+    sys.exit(1)
+policies = resp.json()
 if verbose:
-    print(json.dumps(resp.json(), indent=2))
+    print(json.dumps(policies, indent=2))
 if not verbose:
     print('# Name, policyID, APIs')
     for policy in policies:

@@ -51,12 +51,13 @@ class dashboard:
         headers = {'Authorization' : self.authKey}
         response = requests.get(f'{self.URL}/api/apis/?p=-1', headers=headers, verify=False)
         body_json = response.json()
-        # pull the APIs out of the 'apis' array so that the format is the same as it is from the gateway
-        # also extract the API defintions out of 'api_definition' and add it to the array
-        apis = []
-        for api in body_json['apis']:
-            apis.append(api['api_definition'])
-        response._content = json.dumps(apis).encode()
+        if response.status_code == 200:
+            # pull the APIs out of the 'apis' array so that the format is the same as it is from the gateway
+            # also extract the API defintions out of 'api_definition' and add it to the array
+            apis = []
+            for api in body_json['apis']:
+                apis.append(api['api_definition'])
+            response._content = json.dumps(apis).encode()
         return response
 
     def createAPI(self, APIdefinition):
@@ -124,9 +125,10 @@ class dashboard:
     def getPolicies(self):
         headers = {'Authorization' : self.authKey}
         response = requests.get(f'{self.URL}/api/portal/policies/?p=-1', headers=headers, verify=False)
-        body_json = response.json()
-        # pull the policies out of the 'Data' array so that the format is the same as it is from the gateway
-        response._content = json.dumps(body_json['Data']).encode()
+        if response.status_code == 200:
+            body_json = response.json()
+            # pull the policies out of the 'Data' array so that the format is the same as it is from the gateway
+            response._content = json.dumps(body_json['Data']).encode()
         return response
 
     def createPolicy(self, policyDefinition):
