@@ -70,10 +70,13 @@ class dashboard:
     def createAPIs(self, APIdefinition, numberToCreate):
         apis = self.getAPIs().json()
         # create a dictionary of all API names
-        APIName = APIdefinition['api_definition']['name']
+        if 'api_definition' in APIdefinition:
+            APIName = APIdefinition['api_definition']['name']
+        else:
+            APIName = APIdefinition['name']
         allnames = dict()
         for api in apis:
-            allnames[api['api_definition']['name']] = 1
+            allnames[api['name']] = 1
         i = 1
         numberCreated = 0
         while numberCreated < numberToCreate:
@@ -82,10 +85,16 @@ class dashboard:
                 i += 1
             newname=APIName+str(i)
             allnames[newname] = 1
-            APIdefinition['api_definition']['name'] = newname
-            APIdefinition['api_definition']['slug'] = newname
-            APIdefinition['api_definition']['proxy']['listen_path'] = '/'+newname+'/'
-            print(f'Adding API {APIdefinition["api_definition"]["name"]}, {APIdefinition["api_definition"]["proxy"]["listen_path"]}')
+            if 'api_definition' in APIdefinition:
+                APIdefinition['api_definition']['name'] = newname
+                APIdefinition['api_definition']['slug'] = newname
+                APIdefinition['api_definition']['proxy']['listen_path'] = '/'+newname+'/'
+                print(f'Adding API {APIdefinition["api_definition"]["name"]}, {APIdefinition["api_definition"]["proxy"]["listen_path"]}')
+            else:
+                APIdefinition['name'] = newname
+                APIdefinition['slug'] = newname
+                APIdefinition['proxy']['listen_path'] = '/'+newname+'/'
+                print(f'Adding API {APIdefinition["name"]}, {APIdefinition["proxy"]["listen_path"]}')
             response = self.createAPI(APIdefinition)
             print(response.json())
             # if a call fails, stop and return the number of successes
@@ -449,7 +458,7 @@ class gateway:
             response = self.createAPI(APIdefinition)
             print(response.json())
             # if a call fails, stop and return the number of successes
-            if resp.status_code != 200:
+            if response.status_code != 200:
                 break
             numberCreated += 1
         return numberCreated
