@@ -23,7 +23,7 @@ verbose = 0
 toAdd = 1
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "template=", "dashboard=", "gateway=", "cred=", "number=", "name=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "cred=", "template=", "number=", "name=", "verbose"])
 except getopt.GetoptError as opterr:
     print(f'Error in option: {opterr}')
     printhelp()
