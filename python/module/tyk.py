@@ -117,9 +117,9 @@ class dashboard:
     def deleteAllAPIs(self):
         allDeleted = True
         apis = self.getAPIs().json()
-        for api in apis['apis']:
-            print(f'Deleting API: {api["api_definition"]["name"]}: {api["api_definition"]["api_id"]}')
-            response = self.deleteAPI(api['api_definition']['api_id'])
+        for api in apis:
+            print(f'Deleting API: {api["name"]}: {api["api_id"]}')
+            response = self.deleteAPI(api['api_id'])
             print(response.json())
             if response.status_code != 200:
                 allDeleted = False
