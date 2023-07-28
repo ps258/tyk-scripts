@@ -10,19 +10,20 @@ import tyk
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials> --apiid <apiid>')
-    print("    Will delete the API with apiid from the dashboard")
+    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret> --apiid <apiid>')
+    print("    Will delete the API with apiid from the dashboard or gateway")
     sys.exit(1)
 
 dshb = ""
+gatw = ""
 auth = ""
 apiid = ""
 verbose = 0
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "cred=", "apiid=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "cred=", "apiid=", "verbose"])
 except getopt.GetoptError as opterr:
-    oprint(f'Error in option: {opterr}')
+    print(f'Error in option: {opterr}')
     printhelp()
 
 for opt, arg in opts:
@@ -30,6 +31,8 @@ for opt, arg in opts:
         printhelp()
     elif opt == '--dashboard':
         dshb = arg.strip().strip('/')
+    elif opt == '--gateway':
+        gatw = arg.strip().strip('/')
     elif opt == '--cred':
         auth = arg
     elif opt == '--apiid':
@@ -37,12 +40,16 @@ for opt, arg in opts:
     elif opt == '--verbose':
         verbose = 1
 
-if not (dshb and auth and apiid):
+if not ((dshb or gatw) and auth and apiid):
     printhelp()
 
-dashboard = tyk.dashboard(dshb, auth)
+# create a new dashboard or gateway object
+if dshb:
+    tyk = tyk.dashboard(dshb, auth)
+else:
+    tyk = tyk.gateway(gatw, auth)
 
-resp = dashboard.deleteAPI(apiid)
+resp = tyk.deleteAPI(apiid)
 print(json.dumps(resp.json()))
 if resp.status_code != 200:
     sys.exit(1)

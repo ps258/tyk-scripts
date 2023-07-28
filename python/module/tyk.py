@@ -408,6 +408,13 @@ class gateway:
         return self.description
 
     # Gateway API functions
+    def reloadGroup(self):
+        headers = {'x-tyk-authorization' : self.authKey}
+        response = requests.get(f'{self.URL}/tyk/reload/group', headers=headers, verify=False)
+        if response.status_code != 200:
+            print(f'[WARN]The group hot reload failed with code {response.status_code}: {response.json()}')
+        return response
+
     def getAPI(self, APIid):
         headers = {'x-tyk-authorization' : self.authKey}
         return requests.get(f'{self.URL}/tyk/apis/{APIid}', headers=headers, verify=False)
@@ -431,9 +438,7 @@ class gateway:
         headers['Content-Type'] = 'application/json'
         response = requests.post(f'{self.URL}/tyk/apis', data=APIdefinition, headers=headers, verify=False)
         # automatically call the group reload (makes things simpler for a caller)
-        reloadResp = requests.get(f'{self.URL}/tyk/reload/group', headers=headers, verify=False)
-        if reloadResp.status_code != 200:
-            print(f'[WARN]The group hot reload failed with code {reloadResp.status_code}: {reloadResp.json()}')
+        self.reloadGroup()
         return response
 
     def createAPIs(self, APIdefinition, numberToCreate):
@@ -451,6 +456,7 @@ class gateway:
                 i += 1
             newname=APIName+str(i)
             allnames[newname] = 1
+            APIdefinition['api_definition']['api_id'] = newname
             APIdefinition['api_definition']['name'] = newname
             APIdefinition['api_definition']['slug'] = newname
             APIdefinition['api_definition']['proxy']['listen_path'] = '/'+newname+'/'
@@ -462,6 +468,34 @@ class gateway:
                 break
             numberCreated += 1
         return numberCreated
+
+    # TODO: test updateAPI
+    def updateAPI(self, APIdefinition, APIid):
+        if type(APIdefinition) is dict:
+            APIdefinition = json.dumps(APIdefinition)
+        headers = {'Authorization' : self.authKey}
+        headers['Content-Type'] = 'application/json'
+        reponse =  requests.put(f'{self.URL}/tyk/apis/{APIid}', data=APIdefinition, headers=headers, verify=False)
+        self.reloadGroup()
+        return response
+
+    def deleteAPI(self, APIid):
+        headers = {'x-tyk-authorization' : self.authKey}
+        response = requests.delete(f'{self.URL}/tyk/apis/{APIid}', headers=headers, verify=False)
+        # automatically call the group reload (makes things simpler for a caller)
+        self.reloadGroup()
+        return response
+
+    def deleteAllAPIs(self):
+        allDeleted = True
+        apis = self.getAPIs().json()
+        for api in apis:
+            print(f'Deleting API: {api["name"]}: {api["api_id"]}')
+            response = self.deleteAPI(api['api_id'])
+            print(response.json())
+            if response.status_code != 200:
+                allDeleted = False
+        return allDeleted
 
 
     # Gateway Policy functions
