@@ -423,7 +423,7 @@ class gateway:
         headers = {'x-tyk-authorization' : self.authKey}
         return requests.get(f'{self.URL}/tyk/apis', headers=headers, verify=False)
     
-    def createAPI(self, APIdefinition):        
+    def createAPI(self, APIdefinition, reload = True):        
         # need to convert it to a dict so we can check for api_definition and extract its contents
         if type(APIdefinition) is str:
             APIdefinition = json.loads(APIdefinition)
@@ -437,8 +437,9 @@ class gateway:
         headers = {'x-tyk-authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
         response = requests.post(f'{self.URL}/tyk/apis', data=APIdefinition, headers=headers, verify=False)
-        # automatically call the group reload (makes things simpler for a caller)
-        self.reloadGroup()
+        if reload:
+            # automatically call the group reload (makes things simpler for a caller)
+            self.reloadGroup()
         return response
 
     def createAPIs(self, APIdefinition, numberToCreate):
@@ -461,12 +462,15 @@ class gateway:
             APIdefinition['api_definition']['slug'] = newname
             APIdefinition['api_definition']['proxy']['listen_path'] = '/'+newname+'/'
             print(f'Adding API {APIdefinition["api_definition"]["name"]}, {APIdefinition["api_definition"]["proxy"]["listen_path"]}')
-            response = self.createAPI(APIdefinition)
+            # create the API but don't reload the group
+            response = self.createAPI(APIdefinition, False)
             print(response.json())
             # if a call fails, stop and return the number of successes
             if response.status_code != 200:
                 break
             numberCreated += 1
+        # reload now
+        self.reloadGroup()
         return numberCreated
 
     # TODO: test updateAPI
@@ -479,11 +483,12 @@ class gateway:
         self.reloadGroup()
         return response
 
-    def deleteAPI(self, APIid):
+    def deleteAPI(self, APIid, reload = True):
         headers = {'x-tyk-authorization' : self.authKey}
         response = requests.delete(f'{self.URL}/tyk/apis/{APIid}', headers=headers, verify=False)
-        # automatically call the group reload (makes things simpler for a caller)
-        self.reloadGroup()
+        if reload:
+            # automatically call the group reload (makes things simpler for a caller)
+            self.reloadGroup()
         return response
 
     def deleteAllAPIs(self):
@@ -491,10 +496,11 @@ class gateway:
         apis = self.getAPIs().json()
         for api in apis:
             print(f'Deleting API: {api["name"]}: {api["api_id"]}')
-            response = self.deleteAPI(api['api_id'])
+            response = self.deleteAPI(api['api_id'], False)
             print(response.json())
             if response.status_code != 200:
                 allDeleted = False
+        self.reloadGroup()
         return allDeleted
 
 
