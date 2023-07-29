@@ -46,7 +46,7 @@ for opt, arg in opts:
     elif opt == '--verbose':
         verbose = 1
 
-if not ((dshb or gatw) and templateFile and auth and toAdd and name):
+if not ((dshb or gatw) and templateFile and auth and toAdd):
     printhelp()
 
 # create a new dashboard or gateway object
@@ -59,10 +59,12 @@ else:
 with open(templateFile) as APIFile:
     APIjson=json.load(APIFile)
     APIFile.close()
-    if 'api_definition' in APIjson:
-        APIjson["api_definition"]["name"] = name
-    else:
-        APIjson["name"] = name
+    if name:
+        # if we've been given a name then apply that
+        if 'api_definition' in APIjson:
+            APIjson["api_definition"]["name"] = name
+        else:
+            APIjson["name"] = name
 
 numberCreated = tyk.createAPIs(APIjson, toAdd)
 
