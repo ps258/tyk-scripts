@@ -40,7 +40,7 @@ for opt, arg in opts:
 if not ((dshb or gatw) and auth):
     printhelp()
 
-# create a new dashboard or gateway object
+# create a dashboard or gateway object
 if dshb:
     tyk = tyk.dashboard(dshb, auth)
 else:
