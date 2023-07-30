@@ -67,9 +67,7 @@ for api in apis.json():
             policy["access_rights"][apiid] = {
                 "api_name": apiName,
                 "api_id": apiid,
-                "versions": [
-                    "Default"
-                ],
+                "versions": [ "Default" ],
                 "allowed_urls": [],
                 "restricted_types": [],
                 "limit": None,
@@ -82,9 +80,7 @@ for api in apis.json():
                 "api_name": apiName,
                 "limit": None,
                 "restricted_types": [],
-                "versions": [
-                    "Default"
-                ]
+                "versions": [ "Default" ]
             })
             addedCount+=1
         else:
