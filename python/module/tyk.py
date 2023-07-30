@@ -5,6 +5,7 @@
 import json
 import requests
 import time
+import uuid
 
 # Suppress the warnings from urllib3 when using a self signed certs
 from urllib3.exceptions import InsecureRequestWarning
@@ -582,10 +583,15 @@ class gateway:
     # Gateway createPolicy
     def createPolicy(self, policyDefinition):
         if type(policyDefinition) is dict:
+            if not 'id' in policyDefinition:
+                policyDefinition['id'] = str(uuid.uuid4())
             policyDefinition = json.dumps(policyDefinition)
+            print(policyDefinition)
         headers = {'x-tyk-authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        return requests.post(f'{self.URL}/tyk/policies', data=policyDefinition, headers=headers, verify=False)
+        response =  requests.post(f'{self.URL}/tyk/policies', data=policyDefinition, headers=headers, verify=False)
+        self.reloadGroup()
+        return response
 
     # Gateway createPolicies
     def createPolicies(self, policyDefinition, APIid, numberToCreate):
