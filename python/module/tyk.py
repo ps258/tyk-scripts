@@ -73,14 +73,18 @@ class dashboard:
             APIdefinition = APIDict
         return APIdefinition
 
+    # Dashboard __createAPI
+    def __createAPI(self, APIdefinition):
+        headers = {'Authorization' : self.authKey}
+        headers['Content-Type'] = 'application/json'
+        return requests.post(f'{self.URL}/api/apis', data=APIdefinition, headers=headers, verify=False)
+
     # Dashboard createAPI
     def createAPI(self, APIdefinition):
         APIdefinition = self.standardiseAPI(APIdefinition)
         if type(APIdefinition) is dict:
             APIdefinition = json.dumps(APIdefinition)
-        headers = {'Authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        return requests.post(f'{self.URL}/api/apis', data=APIdefinition, headers=headers, verify=False)
+        return self.__createAPI(APIdefinition)
 
     # Dashboard createAPIs
     def createAPIs(self, APIdefinition, numberToCreate):
@@ -103,7 +107,7 @@ class dashboard:
             APIdefinition['api_definition']['slug'] = newname
             APIdefinition['api_definition']['proxy']['listen_path'] = '/'+newname+'/'
             print(f'Adding API {APIdefinition["api_definition"]["name"]}, {APIdefinition["api_definition"]["proxy"]["listen_path"]}')
-            response = self.createAPI(APIdefinition)
+            response = self.__createAPI(json.dumps(APIdefinition))
             print(response.json())
             # if a call fails, stop and return the number of successes
             if response.status_code != 200:
@@ -470,32 +474,30 @@ class gateway:
         headers = {'x-tyk-authorization' : self.authKey}
         return requests.get(f'{self.URL}/tyk/apis', headers=headers, verify=False)
 
-    # Gateway standardise the API JSON format
+    # Gateway standardise the API JSON format and always return a dict
     def standardiseAPI(self, APIdefinition):
         # the gateway must not have a key called 'api_definition' with the api_definition in it
         # but the object needs to be just the API definition itself
+        if type(APIdefinition) is str:
+            # convert to a dict so we can test for the api_definition key
+            APIdefinition = json.loads(APIdefinition)
         if 'api_definition' in APIdefinition:
             return APIdefinition['api_definition']
         return APIdefinition
 
-    # Gateway createAPI
-    def createAPI(self, APIdefinition, reload = True):        
-        # need to convert it to a dict so we can check for api_definition and extract its contents
-        if type(APIdefinition) is str:
-            APIdefinition = json.loads(APIdefinition)
-        if type(APIdefinition) is dict:
-            # Can't use the dashboard format with api_model etc in it.
-            # Must just be the contents of api_definition without the api_definition key
-            if 'api_definition' in APIdefinition:
-                APIdefinition = json.dumps(APIdefinition['api_definition'])
-            else:
-                APIdefinition = json.dumps(APIdefinition)
+    # Gateway __createAPI
+    def __createAPI(self, APIdefinition):
         headers = {'x-tyk-authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        response = requests.post(f'{self.URL}/tyk/apis', data=APIdefinition, headers=headers, verify=False)
-        if reload:
-            # automatically call the group reload (makes things simpler for a caller)
-            self.reloadGroup()
+        return requests.post(f'{self.URL}/tyk/apis', data=APIdefinition, headers=headers, verify=False)
+
+    # Gateway createAPI
+    def createAPI(self, APIdefinition):
+        # need to convert it to a dict so we can check for api_definition and extract its contents
+        APIdefinition = self.standardiseAPI(APIdefinition)
+        response = self.__createAPI(json.dumps(APIdefinition))
+        # automatically call the group reload (makes things simpler for a caller)
+        self.reloadGroup()
         return response
 
     # Gateway createAPIs
@@ -521,7 +523,7 @@ class gateway:
             APIdefinition['proxy']['listen_path'] = '/'+newname+'/'
             print(f'Adding API {APIdefinition["name"]}, {APIdefinition["proxy"]["listen_path"]}')
             # create the API but don't reload the group
-            response = self.createAPI(APIdefinition, False)
+            response = self.__createAPI(json.dumps(APIdefinition))
             print(response.json())
             # if a call fails, stop and return the number of successes
             if response.status_code != 200:
