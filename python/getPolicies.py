@@ -47,15 +47,18 @@ else:
     tyk = tyk.gateway(gatw, auth)
 
 def printPolicy(policy):
-    print(f'{policy["name"]},{policy["_id"]}',end='')
-    firstAPI=True
-    for api in policy["access_rights"]:
-        if firstAPI:
-            print(f',{api}',end='')
-            firstAPI=False
-        else:
-            print(f':{api}',end='')
-    print('')
+    print(f'{policy["name"]},{policy["id"]}',end='')
+    if "access_rights" in policy and policy["access_rights"] is not None:
+        firstAPI=True
+        for api in policy["access_rights"]:
+            if firstAPI:
+                print(f',{api}',end='')
+                firstAPI=False
+            else:
+                print(f':{api}',end='')
+        print('')
+    else:
+        print(',')
 
 # get the existing Policies
 resp = tyk.getPolicies()
