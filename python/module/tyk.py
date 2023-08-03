@@ -124,10 +124,12 @@ class dashboard:
         headers['Content-Type'] = 'application/json'
         return requests.put(f'{self.URL}/api/apis/{APIid}', data=APIdefinition, headers=headers, verify=False)
 
+    # Dashboard deleteAPI
     def deleteAPI(self, APIid):
         headers = {'Authorization' : self.authKey}
         return requests.delete(f'{self.URL}/api/apis/{APIid}', headers=headers, verify=False)
 
+    # Dashboard deleteAllAPIs
     def deleteAllAPIs(self):
         allDeleted = True
         apis = self.getAPIs().json()
@@ -545,13 +547,15 @@ class gateway:
         self.reloadGroup()
         return response
 
-    # Gateway deleteAPI
-    def deleteAPI(self, APIid, reload = True):
+    # Gateway deleteAPI (private function which doesn't call reloadGroup)
+    def __deleteAPI(self, APIid):
         headers = {'x-tyk-authorization' : self.authKey}
-        response = requests.delete(f'{self.URL}/tyk/apis/{APIid}', headers=headers, verify=False)
-        if reload:
-            # automatically call the group reload (makes things simpler for a caller)
-            self.reloadGroup()
+        return requests.delete(f'{self.URL}/tyk/apis/{APIid}', headers=headers, verify=False)
+
+    # Gateway deleteAPI
+    def deleteAPI(self, APIid):
+        response = self.__deleteAPI(APIid)
+        self.reloadGroup()
         return response
 
     # Gateway deleteAllAPIs
@@ -560,7 +564,7 @@ class gateway:
         apis = self.getAPIs().json()
         for api in apis:
             print(f'Deleting API: {api["name"]}: {api["api_id"]}')
-            response = self.deleteAPI(api['api_id'], False)
+            response = self.__deleteAPI(api['api_id'])
             print(response.json())
             if response.status_code != 200:
                 allDeleted = False
@@ -590,7 +594,6 @@ class gateway:
         headers = {'x-tyk-authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
         response =  requests.post(f'{self.URL}/tyk/policies', data=policyDefinition, headers=headers, verify=False)
-        self.reloadGroup()
         return response
 
     # Gateway createPolicies
