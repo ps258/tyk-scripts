@@ -43,7 +43,7 @@ for opt, arg in opts:
     elif opt == '--verbose':
         verbose = 1
 
-if not ((dshb or gatw) and templateFile and auth and name):
+if not ((dshb or gatw) and templateFile and auth):
     printhelp()
 
 # create a new dashboard or gateway object
@@ -56,18 +56,20 @@ else:
 with open(templateFile) as APIFile:
     APIjson=json.load(APIFile)
     APIFile.close()
-    if 'api_definition' in APIjson:
-        APIjson["api_definition"]["name"] = name
-        APIjson["api_definition"]["slug"] = name
-        APIjson["api_definition"]["proxy"]["listen_path"] = '/'+name+'/'
-        if verbose:
-            print(f'[INFO]Creating API with name: {APIjson["api_definition"]["name"]}, slug:{APIjson["api_definition"]["slug"]}, listen_path {APIjson["api_definition"]["proxy"]["listen_path"]}')
-    else:
-        APIjson["name"] = name
-        APIjson["slug"] = name
-        APIjson["proxy"]["listen_path"] = '/'+name+'/'
-        if verbose:
-            print(f'[INFO]Creating API with name: {APIjson["name"]}, slug:{APIjson["slug"]}, listen_path {APIjson["proxy"]["listen_path"]}')
+    if name:
+        if 'api_definition' in APIjson:
+            APIjson["api_definition"]["name"] = name
+            APIjson["api_definition"]["slug"] = name
+            APIjson["api_definition"]["proxy"]["listen_path"] = '/'+name+'/'
+            if verbose:
+                print(f'[INFO]Creating API with name: {APIjson["api_definition"]["name"]}, slug:{APIjson["api_definition"]["slug"]}, listen_path {APIjson["api_definition"]["proxy"]["listen_path"]}')
+        else:
+            APIjson["name"] = name
+            APIjson["slug"] = name
+            APIjson["proxy"]["listen_path"] = '/'+name+'/'
+            if verbose:
+                print(f'[INFO]Creating API with name: {APIjson["name"]}, slug:{APIjson["slug"]}, listen_path {APIjson["proxy"]["listen_path"]}')
+
 resp = tyk.createAPI(APIjson)
 print(json.dumps(resp.json()))
 if resp.status_code != 200:
