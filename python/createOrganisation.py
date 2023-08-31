@@ -19,9 +19,10 @@ adminsecret = ""
 name = ""
 slug = ""
 verbose = 0
+cname = "cname.com"
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "adminsecret=", "name=", "slug=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "adminsecret=", "name=", "slug=", "cname=", "verbose"])
 except getopt.GetoptError as opterr:
     print(f'Error in option: {opterr}')
     printhelp()
@@ -35,6 +36,8 @@ for opt, arg in opts:
         adminsecret = arg
     elif opt == '--name':
         name = arg
+    elif opt == '--cname':
+        cname = arg
     elif opt == '--verbose':
         verbose = 1
 
@@ -49,7 +52,7 @@ if not slug:
 dashboard = tyk.dashboard(dshb, "", adminsecret)
 
 # Create the org data structure
-orgDef = { "owner_name": name, "owner_slug": slug }
+orgDef = { "owner_name": name, "owner_slug": slug, "cname": cname}
 
 resp = dashboard.createOrganisation(orgDef)
 print(json.dumps(resp.json()))
