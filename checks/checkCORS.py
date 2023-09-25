@@ -30,7 +30,7 @@ requestHeaders = ""
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} --url <Rest URL> --origins <list of origins to try> [--verbose]')
+    print(f'{scriptName} --url <Rest URL> --origins <list of origins to try> --headers <list of headers> [--verbose]')
     sys.exit(2)
 
 def checkOrigin(origin, headers) :
@@ -65,7 +65,7 @@ if not (url or len(origins)):
 
 for origin in origins:
     print(f'Testing Origin: {origin}')
-    for method in ['GET', 'PUT', 'POST', 'OPTIONS', 'DELETE', 'HEAD', 'CONNECT', 'TRACE']:
+    for method in ['GET', 'PUT', 'POST', 'PATCH', 'OPTIONS', 'DELETE', 'HEAD', 'CONNECT', 'TRACE']:
         Allowed = True
         reason = ''
         resp = requests.options(f'{url}', headers={'Origin' : origin, 'Access-Control-Request-Method': method}, verify=False)
