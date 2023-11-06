@@ -55,4 +55,4 @@ if verbose:
     print(json.dumps(apis.json(), indent=2))
 else:
     for api in apis.json():
-            print(f'{api["name"]},{api["api_id"]}')
+        print(f'{api["name"]},{api["api_id"]}')

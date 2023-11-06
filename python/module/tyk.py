@@ -653,9 +653,17 @@ class gateway:
     # Gateway getKeys
     def getKeys(self):
         headers = {'x-tyk-authorization' : self.authKey}
-        return requests.get(f'{self.URL}/tyk/keys', headers=headers, verify=False)
+        response = requests.get(f'{self.URL}/tyk/keys', headers=headers, verify=False)
+        body_json = response.json()
+        if response.status_code == 200:
+            # pull the Keys out of the 'keys' array so that the format is the same as it is from the Dashboard
+            keys = []
+            for key in body_json['keys']:
+                keys.append(key)
+            response._content = json.dumps(keys).encode()
+        return response
 
     # Gateway getKey
     def getKey(self, keyID):
         headers = {'x-tyk-authorization' : self.authKey}
-        return requests.get(f'{self.URL}/key/keys/{keyID}', headers=headers, verify=False)
+        return requests.get(f'{self.URL}/tyk/keys/{keyID}', headers=headers, verify=False)
