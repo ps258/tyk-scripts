@@ -40,4 +40,3 @@ if not (dshb and auth):
 dashboard = tyk.dashboard(dshb, auth)
 
 dashboard.deleteAllKeys()
-    sys.exit(1)
