@@ -1,0 +1,66 @@
+#!/bin/bash
+
+SCRIPTNAME=$(basename $0)
+NUM=100
+
+function help {
+  echo "$SCRIPTNAME: A script to create lots of oauth tokens"
+  echo "[USAGE]:"
+  echo "$SCRIPTNAME -n <number of tokens to create> -g <gateway URL> -a <API listen path> -i <client ID> -s <client Secret>"
+  echo "         The Auth token will be created from the client ID and client secret"
+}
+
+while getopts :n:g:a:i:s: arg; do
+  case $arg in
+    a)
+      API=$OPTARG
+      ;;
+    n)
+      NUM=$OPTARG
+      ;;
+    g)
+      GATEWAY=$OPTARG
+      ;;
+    i)
+      CLIENT_ID=$OPTARG
+      ;;
+    s)
+      CLIENT_SECRET=$OPTARG
+      ;;
+        :)
+      echo "Option -$OPTARG requires an arguement."
+      exit 1
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG"
+      exit 1
+      ;;
+  esac
+done
+
+if [[ -z $GATEWAY || -z $CLIENT_ID || -z $CLIENT_SECRET || -z $API ]]; then
+  help
+  exit 1
+fi
+
+GATEWAY=$(echo $GATEWAY | sed 's/\/$//')
+API=$(echo $API | sed 's/\/$//')
+API=$(echo $API | sed 's/^\///')
+
+AUTH=$(echo -n $CLIENT_ID:$CLIENT_SECRET | base64 -w 0)
+
+echo "[INFO]Number of oauth tokens to be created: $NUM"
+echo "[INFO]API URL: $GATEWAY/$API/oauth/token"
+echo "[INFO]Client ID: $CLIENT_ID"
+echo "[INFO]Client Secret: $CLIENT_SECRET"
+echo "[INFO]Authorization: $AUTH"
+echo
+
+for a in $(seq 1 $NUM); do
+  curl --location "$GATEWAY/$API/oauth/token" \
+  --header "Authorization: Basic $AUTH" \
+  --header "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=client_credentials" \
+  --data-urlencode "client_id=$CLIENT_ID" \
+  --data-urlencode "client_secret=$CLIENT_SECRET"
+done
