@@ -49,28 +49,28 @@ else:
 def printPolicy(policy):
     if policy["id"] == "":
         policy["id"] = policy["_id"] 
-    print(f'{policy["name"]},{policy["id"]}',end='')
+    print(f'{policy["name"]};{policy["id"]}',end='')
     if "access_rights" in policy and policy["access_rights"] is not None:
         firstAPI=True
         for api in policy["access_rights"]:
             if firstAPI:
-                print(f',{api}',end='')
+                print(f';{api}',end='')
                 firstAPI=False
             else:
-                print(f':{api}',end='')
+                print(f',{api}',end='')
         print('')
     else:
         print(',')
 
-# get the existing Policies
 resp = tyk.getPolicies()
 if resp.status_code != 200:
     print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
 policies = resp.json()
+
 if verbose:
     print(json.dumps(policies, indent=2))
-if not verbose:
-    print('# Name, policyID, APIs')
+else:
+    print('# Name; policyID; API, API, ...')
     for policy in policies:
         printPolicy(policy)
