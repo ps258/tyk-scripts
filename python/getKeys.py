@@ -46,13 +46,36 @@ if dshb:
 else:
     tyk = tyk.gateway(gatw, auth)
 
-keys = tyk.getKeys()
-if keys.status_code != 200:
-    print(json.dumps(keys.json()))
+def printKey(key):
+    print(f'{key["key_id"]};{key["data"]["alias"]}',end='')
+    firstPolicy=True
+    for policy in key["data"]["apply_policies"]:
+        if firstPolicy:
+            print(f';{policy}',end='')
+            firstPolicy=False
+        else:
+            print(f',{policy}',end='')
+    if "access_rights" in key["data"] and key["data"]["access_rights"] is not None:
+        firstAPI=True
+        for api in key["data"]["access_rights"]:
+            if firstAPI:
+                print(f';{api}',end='')
+                firstAPI=False
+            else:
+                print(f',{api}',end='')
+        print('')
+    else:
+        print('Y,',end='')
+
+resp = tyk.getKeys()
+if resp.status_code != 200:
+    print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
+keys = resp.json()
 
 if verbose:
-    print(json.dumps(keys.json(), indent=2))
+    print(json.dumps(keys, indent=2))
 else:
-    for key in keys.json():
-        print(f'{key}')
+    print('# Key; alias; policyID(s); API(s)')
+    for key in keys["keys"]:
+        printKey(key)
