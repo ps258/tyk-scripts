@@ -1,0 +1,18 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: ApiDefinition
+metadata:
+  name: testapi50
+spec:
+  name: testapi50
+  active: true
+  proxy:
+    target_url: http://httpbin.org/anything/50/
+    listen_path: /testapi50/
+    strip_listen_path: true
+  use_standard_auth: true
+  auth_configs:
+    authToken:
+      auth_header_name: Authorization
+  contextRef:
+    name: local-operator-context
+    namespace: ksandbox-1

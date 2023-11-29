@@ -1,0 +1,16 @@
+apiVersion: tyk.tyk.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: testapi50
+spec:
+  name: testapi50
+  state: active
+  active: true
+  access_rights_array:
+    - name: testapi50
+      namespace: ksandbox-1
+      versions:
+        - Default
+  contextRef:
+    name: local-operator-context
+    namespace: ksandbox-1
