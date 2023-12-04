@@ -667,3 +667,46 @@ class gateway:
     def getKey(self, keyID):
         headers = {'x-tyk-authorization' : self.authKey}
         return requests.get(f'{self.URL}/tyk/keys/{keyID}', headers=headers, verify=False)
+
+
+    # Gateway Certificate functions
+
+    # Gateway getCerts
+    def getCerts(self):
+        headers = {'x-tyk-authorization' : self.authKey}
+        return requests.get(f'{self.URL}/tyk/certs?p=-1', headers=headers, verify=False)
+
+    # Gateway getCert
+    def getCert(self, certid):
+        headers = {'x-tyk-authorization' : self.authKey}
+        return requests.get(f'{self.URL}/tyk/certs/{certid}', headers=headers, verify=False)
+
+    # Gateway getCertsDetails
+    def getCertsDetails(self):
+        headers = {'x-tyk-authorization' : self.authKey}
+        return requests.get(f'{self.URL}/tyk/certs?p=-1&mode=detailed', headers=headers, verify=False)
+
+    # Gateway createCert
+    def createCert(self, certFile):
+        headers = {'x-tyk-authorization' : self.authKey}
+        files={'data': open(certFile,'r')}
+        return requests.post(f'{self.URL}/tyk/certs', files=files, headers=headers, verify=False)
+
+    # Gateway deleteCert
+    def deleteCert(self, certid):
+        headers = {'x-tyk-authorization' : self.authKey}
+        return requests.delete(f'{self.URL}/tyk/certs/{certid}', headers=headers, verify=False)
+
+    # Gateway deleteAllCerts
+    def deleteAllCerts(self):
+        allDeleted = True
+        certs = self.getCerts().json()
+        print(certs)
+        for certid in certs['certs']:
+            print(f'Deleting certificate: {certid}')
+            response = self.deleteCert(certid)
+            print(response.json())
+            if response.status_code != 200:
+                allDeleted = False
+        return allDeleted
+
