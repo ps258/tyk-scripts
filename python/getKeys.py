@@ -47,7 +47,10 @@ else:
     tyk = tyk.gateway(gatw, auth)
 
 def printKey(key):
-    print(f'{key["key_id"]};{key["data"]["alias"]}',end='')
+    if "key_id" in key:
+        print(f'{key["key_id"]};{key["data"]["alias"]}',end='')
+    else:
+        print(f'{key["key_hash"]};{key["data"]["alias"]}',end='')
     firstPolicy=True
     for policy in key["data"]["apply_policies"]:
         if firstPolicy:
@@ -63,9 +66,7 @@ def printKey(key):
                 firstAPI=False
             else:
                 print(f',{api}',end='')
-        print('')
-    else:
-        print('Y,',end='')
+    print('')
 
 resp = tyk.getKeys()
 if resp.status_code != 200:
