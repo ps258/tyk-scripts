@@ -10,18 +10,19 @@ import tyk
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials> --template <API template file> --apiid <apiid> --verbose')
-    print("    Will take the template apply it to the APIid given")
+    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret> --template <API template file> --apiid <apiid> --verbose')
+    print("    Will take the template and apply it to the APIid given")
     sys.exit(1)
 
 dshb = ""
+gatw = ""
 auth = ""
 templateFile = ""
 verbose = 0
 apiid = ""
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "template=", "dashboard=", "cred=", "number=", "apiid=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "template=", "dashboard=", "gateway=", "cred=", "apiid=", "verbose"])
 except getopt.GetoptError as opterr:
     print(f'Error in option: {opterr}')
     printhelp()
@@ -33,6 +34,8 @@ for opt, arg in opts:
         templateFile = arg
     elif opt == '--dashboard':
         dshb = arg.strip().strip('/')
+    elif opt == '--gateway':
+        gatw = arg.strip().strip('/')
     elif opt == '--cred':
         auth = arg
     elif opt == '--apiid':
@@ -40,11 +43,14 @@ for opt, arg in opts:
     elif opt == '--verbose':
         verbose = 1
 
-if not (dshb and templateFile and auth and apiid):
+if not ((dshb or gatw) and templateFile and auth and apiid):
     printhelp()
 
-# create a new dashboard object
-dashboard = tyk.dashboard(dshb, auth)
+# create a new dashboard or gateway object
+if dshb:
+    tyk = tyk.dashboard(dshb, auth)
+else:
+    tyk = tyk.gateway(gatw, auth)
 
 # read the API defn
 with open(templateFile) as APIFile:
@@ -54,7 +60,8 @@ with open(templateFile) as APIFile:
 # set the api_id in the definition
 APIjson["api_definition"]["api_id"] = apiid
 
-resp = dashboard.updateAPI(json.dumps(APIjson), apiid)
+resp = tyk.updateAPI(json.dumps(APIjson), apiid)
 print(json.dumps(resp.json()))
 if resp.status_code != 200:
+    print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
