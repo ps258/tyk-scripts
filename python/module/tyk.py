@@ -482,6 +482,12 @@ class dashboard(tyk):
                 allDeleted = False
         return allDeleted
 
+    # Dashboard System functions
+
+    # Dashboard getNodes
+    def getNodes(self):
+        headers = {'Authorization' : self.authKey}
+        return requests.get(f'{self.URL}/api/system/nodes?p=-1', headers=headers, verify=False)
 
 ###################### GATEWAY CLASS ######################
 class gateway(tyk):
