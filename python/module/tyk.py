@@ -417,8 +417,18 @@ class dashboard(tyk):
         headers = {'Authorization' : self.authKey}
         return requests.get(f'{self.URL}/api/users/{userid}', headers=headers, verify=False)
 
+    # Dashboard deleteUser
+    def deleteUser(self, userid):
+        headers = {'Authorization' : self.authKey}
+        return requests.delete(f'{self.URL}/api/users/{userid}/actions/key/reset', headers=headers, verify=False)
+
+    # Dashboard resetAdminKey
+    def resetAdminKey(self, userid):
+        headers = {'Authorization' : self.authKey}
+        return requests.put(f'{self.URL}/api/users/{userid}/actions/key/reset', headers=headers, verify=False)
+
     # Dashboard resetUserPassword
-    def getUser(self, userid, userPass):
+    def resetUserPassword(self, userid, userPass):
         headers = {'Authorization' : self.authKey}
         return requests.post(f'{self.URL}/api/users/{userid}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers, verify=False)
 
