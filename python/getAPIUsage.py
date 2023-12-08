@@ -5,6 +5,7 @@ import os
 import getopt
 import sys
 import time
+from datetime import datetime, timedelta
 sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/module')
 import tyk
 
@@ -18,8 +19,8 @@ def printhelp():
 dshb = ""
 auth = ""
 verbose = 0
-startdate = ""
-enddate = ""
+startdate = (datetime.now() - timedelta(days=1)).strftime("%Y/%m/%d")
+enddate = (datetime.now()).strftime("%Y/%m/%d")
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "cred=", "startdate=", "enddate="])
