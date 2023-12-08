@@ -417,9 +417,13 @@ class dashboard(tyk):
         headers = {'Authorization' : self.authKey}
         return requests.get(f'{self.URL}/api/users/{userid}', headers=headers, verify=False)
 
+    # Dashboard resetUserPassword
+    def getUser(self, userid, userPass):
+        headers = {'Authorization' : self.authKey}
+        return requests.post(f'{self.URL}/api/users/{userid}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers, verify=False)
+
 
     # Dashboard Analytics functions
-
 
     # Dashboard getAPIUsage
     def getAPIUsage(self, startday = time.strftime('%d'), startmonth = time.strftime('%m'), startyear = time.strftime('%Y'), endday = time.strftime('%d'), endmonth = time.strftime('%m'), endyear = time.strftime('%Y')):
