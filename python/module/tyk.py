@@ -11,8 +11,43 @@ import uuid
 from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
+###################### BASE CLASS ######################
+# mostly for functions to print stuff out
+class tyk:
+    def printUserSummaryHeader(self):
+        print('# ID,IsActive,org_id,first_name,last_name,email,IsAdmin,accessKey')
+
+    def printUserSummary(self, user):
+        print(f'{user["id"]},{user["active"]},{user["org_id"]},{user["first_name"]},{user["last_name"]},{user["email_address"]},{user["user_permissions"]["IsAdmin"]},{user["access_key"]}')
+
+    def printKeySummaryHeader(self):
+        print('# Key; alias; policyID(s); API(s)')
+    
+    def printKeySummary(self,key):
+        if "key_id" in key:
+            print(f'{key["key_id"]};{key["data"]["alias"]}',end='')
+        else:
+            print(f'{key["key_hash"]};{key["data"]["alias"]}',end='')
+        firstPolicy=True
+        for policy in key["data"]["apply_policies"]:
+            if firstPolicy:
+                print(f';{policy}',end='')
+                firstPolicy=False
+            else:
+                print(f',{policy}',end='')
+        if "access_rights" in key["data"] and key["data"]["access_rights"] is not None:
+            firstAPI=True
+            for api in key["data"]["access_rights"]:
+                if firstAPI:
+                    print(f';{api}',end='')
+                    firstAPI=False
+                else:
+                    print(f',{api}',end='')
+        print('')
+
+
 ###################### DASHBOARD CLASS ######################
-class dashboard:
+class dashboard(tyk):
     def __init__(self, URL, authKey, adminSecret = 'N/A' , description = 'N/A'):
         self.URL = URL.strip('/')       # The dashboard URL
         self.authKey = authKey          # User key to authenticate API calls
@@ -372,6 +407,16 @@ class dashboard:
         resetResp = requests.post(f'{self.URL}/api/users/{userdata["Meta"]["id"]}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers, verify=False)
         return createResp
 
+    # Dashboard getUsers
+    def getUsers(self):
+        headers = {'Authorization' : self.authKey}
+        return requests.get(f'{self.URL}/api/users?p=-1', headers=headers, verify=False)
+
+    # Dashboard getUser
+    def getUser(self, userid):
+        headers = {'Authorization' : self.authKey}
+        return requests.get(f'{self.URL}/api/users/{userid}', headers=headers, verify=False)
+
 
     # Dashboard Analytics functions
 
@@ -435,7 +480,7 @@ class dashboard:
 
 
 ###################### GATEWAY CLASS ######################
-class gateway:
+class gateway(tyk):
     def __init__(self, URL, authKey, description = 'N/A'):
         self.URL = URL.strip('/')       # The gateway URL
         self.authKey = authKey          # User key to authenticate API calls ('Secret' from tyk.conf)
