@@ -499,6 +499,12 @@ class dashboard(tyk):
         headers = {'Authorization' : self.authKey}
         return requests.get(f'{self.URL}/api/system/nodes?p=-1', headers=headers, verify=False)
 
+    # Dashboard getSystemStats
+    def getSystemStats(self, ):
+        headers = {'Authorization' : self.authKey}
+        return requests.get(f'{self.URL}/api/system/stats', headers=headers, verify=False)
+
+
 ###################### GATEWAY CLASS ######################
 class gateway(tyk):
     def __init__(self, URL, authKey, description = 'N/A'):
