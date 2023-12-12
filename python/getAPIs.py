@@ -46,13 +46,13 @@ if dshb:
 else:
     tyk = tyk.gateway(gatw, auth)
 
-apis = tyk.getAPIs()
-if apis.status_code != 200:
-    print(json.dumps(apis.json()))
+resp = tyk.getAPIs()
+if resp.status_code != 200:
+    print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
 
 if verbose:
-    print(json.dumps(apis.json(), indent=2))
+    print(json.dumps(resp.json(), indent=2))
 else:
-    for api in apis.json():
+    for api in resp.json():
         print(f'{api["name"]},{api["api_id"]}')
