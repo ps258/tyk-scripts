@@ -22,14 +22,14 @@
 # USE THIS OPTION WITH CAUTION: --include-jwt-sessions
 # --include-jwt-sessions means that keys created as JWT session objects will be considered for deletion.
 # Deleting these will allow them to be recreated when a JWT with the corresponding sub is presented 
-# as an auth token to the gateway. This is almost certainly not was you want.
+# as an auth token to the gateway. This is almost certainly not what you want.
 # For example: 
 #    JWT auth is setup with a policy that defaults to a 1 hour key life.
 #    A JWT is presented with a particular subject and the corresponding key is created.
-#    That key expires in an hour
+#    That key expires after an hour and access is denied when the JWT is presented
 #    This script is used to remove that expired key
-#    A JWT is presented with a the same subject and the corresponding key is created.
-#    This has restored access rather than removed it.
+#    The JWT is presented again and the corresponding key is created allowing access for another hour
+#    So removing the key has restored access via the JWT rather than blocking it
 
 # The script is not redis cluster aware. It must be pointed at a master redis replica (if replication is active)
 # If redis is sharded the script must be used on each master in turn
