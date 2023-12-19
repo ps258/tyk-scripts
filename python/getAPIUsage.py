@@ -52,8 +52,12 @@ dashboard = tyk.dashboard(dshb, auth)
 
 start = startdate.split('/')
 end = enddate.split('/')
+# symbols for the contents of 'start' and 'end' for readability
+year = 0
+day = 2
+month = 1
 
-resp = dashboard.getAPIUsage(startday=start[2], startmonth=start[1], startyear=start[0], endday=end[2], endmonth=end[1], endyear=end[0])
+resp = dashboard.getAPIUsage(startday=start[day], startmonth=start[month], startyear=start[year], endday=end[day], endmonth=end[month], endyear=end[year])
 print(json.dumps(resp.json(), indent=2))
 if resp.status_code != 200:
     sys.exit(1)
