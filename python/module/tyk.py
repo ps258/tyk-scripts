@@ -468,7 +468,7 @@ class dashboard(tyk):
 
     # Dashboard Bootstrap functions
 
-    # Dashboard bootstrap. Takes an admin email, admin password, a dashboard licence and an optional portal cname. 
+    # Dashboard bootstrap. Takes an admin email, admin password, a dashboard licence and an optional portal cname.
     def bootstrap(self, userEmail, userPass, licence, cname = "portal.cname.com"):
         # set the licence
         response = self.setLicence(licence)
@@ -559,6 +559,31 @@ class dashboard(tyk):
     def getSystemStats(self, ):
         headers = {'Authorization' : self.authKey}
         return requests.get(f'{self.URL}/api/system/stats', headers=headers, verify=False)
+
+    # Dashboard getSystemStauts
+    def getSystemStatus(self):
+        return requests.get(f'{self.URL}/hello/', verify=False)
+
+    # Dashboard is up
+    def isUp(self):
+        try:
+            response = self.getSystemStatus()
+            return response.status_code == 200
+        except:
+            return False
+
+    # Dashboard wait to be up
+    def waitUp(self, timeout = 0):
+        count = 0
+        if timeout > 0:
+            while (not self.isUp() and count < timeout):
+                time.sleep(1)
+                count += 1
+        else:
+            while not self.isUp():
+                time.sleep(1)
+        return self.isUp()
+
 
 
 ###################### GATEWAY CLASS ######################
@@ -806,7 +831,7 @@ class gateway(tyk):
             for key in body_json['keys']:
                 keyResp = self.getKey(key)
                 if keyResp.status_code == 200:
-                    #keyJSON = f'"{key}": "{keyResp.json()}"' 
+                    #keyJSON = f'"{key}": "{keyResp.json()}"'
                     #keys.append(keyResp.json())
                     #keys.append(keyJSON)
                     body_json['keys'] = keyResp.json()
