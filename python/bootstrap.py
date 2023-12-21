@@ -59,6 +59,6 @@ dashboard = tyk.dashboard(dshb, "", adminsecret)
 
 resp = dashboard.bootstrap(adminEmail, adminPassword, licence, cname)
 if resp.status_code != 200:
-    print("[FATAL]Failed to bootstrap")
-    print(json.dumps(resp.json()))
+    print(f'[FATAL]Failed to bootstrap. The dashboard returned {resp.status_code}', file=sys.stderr)
+    print(json.dumps(resp.json()), file=sys.stderr)
     sys.exit(1)
