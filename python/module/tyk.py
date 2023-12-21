@@ -426,7 +426,7 @@ class dashboard(tyk):
         createResp = requests.post(f'{self.URL}/admin/users', data=json.dumps(userDefinition), headers=headers, verify=False)
         if createResp.status_code != 200:
             return createResp
-        # need to send a reset to for the user
+        # need to set the user password immediately
         userdata = createResp.json()
         headers = {'Authorization' : userdata['Meta']['access_key']}
         headers['Content-Type'] = 'application/json'
@@ -463,7 +463,8 @@ class dashboard(tyk):
 
     # Dashboard setLicence
     def setLicence(self, licence):
-        return requests.post(f'{self.URL}/license', data=f'license={licence}', verify=False)
+        headers = {'Content-Type' : 'application/x-www-form-urlencoded'}
+        return requests.post(f'{self.URL}/license', data=f'license={licence}', headers=headers, verify=False)
 
 
     # Dashboard Bootstrap functions

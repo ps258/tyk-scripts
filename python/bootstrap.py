@@ -11,7 +11,7 @@ scriptName = os.path.basename(__file__)
 
 dshb = ""
 adminsecret = ""
-adminEmail = "tyk@admin.com"
+adminEmail = "admin@tyk.io"
 adminPassword = "ABC-123"
 licence = ""
 verbose = 0
@@ -55,7 +55,7 @@ if not (dshb and adminsecret and licence):
 # create a new dashboard object
 dashboard = tyk.dashboard(dshb, "", adminsecret)
 
-# Create the org data structure
+# Bootstrap when the dashboard is up
 if dashboard.waitUp(10):
     resp = dashboard.bootstrap(adminEmail, adminPassword, licence, cname)
     if resp.status_code != 200:
