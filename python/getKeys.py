@@ -10,7 +10,7 @@ import tyk
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] URL> --cred <Dashboard API credentials>')
+    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] URL> --cred <Dashboard API key or Gateway secret>')
     print("    Will list all keys found")
     sys.exit(1)
 
@@ -46,9 +46,10 @@ if dshb:
 else:
     tyk = tyk.gateway(gatw, auth)
 
-resp = tyk.getKeys()
+resp = tyk.getKeysDetailed()
 if resp.status_code != 200:
     print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
+    print(json.dumps(resp.json()))
     sys.exit(1)
 keys = resp.json()
 
