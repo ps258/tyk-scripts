@@ -46,21 +46,6 @@ if dshb:
 else:
     tyk = tyk.gateway(gatw, auth)
 
-def printPolicy(policy):
-    if policy["id"] == "":
-        policy["id"] = policy["_id"] 
-    print(f'{policy["name"]};{policy["id"]}',end='')
-    if "access_rights" in policy and policy["access_rights"] is not None:
-        firstAPI=True
-        for api in policy["access_rights"]:
-            if firstAPI:
-                print(f';{api}',end='')
-                firstAPI=False
-            else:
-                print(f',{api}',end='')
-        print('')
-    else:
-        print(',')
 
 resp = tyk.getPolicies()
 if resp.status_code != 200:
@@ -71,6 +56,6 @@ policies = resp.json()
 if verbose:
     print(json.dumps(policies, indent=2))
 else:
-    print('# Name; policyID; API, API, ...')
-    for policy in policies:
-        printPolicy(policy)
+    tyk.printPolicySummaryHeader()
+    for policy in policies['policies']:
+        tyk.printPolicySummary(policy)

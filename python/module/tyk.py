@@ -52,6 +52,24 @@ class tyk:
             print(';',end='')
         print('')
 
+    def printPolicySummaryHeader(self):
+        print('# Name; policyID; API, API, ...')
+
+    def printPolicySummary(self,policy):
+        if policy["id"] == "":
+            policy["id"] = policy["_id"]
+        print(f'{policy["name"]};{policy["id"]}',end='')
+        if "access_rights" in policy and policy["access_rights"] is not None:
+            firstAPI=True
+            for api in policy["access_rights"]:
+                if firstAPI:
+                    print(f';{api}',end='')
+                    firstAPI=False
+                else:
+                    print(f',{api}',end='')
+            print('')
+        else:
+            print(',')
 
 ###################### DASHBOARD CLASS ######################
 class dashboard(tyk):
@@ -199,8 +217,10 @@ class dashboard(tyk):
         response = requests.get(f'{self.URL}/api/portal/policies/?p=-1', headers=headers, verify=False)
         if response.status_code == 200:
             body_json = response.json()
-            # pull the policies out of the 'Data' array so that the format is the same as it is from the gateway
-            response._content = json.dumps(body_json['Data']).encode()
+            # rename 'Data' to 'polcies' to be consistent with apis, users and keys.
+            body_json['policies'] = body_json['Data']
+            del body_json['Data']
+            response._content = json.dumps(body_json).encode()
         return response
 
     # Dashboard createPolicy
@@ -255,7 +275,7 @@ class dashboard(tyk):
     def deleteAllPolicies(self):
         allDeleted = True
         policies = self.getPolicies().json()
-        for policy in policies:
+        for policy in policies['policies']:
             print(f'Deleting policy: {policy["_id"]}')
             response = self.deletePolicy(policy['_id'])
             print(response.json())
@@ -738,7 +758,11 @@ class gateway(tyk):
     # Gateway getPolicies
     def getPolicies(self):
         headers = {'x-tyk-authorization' : self.authKey}
-        return requests.get(f'{self.URL}/tyk/policies', headers=headers, verify=False)
+        response = requests.get(f'{self.URL}/tyk/policies', headers=headers, verify=False)
+        body_json = {}
+        body_json['policies'] = response.json()
+        response._content = json.dumps(body_json).encode()
+        return response
 
     # Gateway createPolicy
     def createPolicy(self, policyDefinition):
@@ -757,7 +781,7 @@ class gateway(tyk):
         policies = self.getPolicies().json()
         # create a dictionary of all policy names
         PolicyName = policyDefinition['name']
-        for policy in policies:
+        for policy in policies['policies']:
             allnames[policy['name']] = 1
         i = 1
         numberCreated = 0
@@ -795,7 +819,7 @@ class gateway(tyk):
     def deleteAllPolicies(self):
         allDeleted = True
         policies = self.getPolicies().json()
-        for policy in policies:
+        for policy in policies['policies']:
             print(f'Deleting policy: {policy["_id"]}')
             response = self.deletePolicy(policy['_id'])
             print(response.json())
