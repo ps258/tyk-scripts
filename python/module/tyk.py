@@ -923,10 +923,9 @@ class gateway(tyk):
     # Gateway Certificate functions
 
     # Gateway getCerts
-    def getCerts(self, orgid='*'):
+    def getCerts(self, orgid):
         headers = {'x-tyk-authorization' : self.authKey}
-        # I know that orgid is needed when the gateway is connected to the dashboard.
-        # But I'm not sure about when it's in CE mode
+        # there seems to be a bug in retrieving certs from the gateway unless the orgid is specified (TT-8211)
         return requests.get(f'{self.URL}/tyk/certs?p=-1&org_id={orgid}', headers=headers, verify=False)
 
     # Gateway getCert
