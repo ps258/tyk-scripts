@@ -55,7 +55,7 @@ class tyk:
     def printPolicySummaryHeader(self):
         print('# Name; policyID; API, API, ...')
 
-    def printPolicySummary(self,policy):
+    def printPolicySummary(self, policy):
         if policy["id"] == "":
             policy["id"] = policy["_id"]
         print(f'{policy["name"]};{policy["id"]}',end='')
@@ -70,6 +70,25 @@ class tyk:
             print('')
         else:
             print(',')
+
+    def printAPISummaryHeader(self):
+        print('# Name; apiid')
+
+    def printAPISummary(self, api):
+        # handle both forms of classic API
+        if "api_definition" in api:
+            api = api["api_definition"]
+        print(f'{api["name"]},{api["api_id"]}')
+
+    def APIid(self, api):
+        if "api_definition" in api:
+            return api["api_definition"]["api_id"]
+        return api["api_id"]
+
+    def APIName(self, api):
+        if "api_definition" in api:
+            return api["api_definition"]["name"]
+        return api["name"]
 
 ###################### DASHBOARD CLASS ######################
 class dashboard(tyk):
@@ -116,26 +135,7 @@ class dashboard(tyk):
     # Dashboard getAPIs
     def getAPIs(self):
         headers = {'Authorization' : self.authKey}
-        response = requests.get(f'{self.URL}/api/apis/?p=-1', headers=headers, verify=False)
-        body_json = response.json()
-        if response.status_code == 200:
-            # pull the APIs out of the 'apis' array so that the format is the same as it is from the gateway
-            # also extract the API defintions out of 'api_definition' and add it to the array
-            apis = []
-            for api in body_json['apis']:
-                apis.append(api['api_definition'])
-            response._content = json.dumps(apis).encode()
-        return response
-
-    # Dashboard standardise the API JSON format
-    def standardiseAPI(self, APIdefinition):
-        # the dashboard needs to have a key called 'api_definition' with the api_definition in it
-        # but sometimes the json is just the API definition. So test for that and set it right
-        if not 'api_definition' in APIdefinition:
-            APIDict = dict()
-            APIDict['api_definition'] = APIdefinition
-            APIdefinition = APIDict
-        return APIdefinition
+        return requests.get(f'{self.URL}/api/apis/?p=-1', headers=headers, verify=False)
 
     # Dashboard __createAPI
     def __createAPI(self, APIdefinition):
@@ -145,14 +145,14 @@ class dashboard(tyk):
 
     # Dashboard createAPI
     def createAPI(self, APIdefinition):
-        APIdefinition = self.standardiseAPI(APIdefinition)
+        APIdefinition = self.standardiseAPIformat(APIdefinition)
         if isinstance(APIdefinition, dict):
             APIdefinition = json.dumps(APIdefinition)
         return self.__createAPI(APIdefinition)
 
     # Dashboard createAPIs
     def createAPIs(self, APIdefinition, numberToCreate):
-        APIdefinition = self.standardiseAPI(APIdefinition)
+        APIdefinition = self.standardiseAPIformat(APIdefinition)
         # create a dictionary of all API names
         apis = self.getAPIs().json()
         APIName = APIdefinition['api_definition']['name']
@@ -196,13 +196,26 @@ class dashboard(tyk):
     def deleteAllAPIs(self):
         allDeleted = True
         apis = self.getAPIs().json()
-        for api in apis:
-            print(f'Deleting API: {api["name"]}: {api["api_id"]}')
-            response = self.deleteAPI(api['api_id'])
-            print(response.json())
+        for api in apis['apis']:
+            id = self.APIid(api)
+            print(f'Deleting API: {self.APIName(api)}: {id}')
+            response = self.deleteAPI(id)
             if response.status_code != 200:
                 allDeleted = False
         return allDeleted
+
+    # Dashboard standardise the API JSON format
+    def standardiseAPIformat(self, APIdefinition):
+        # the dashboard needs to have a key called 'api_definition' with the api_definition in it
+        # but sometimes the json is just the API definition. So test for that and set it right
+        if isinstance(APIdefinition, str):
+            # convert to a dict so we can test for the api_definition key
+            APIdefinition = json.loads(APIdefinition)
+        if not 'api_definition' in APIdefinition:
+            APIDict = dict()
+            APIDict['api_definition'] = APIdefinition
+            APIdefinition = APIDict
+        return APIdefinition
 
 
     # Dashboard Policy functions
@@ -651,18 +664,11 @@ class gateway(tyk):
     # Gateway getAPIs
     def getAPIs(self):
         headers = {'x-tyk-authorization' : self.authKey}
-        return requests.get(f'{self.URL}/tyk/apis', headers=headers, verify=False)
-
-    # Gateway standardise the API JSON format and always return a dict
-    def standardiseAPI(self, APIdefinition):
-        # the gateway must not have a key called 'api_definition' with the api_definition in it
-        # but the object needs to be just the API definition itself
-        if isinstance(APIdefinition, str):
-            # convert to a dict so we can test for the api_definition key
-            APIdefinition = json.loads(APIdefinition)
-        if 'api_definition' in APIdefinition:
-            return APIdefinition['api_definition']
-        return APIdefinition
+        response = requests.get(f'{self.URL}/tyk/apis', headers=headers, verify=False)
+        body_json = {}
+        body_json['apis'] = response.json()
+        response._content = json.dumps(body_json).encode()
+        return response
 
     # Gateway __createAPI
     def __createAPI(self, APIdefinition):
@@ -673,7 +679,7 @@ class gateway(tyk):
     # Gateway createAPI
     def createAPI(self, APIdefinition):
         # need to convert it to a dict so we can check for api_definition and extract its contents
-        APIdefinition = self.standardiseAPI(APIdefinition)
+        APIdefinition = self.standardiseAPIformat(APIdefinition)
         response = self.__createAPI(json.dumps(APIdefinition))
         # automatically call the group reload (makes things simpler for a caller)
         self.reloadGroup()
@@ -681,7 +687,7 @@ class gateway(tyk):
 
     # Gateway createAPIs
     def createAPIs(self, APIdefinition, numberToCreate):
-        APIdefinition = self.standardiseAPI(APIdefinition)
+        APIdefinition = self.standardiseAPIformat(APIdefinition)
         APIName = APIdefinition['name']
         apis = self.getAPIs().json()
         # create a dictionary of all API names
@@ -746,6 +752,17 @@ class gateway(tyk):
                 allDeleted = False
         self.reloadGroup()
         return allDeleted
+
+    # Gateway standardise the API JSON format and always return a dict
+    def standardiseAPIformat(self, APIdefinition):
+        # the gateway must not have a key called 'api_definition' with the api_definition in it
+        # but the object needs to be just the API definition itself
+        if isinstance(APIdefinition, str):
+            # convert to a dict so we can test for the api_definition key
+            APIdefinition = json.loads(APIdefinition)
+        if 'api_definition' in APIdefinition:
+            return APIdefinition['api_definition']
+        return APIdefinition
 
 
     # Gateway Policy functions

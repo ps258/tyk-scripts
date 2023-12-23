@@ -54,5 +54,6 @@ if resp.status_code != 200:
 if verbose:
     print(json.dumps(resp.json(), indent=2))
 else:
-    for api in resp.json():
-        print(f'{api["name"]},{api["api_id"]}')
+    tyk.printAPISummaryHeader()
+    for api in resp.json()['apis']:
+        tyk.printAPISummary(api)
