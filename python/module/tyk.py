@@ -861,25 +861,32 @@ class gateway(tyk):
             response._content = json.dumps(keys).encode()
         return response
 
-    # Dashboard getKeysDetailed
+    # Gateway getKeysDetailed
     def getKeysDetailed(self):
         headers = {'x-tyk-authorization' : self.authKey}
         response = requests.get(f'{self.URL}/tyk/keys', headers=headers, verify=False)
         body_json = response.json()
-        print(json.dumps(body_json, indent=2))
+        #print(json.dumps(body_json, indent=2))
         if response.status_code == 200:
             # pull the Keys out of the 'keys' array so that the format is the same as it is from the Dashboard
-            keys = []
+            keys = {}
+            keys['keys'] = []
             for key in body_json['keys']:
+                #print(f'Key is {key}')
+                keyObj = {}
+                keyObj["key_id"] = key
                 keyResp = self.getKey(key)
                 if keyResp.status_code == 200:
+                    keyObj["data"] = keyResp.json()
                     #keyJSON = f'"{key}": "{keyResp.json()}"'
                     #keys.append(keyResp.json())
                     #keys.append(keyJSON)
-                    body_json['keys'] = keyResp.json()
-            print(json.dumps(body_json, indent=2))
+                    #body_json['keys'] = keyResp.json()
+                keys['keys'].append(keyObj)
+                #print(json.dumps(keys, indent=2))
+            #print(json.dumps(body_json, indent=2))
             response._content = json.dumps(keys).encode()
-        print(json.dumps(response.json()))
+        #print(json.dumps(response.json(), indent=2))
         return response
 
     # Gateway getKey
