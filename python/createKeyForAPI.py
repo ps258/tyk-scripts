@@ -10,11 +10,12 @@ import tyk
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API key or Gateway secret> --apiid <apiid> --rate <rate> --per <period in seconds>')
-    print("    returns the API JSON for the given APIID")
+    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret> --apiid <apiid> --rate <rate> --per <period in seconds>')
+    print("    Will create a new authentication key for the API_ID given")
     sys.exit(1)
 
 dshb = ""
+gatw = ""
 auth = ""
 apiid = ""
 verbose = 0
@@ -23,7 +24,7 @@ per = 60
 
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "cred=", "apiid=", "per=", "rate=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "cred=", "apiid=", "per=", "rate=", "verbose"])
 except getopt.GetoptError as opterr:
     print(f'Error in option: {opterr}')
     printhelp()
@@ -33,6 +34,8 @@ for opt, arg in opts:
         printhelp()
     elif opt == '--dashboard':
         dshb = arg.strip().strip('/')
+    elif opt == '--gateway':
+        gatw = arg.strip().strip('/')
     elif opt == '--cred':
         auth = arg
     elif opt == '--apiid':
@@ -44,7 +47,7 @@ for opt, arg in opts:
     elif opt == '--verbose':
         verbose = 1
 
-if not (dshb and auth and apiid):
+if not ((dshb or gatw) and auth and apiid):
     printhelp()
 
 # create a new dashboard or gateway object
@@ -77,13 +80,21 @@ KeyJson["quota_renewal_rate"] = 60
 KeyJson["allowance"] = rate
 
 
-if verbose:
-    print(json.dumps(KeyJson, indent=2))
+#if verbose:
+#    print(json.dumps(KeyJson, indent=2))
 
 resp = tyk.createKey(KeyJson)
 if resp.status_code != 200:
     print(resp)
     sys.exit(1)
 else:
-    print(json.dumps(resp.json()["key_id"]))
+    if verbose:
+        print(json.dumps(resp.json(), indent=2))
+    else:
+        if "key_id" in resp.json():
+            # dashboard
+            print(json.dumps(resp.json()["key_id"]))
+        else:
+            # gateway
+            print(json.dumps(resp.json()["key"]))
 
