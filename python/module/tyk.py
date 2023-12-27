@@ -594,7 +594,7 @@ class dashboard(tyk):
         headers = {'Authorization' : self.authKey}
         return requests.get(f'{self.URL}/api/system/stats', headers=headers, verify=False)
 
-    # Dashboard getSystemStauts
+    # Dashboard getSystemStatus
     def getSystemStatus(self):
         return requests.get(f'{self.URL}/hello/', verify=False)
 
@@ -978,4 +978,30 @@ class gateway(tyk):
             if response.status_code != 200:
                 allDeleted = False
         return allDeleted
+
+    # Gateway getSystemStatus
+    def getSystemStatus(self):
+        return requests.get(f'{self.URL}/hello', verify=False)
+
+    # Gateway is up
+    def isUp(self):
+        try:
+            response = self.getSystemStatus()
+            # This is nice for versions after 3.0 but before that it was only 'Hello Tiki', so just use status_code
+            # return response.json()["status"] == "pass"
+            return response.status_code == 200
+        except:
+            return False
+
+    # Gateway wait to be up
+    def waitUp(self, timeout = 0):
+        count = 0
+        if timeout > 0:
+            while (not self.isUp() and count < timeout):
+                time.sleep(1)
+                count += 1
+        else:
+            while not self.isUp():
+                time.sleep(1)
+        return self.isUp()
 
