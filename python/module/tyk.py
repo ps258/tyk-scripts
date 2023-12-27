@@ -195,8 +195,8 @@ class dashboard(tyk):
     # Dashboard deleteAllAPIs
     def deleteAllAPIs(self):
         allDeleted = True
-        apis = self.getAPIs().json()
-        for api in apis['apis']:
+        apis = self.getAPIs().json()['apis']
+        for api in apis:
             id = self.APIid(api)
             print(f'Deleting API: {self.APIName(api)}: {id}')
             response = self.deleteAPI(id)
@@ -515,7 +515,7 @@ class dashboard(tyk):
         if response.status_code != 200:
             print("[FATAL]Failed to create organisation")
             return response
-        orgID = response.json()["Meta"]
+        orgID = response.json()['Meta']
         response = self.createAdminUser(userEmail, userPass, orgID)
         return response
 
@@ -743,7 +743,7 @@ class gateway(tyk):
     # Gateway deleteAllAPIs
     def deleteAllAPIs(self):
         allDeleted = True
-        apis = self.getAPIs().json()
+        apis = self.getAPIs().json()['apis']
         for api in apis:
             print(f'Deleting API: {api["name"]}: {api["api_id"]}')
             response = self.__deleteAPI(api['api_id'])
