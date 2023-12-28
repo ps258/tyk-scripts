@@ -157,8 +157,8 @@ class dashboard(tyk):
         apis = self.getAPIs().json()
         APIName = APIdefinition['api_definition']['name']
         allnames = dict()
-        for api in apis:
-            allnames[api['name']] = 1
+        for api in apis['apis']:
+            allnames[api['api_definition']['name']] = 1
         i = 1
         numberCreated = 0
         while numberCreated < numberToCreate:
@@ -172,7 +172,7 @@ class dashboard(tyk):
             APIdefinition['api_definition']['proxy']['listen_path'] = '/'+newname+'/'
             print(f'Adding API {APIdefinition["api_definition"]["name"]}, {APIdefinition["api_definition"]["proxy"]["listen_path"]}')
             response = self.__createAPI(json.dumps(APIdefinition))
-            print(response.json())
+            #print(response.json())
             # if a call fails, stop and return the number of successes
             if response.status_code != 200:
                 break

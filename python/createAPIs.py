@@ -68,8 +68,11 @@ with open(templateFile) as APIFile:
 
 numberCreated = tyk.createAPIs(APIjson, toAdd)
 
-if numberCreated == toAdd:
-    print(f'Success: {numberCreated} APIs created')
+if verbose:
+    if numberCreated == toAdd:
+        print(f'Success: {numberCreated} APIs created')
+    else:
+        print(f'Failure: Only {numberCreated} of {toAdd} APIs created')
+        sys.exit(1)
 else:
-    print(f'Failure: Only {numberCreated} of {toAdd} APIs created')
-    sys.exit(1)
+    print(numberCreated)
