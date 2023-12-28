@@ -14,6 +14,9 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 ###################### BASE CLASS ######################
 # mostly for functions to print stuff out
 class tyk:
+    def __init__(self):
+        self.session = requests.Session()
+
     def printUserSummaryHeader(self):
         print('# ID,IsActive,org_id,first_name,last_name,email,IsAdmin,accessKey')
 
@@ -93,10 +96,13 @@ class tyk:
 ###################### DASHBOARD CLASS ######################
 class dashboard(tyk):
     def __init__(self, URL, authKey, adminSecret = 'N/A' , description = 'N/A'):
+        super().__init__()
         self.URL = URL.strip('/')       # The dashboard URL
         self.authKey = authKey          # User key to authenticate API calls
         self.description = description  # description of this dashboard
         self.adminSecret = adminSecret  # The admin secret for the admin API (admin_secret in tyk_analytics.conf, AdminSecret in tyk.conf)
+        self.session.headers.update({'Authorization': self.authKey})
+        self.session.headers.update({'admin-auth': self.adminSecret})
 
     def __str__(self):
         return f'Dashboard URL: {self.URL}, Auth token: {self.authkey}, Admin Secret: {self.adminSecret}, Description: {self.description}'
@@ -112,12 +118,14 @@ class dashboard(tyk):
 
     def setAuthkey(self, authkey):
         self.authkey = authkey
+        self.session.headers.update({'Authorization': self.authKey})
         return self.authkey
 
     def description(self):
         return self.description
 
     def adminSecret(self):
+        self.session.headers.update({'admin-auth': self.adminSecret})
         return self.adminSecret
 
     def setAdminSecret(self, adminSecret):
@@ -129,19 +137,16 @@ class dashboard(tyk):
 
     # Dashboard getAPI
     def getAPI(self, APIid):
-        headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/apis/{APIid}', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/api/apis/{APIid}', verify=False)
 
     # Dashboard getAPIs
     def getAPIs(self):
-        headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/apis/?p=-1', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/api/apis/?p=-1', verify=False)
 
     # Dashboard __createAPI
     def __createAPI(self, APIdefinition):
-        headers = {'Authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        return requests.post(f'{self.URL}/api/apis', data=APIdefinition, headers=headers, verify=False)
+        headers = {'Content-Type': 'application/json'}
+        return self.session.post(f'{self.URL}/api/apis', data=APIdefinition, headers=headers, verify=False)
 
     # Dashboard createAPI
     def createAPI(self, APIdefinition):
@@ -183,14 +188,12 @@ class dashboard(tyk):
     def updateAPI(self, APIdefinition, APIid):
         if isinstance(APIdefinition, dict):
             APIdefinition = json.dumps(APIdefinition)
-        headers = {'Authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        return requests.put(f'{self.URL}/api/apis/{APIid}', data=APIdefinition, headers=headers, verify=False)
+        headers = {'Content-Type': 'application/json'}
+        return self.session.put(f'{self.URL}/api/apis/{APIid}', data=APIdefinition, headers=headers, verify=False)
 
     # Dashboard deleteAPI
     def deleteAPI(self, APIid):
-        headers = {'Authorization' : self.authKey}
-        return requests.delete(f'{self.URL}/api/apis/{APIid}', headers=headers, verify=False)
+        return self.session.delete(f'{self.URL}/api/apis/{APIid}', verify=False)
 
     # Dashboard deleteAllAPIs
     def deleteAllAPIs(self):
@@ -221,13 +224,11 @@ class dashboard(tyk):
     # Dashboard Policy functions
     # Dashboard getPolicy
     def getPolicy(self, policyID):
-        headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/portal/policies/{policyID}', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/api/portal/policies/{policyID}', verify=False)
 
     # Dashboard getPolicies
     def getPolicies(self):
-        headers = {'Authorization' : self.authKey}
-        response = requests.get(f'{self.URL}/api/portal/policies/?p=-1', headers=headers, verify=False)
+        response = self.session.get(f'{self.URL}/api/portal/policies/?p=-1', verify=False)
         if response.status_code == 200:
             body_json = response.json()
             # rename 'Data' to 'polcies' to be consistent with apis, users and keys.
@@ -240,9 +241,8 @@ class dashboard(tyk):
     def createPolicy(self, policyDefinition):
         if isinstance(policyDefinition, dict):
             policyDefinition = json.dumps(policyDefinition)
-        headers = {'Authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        return requests.post(f'{self.URL}/api/portal/policies', data=policyDefinition, headers=headers, verify=False)
+        headers = {'Content-Type': 'application/json'}
+        return self.session.post(f'{self.URL}/api/portal/policies', data=policyDefinition, headers=headers, verify=False)
 
     # Dashboard createPolicies
     def createPolicies(self, policyDefinition, APIid, numberToCreate):
@@ -275,14 +275,12 @@ class dashboard(tyk):
     def updatePolicy(self, policyDefinition, policyID):
         if isinstance(policyDefinition, dict):
             policyDefinition = json.dumps(policyDefinition)
-        headers = {'Authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        return requests.put(f'{self.URL}/api/portal/policies/{policyID}', data=policyDefinition, headers=headers, verify=False)
+        headers = {'Content-Type': 'application/json'}
+        return self.session.put(f'{self.URL}/api/portal/policies/{policyID}', data=policyDefinition, headers=headers, verify=False)
 
     # Dashboard deletePolicy
     def deletePolicy(self, policyID):
-        headers = {'Authorization' : self.authKey}
-        return requests.delete(f'{self.URL}/api/portal/policies/{policyID}', headers=headers, verify=False)
+        return self.session.delete(f'{self.URL}/api/portal/policies/{policyID}', verify=False)
 
     # Dashboard deleteAllPolicies
     def deleteAllPolicies(self):
@@ -305,49 +303,41 @@ class dashboard(tyk):
 
     # Dashboard getKeys
     def getKeys(self):
-        headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/apis/-/keys?p=-1', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/api/apis/-/keys?p=-1', verify=False)
 
     # Dashboard getKeysDetailed
     def getKeysDetailed(self):
-        headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/keys/detailed/?p=-1', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/api/keys/detailed/?p=-1', verify=False)
 
     # Dashboard getKey
     def getKey(self, keyID):
-        headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/apis/-/keys/{keyID}', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/api/apis/-/keys/{keyID}', verify=False)
 
     # Dashboard createKey
     def createKey(self, keyDefinition):
         if isinstance(keyDefinition, dict):
             keyDefinition = json.dumps(keyDefinition)
-        headers = {'Authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        return requests.post(f'{self.URL}/api/keys', data=keyDefinition, headers=headers, verify=False)
+        headers = {'Content-Type': 'application/json'}
+        return self.session.post(f'{self.URL}/api/keys', data=keyDefinition, headers=headers, verify=False)
 
     # Dashboard createCustomKey
     def createCustomKey(self, keyDefinition, keyID):
         if isinstance(keyDefinition, dict):
             keyDefinition = json.dumps(keyDefinition)
-        headers = {'Authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        return requests.post(f'{self.URL}/api/keys/{keyID}', data=keyDefinition, headers=headers, verify=False)
+        headers = {'Content-Type': 'application/json'}
+        return self.session.post(f'{self.URL}/api/keys/{keyID}', data=keyDefinition, headers=headers, verify=False)
 
     # Dashboard updateKey
     def updateKey(self, keyDefinition, keyID):
         if isinstance(keyDefinition, dict):
             keyDefinition = json.dumps(keyDefinition)
-        headers = {'Authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        return requests.put(f'{self.URL}/api/keys/{keyID}', data=keyDefinition, headers=headers, verify=False)
+        headers = {'Content-Type': 'application/json'}
+        return self.session.put(f'{self.URL}/api/keys/{keyID}', data=keyDefinition, headers=headers, verify=False)
 
     # Dashboard deleteKey
     def deleteKey(self, keyID):
-        headers = {'Authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
         # not sure where ?auto_guess=true comes from but it works when keys are encrypted
-        return requests.delete(f'{self.URL}/api/keys/{keyID}/?auto_guess=true', headers=headers, verify=False)
+        return self.session.delete(f'{self.URL}/api/keys/{keyID}/?auto_guess=true', verify=False)
 
     # Dashboard deleteAllKeys
     def deleteAllKeys(self):
@@ -364,9 +354,7 @@ class dashboard(tyk):
 
     # Dashboard keyExists
     def keyExists(self, keyID):
-        headers = {'Authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        resp = requests.get(f'{self.URL}/api/apis/-/keys/{keyID}', headers=headers, verify=False)
+        resp = self.session.get(f'{self.URL}/api/apis/-/keys/{keyID}', verify=False)
         return resp.status_code == 200
 
 
@@ -374,38 +362,31 @@ class dashboard(tyk):
 
     # Dashboard getCatalogue
     def getCatalogue(self):
-        headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/portal/catalogue', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/api/portal/catalogue', verify=False)
 
     # Dashboard updateCatalogue
     def updateCatalogue(self, catalogue):
         if isinstance(catalogue, dict):
             catalogue = json.dumps(catalogue)
-        headers = {'Authorization' : self.authKey}
-        return requests.put(f'{self.URL}/api/portal/catalogue', data=catalogue, headers=headers, verify=False)
+        return self.session.put(f'{self.URL}/api/portal/catalogue', data=catalogue, verify=False)
 
 
     # Dashboard Organisation functions
 
     # Dashboard getOrganisations
     def getOrganisations(self):
-        headers = {'admin-auth': self.adminSecret}
-        headers['Content-Type'] = 'application/json'
-        return requests.get(f'{self.URL}/admin/organisations?p=-1', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/admin/organisations?p=-1', verify=False)
 
     # Dashboard getOrganisation
     def getOrganisation(self, orgID):
-        headers = {'admin-auth': self.adminSecret}
-        headers['Content-Type'] = 'application/json'
-        return requests.get(f'{self.URL}/admin/organisations/{orgID}', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/admin/organisations/{orgID}', verify=False)
 
     # Dashboard createOrganisation
     def createOrganisation(self, orgDefinition):
         if isinstance(orgDefinition, dict):
             orgDefinition = json.dumps(orgDefinition)
-        headers = {'admin-auth': self.adminSecret}
-        headers['Content-Type'] = 'application/json'
-        return requests.post(f'{self.URL}/admin/organisations', data=orgDefinition, headers=headers, verify=False)
+        headers = {'Content-Type': 'application/json'}
+        return self.session.post(f'{self.URL}/admin/organisations', data=orgDefinition, headers=headers, verify=False)
 
     # Dashboard createOrganisations
     def createOrganisations(self, orgDefinition, numberToCreate):
@@ -437,17 +418,14 @@ class dashboard(tyk):
 
     # Dashboard deleteOrganisation
     def getOrganisation(self, orgID):
-        headers = {'admin-auth': self.adminSecret}
-        headers['Content-Type'] = 'application/json'
-        return requests.delete(f'{self.URL}/admin/organisations/{orgID}', headers=headers, verify=False)
+        return self.session.delete(f'{self.URL}/admin/organisations/{orgID}', verify=False)
 
 
     # Dashboard User functions
 
     # Dashboard createAdminUser
     def createAdminUser(self, userEmail, userPass, orgID):
-        headers = {'admin-auth': self.adminSecret}
-        headers['Content-Type'] = 'application/json'
+        headers = {'Content-Type': 'application/json'}
         userDefinition = {
                 'first_name': 'Tyk',
                 'last_name': 'Admin',
@@ -456,40 +434,35 @@ class dashboard(tyk):
                 'active': True,
                 'org_id': orgID,
                 'user_permissions': { 'ResetPassword' : 'admin', 'IsAdmin': 'admin' }}
-        createResp = requests.post(f'{self.URL}/admin/users', data=json.dumps(userDefinition), headers=headers, verify=False)
+        createResp = self.session.post(f'{self.URL}/admin/users', data=json.dumps(userDefinition), headers=headers, verify=False)
         if createResp.status_code != 200:
             return createResp
         # need to set the user password immediately
         userdata = createResp.json()
-        headers = {'Authorization' : userdata['Meta']['access_key']}
-        headers['Content-Type'] = 'application/json'
-        resetResp = requests.post(f'{self.URL}/api/users/{userdata["Meta"]["id"]}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers, verify=False)
+        self.setAuthkey(userdata['Meta']['access_key'])
+        headers = {'Content-Type': 'application/json'}
+        resetResp = self.session.post(f'{self.URL}/api/users/{userdata["Meta"]["id"]}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers, verify=False)
         return createResp
 
     # Dashboard getUsers
     def getUsers(self):
-        headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/users?p=-1', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/api/users?p=-1', verify=False)
 
     # Dashboard getUser
     def getUser(self, userid):
-        headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/users/{userid}', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/api/users/{userid}', verify=False)
 
     # Dashboard deleteUser
     def deleteUser(self, userid):
-        headers = {'Authorization' : self.authKey}
-        return requests.delete(f'{self.URL}/api/users/{userid}/actions/key/reset', headers=headers, verify=False)
+        return self.session.delete(f'{self.URL}/api/users/{userid}/actions/key/reset', verify=False)
 
     # Dashboard resetAdminKey
     def resetAdminKey(self, userid):
-        headers = {'Authorization' : self.authKey}
-        return requests.put(f'{self.URL}/api/users/{userid}/actions/key/reset', headers=headers, verify=False)
+        return self.session.put(f'{self.URL}/api/users/{userid}/actions/key/reset', verify=False)
 
     # Dashboard resetUserPassword
     def resetUserPassword(self, userid, userPass):
-        headers = {'Authorization' : self.authKey}
-        return requests.post(f'{self.URL}/api/users/{userid}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers, verify=False)
+        return self.session.post(f'{self.URL}/api/users/{userid}/actions/reset', data='{"new_password":"'+userPass+'"}', verify=False)
 
 
     # Dashboard Licence functions
@@ -497,7 +470,7 @@ class dashboard(tyk):
     # Dashboard setLicence
     def setLicence(self, licence):
         headers = {'Content-Type' : 'application/x-www-form-urlencoded'}
-        return requests.post(f'{self.URL}/license', data=f'license={licence}', headers=headers, verify=False)
+        return self.session.post(f'{self.URL}/license', data=f'license={licence}', headers=headers, verify=False)
 
 
     # Dashboard Bootstrap functions
@@ -538,36 +511,30 @@ class dashboard(tyk):
             endmonth = str(endmonth)
         if isinstance(endyear, int):
             endmonth = str(endyear)
-        headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/usage/apis/{startday}/{startmonth}/{startyear}/{endday}/{endmonth}/{endyear}?by=Hits&sort=1&p=-1', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/api/usage/apis/{startday}/{startmonth}/{startyear}/{endday}/{endmonth}/{endyear}?by=Hits&sort=1&p=-1', verify=False)
 
     # Dashboard Certificate functions
 
     # Dashboard getCerts
     def getCerts(self):
-        headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/certs?p=-1', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/api/certs?p=-1', verify=False)
 
     # Dashboard getCert
     def getCert(self, certid):
-        headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/certs/{certid}', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/api/certs/{certid}', verify=False)
 
     # Dashboard getCertsDetails
     def getCertsDetails(self):
-        headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/certs?p=-1&mode=detailed', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/api/certs?p=-1&mode=detailed', verify=False)
 
     # Dashboard createCert
     def createCert(self, certFile):
-        headers = {'Authorization' : self.authKey}
         files={'data': open(certFile,'r')}
-        return requests.post(f'{self.URL}/api/certs', files=files, headers=headers, verify=False)
+        return self.session.post(f'{self.URL}/api/certs', files=files, verify=False)
 
     # Dashboard deleteCert
     def deleteCert(self, certid):
-        headers = {'Authorization' : self.authKey}
-        return requests.delete(f'{self.URL}/api/certs/{certid}', headers=headers, verify=False)
+        return self.session.delete(f'{self.URL}/api/certs/{certid}', verify=False)
 
     # Dashboard deleteAllCerts
     def deleteAllCerts(self):
@@ -586,17 +553,15 @@ class dashboard(tyk):
 
     # Dashboard getNodes
     def getNodes(self):
-        headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/system/nodes?p=-1', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/api/system/nodes?p=-1', verify=False)
 
     # Dashboard getSystemStats
     def getSystemStats(self, ):
-        headers = {'Authorization' : self.authKey}
-        return requests.get(f'{self.URL}/api/system/stats', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/api/system/stats', verify=False)
 
     # Dashboard getSystemStatus
     def getSystemStatus(self):
-        return requests.get(f'{self.URL}/hello/', verify=False)
+        return self.session.get(f'{self.URL}/hello/', verify=False)
 
     # Dashboard is up
     def isUp(self):
@@ -623,6 +588,7 @@ class dashboard(tyk):
 ###################### GATEWAY CLASS ######################
 class gateway(tyk):
     def __init__(self, URL, authKey, description = 'N/A'):
+        super().__init__()
         self.URL = URL.strip('/')       # The gateway URL
         self.authKey = authKey          # User key to authenticate API calls ('Secret' from tyk.conf)
         self.description = description  # description of this gateway
@@ -651,7 +617,7 @@ class gateway(tyk):
     # Gateway reloadGroup
     def reloadGroup(self):
         headers = {'x-tyk-authorization' : self.authKey}
-        response = requests.get(f'{self.URL}/tyk/reload/group', headers=headers, verify=False)
+        response = self.session.get(f'{self.URL}/tyk/reload/group', headers=headers, verify=False)
         if response.status_code != 200:
             print(f'[WARN]The group hot reload failed with code {response.status_code}: {response.json()}')
         return response
@@ -659,12 +625,12 @@ class gateway(tyk):
     # Gateway getAPI
     def getAPI(self, APIid):
         headers = {'x-tyk-authorization' : self.authKey}
-        return requests.get(f'{self.URL}/tyk/apis/{APIid}', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/tyk/apis/{APIid}', headers=headers, verify=False)
 
     # Gateway getAPIs
     def getAPIs(self):
         headers = {'x-tyk-authorization' : self.authKey}
-        response = requests.get(f'{self.URL}/tyk/apis', headers=headers, verify=False)
+        response = self.session.get(f'{self.URL}/tyk/apis', headers=headers, verify=False)
         body_json = {}
         body_json['apis'] = response.json()
         response._content = json.dumps(body_json).encode()
@@ -674,7 +640,7 @@ class gateway(tyk):
     def __createAPI(self, APIdefinition):
         headers = {'x-tyk-authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        return requests.post(f'{self.URL}/tyk/apis', data=APIdefinition, headers=headers, verify=False)
+        return self.session.post(f'{self.URL}/tyk/apis', data=APIdefinition, headers=headers, verify=False)
 
     # Gateway createAPI
     def createAPI(self, APIdefinition):
@@ -725,14 +691,14 @@ class gateway(tyk):
             APIdefinition = json.dumps(APIdefinition)
         headers = {'Authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        reponse =  requests.put(f'{self.URL}/tyk/apis/{APIid}', data=APIdefinition, headers=headers, verify=False)
+        reponse =  self.session.put(f'{self.URL}/tyk/apis/{APIid}', data=APIdefinition, headers=headers, verify=False)
         self.reloadGroup()
         return response
 
     # Gateway deleteAPI (private function which doesn't call reloadGroup)
     def __deleteAPI(self, APIid):
         headers = {'x-tyk-authorization' : self.authKey}
-        return requests.delete(f'{self.URL}/tyk/apis/{APIid}', headers=headers, verify=False)
+        return self.session.delete(f'{self.URL}/tyk/apis/{APIid}', headers=headers, verify=False)
 
     # Gateway deleteAPI
     def deleteAPI(self, APIid):
@@ -770,12 +736,12 @@ class gateway(tyk):
     # Gateway getPolicy
     def getPolicy(self, policyID):
         headers = {'x-tyk-authorization' : self.authKey}
-        return requests.get(f'{self.URL}/tyk/policies/{policyID}', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/tyk/policies/{policyID}', headers=headers, verify=False)
 
     # Gateway getPolicies
     def getPolicies(self):
         headers = {'x-tyk-authorization' : self.authKey}
-        response = requests.get(f'{self.URL}/tyk/policies', headers=headers, verify=False)
+        response = self.session.get(f'{self.URL}/tyk/policies', headers=headers, verify=False)
         body_json = {}
         body_json['policies'] = response.json()
         response._content = json.dumps(body_json).encode()
@@ -790,7 +756,7 @@ class gateway(tyk):
             print(policyDefinition)
         headers = {'x-tyk-authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        response =  requests.post(f'{self.URL}/tyk/policies', data=policyDefinition, headers=headers, verify=False)
+        response =  self.session.post(f'{self.URL}/tyk/policies', data=policyDefinition, headers=headers, verify=False)
         return response
 
     # Gateway createPolicies
@@ -825,12 +791,12 @@ class gateway(tyk):
             policyDefinition = json.dumps(policyDefinition)
         headers = {'x-tyk-authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        return requests.put(f'{self.URL}/tyk/policies/{policyID}', data=policyDefinition, headers=headers, verify=False)
+        return self.session.put(f'{self.URL}/tyk/policies/{policyID}', data=policyDefinition, headers=headers, verify=False)
 
     # Gateway deletePolicy
     def deletePolicy(self, policyID):
         headers = {'x-tyk-authorization' : self.authKey}
-        return requests.delete(f'{self.URL}/tyk/policies/{policyID}', headers=headers, verify=False)
+        return self.session.delete(f'{self.URL}/tyk/policies/{policyID}', headers=headers, verify=False)
 
     # Gateway deleteAllPolicies
     def deleteAllPolicies(self):
@@ -850,7 +816,7 @@ class gateway(tyk):
     # Gateway getKeys
     def getKeys(self):
         headers = {'x-tyk-authorization' : self.authKey}
-        response = requests.get(f'{self.URL}/tyk/keys', headers=headers, verify=False)
+        response = self.session.get(f'{self.URL}/tyk/keys', headers=headers, verify=False)
         body_json = response.json()
         #print(json.dumps(body_json, indent=2))
         if response.status_code == 200:
@@ -864,7 +830,7 @@ class gateway(tyk):
     # Gateway getKeysDetailed
     def getKeysDetailed(self):
         headers = {'x-tyk-authorization' : self.authKey}
-        response = requests.get(f'{self.URL}/tyk/keys', headers=headers, verify=False)
+        response = self.session.get(f'{self.URL}/tyk/keys', headers=headers, verify=False)
         body_json = response.json()
         #print(json.dumps(body_json, indent=2))
         if response.status_code == 200:
@@ -892,7 +858,7 @@ class gateway(tyk):
     # Gateway getKey
     def getKey(self, keyID):
         headers = {'x-tyk-authorization' : self.authKey}
-        return requests.get(f'{self.URL}/tyk/keys/{keyID}', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/tyk/keys/{keyID}', headers=headers, verify=False)
 
     # Gateway createKey
     def createKey(self, keyDefinition):
@@ -900,7 +866,7 @@ class gateway(tyk):
             keyDefinition = json.dumps(keyDefinition)
         headers = {'x-tyk-authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        return requests.post(f'{self.URL}/tyk/keys', data=keyDefinition, headers=headers, verify=False)
+        return self.session.post(f'{self.URL}/tyk/keys', data=keyDefinition, headers=headers, verify=False)
 
     # Gateway createCustomKey
     def createCustomKey(self, keyDefinition, keyID):
@@ -908,7 +874,7 @@ class gateway(tyk):
             keyDefinition = json.dumps(keyDefinition)
         headers = {'x-tyk-authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        return requests.post(f'{self.URL}/tyk/keys/{keyID}', data=keyDefinition, headers=headers, verify=False)
+        return self.session.post(f'{self.URL}/tyk/keys/{keyID}', data=keyDefinition, headers=headers, verify=False)
 
     # Gateway updateKey
     def updateKey(self, keyDefinition, keyID):
@@ -916,13 +882,13 @@ class gateway(tyk):
             keyDefinition = json.dumps(keyDefinition)
         headers = {'x-tyk-authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        return requests.put(f'{self.URL}/tyk/keys/{keyID}', data=keyDefinition, headers=headers, verify=False)
+        return self.session.put(f'{self.URL}/tyk/keys/{keyID}', data=keyDefinition, headers=headers, verify=False)
 
     # Gateway deleteKey
     def deleteKey(self, keyID):
         headers = {'x-tyk-authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        return requests.delete(f'{self.URL}/api/keys/{keyID}', headers=headers, verify=False)
+        return self.session.delete(f'{self.URL}/api/keys/{keyID}', headers=headers, verify=False)
 
     # Gateway deleteAllKeys
     def deleteAllKeys(self):
@@ -940,7 +906,7 @@ class gateway(tyk):
     # Gateway keyExists
     def keyExists(self, keyID):
         headers = {'x-tyk-authorization' : self.authKey}
-        resp = requests.get(f'{self.URL}/tyk/keys/{keyID}', headers=headers, verify=False)
+        resp = self.session.get(f'{self.URL}/tyk/keys/{keyID}', headers=headers, verify=False)
         return resp.status_code == 200
 
 
@@ -950,28 +916,28 @@ class gateway(tyk):
     def getCerts(self, orgid):
         headers = {'x-tyk-authorization' : self.authKey}
         # there seems to be a bug in retrieving certs from the gateway unless the orgid is specified (TT-8211)
-        return requests.get(f'{self.URL}/tyk/certs?p=-1&org_id={orgid}', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/tyk/certs?p=-1&org_id={orgid}', headers=headers, verify=False)
 
     # Gateway getCert
     def getCert(self, certid):
         headers = {'x-tyk-authorization' : self.authKey}
-        return requests.get(f'{self.URL}/tyk/certs/{certid}', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/tyk/certs/{certid}', headers=headers, verify=False)
 
     # Gateway getCertsDetails
     def getCertsDetails(self):
         headers = {'x-tyk-authorization' : self.authKey}
-        return requests.get(f'{self.URL}/tyk/certs?p=-1&mode=detailed', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/tyk/certs?p=-1&mode=detailed', headers=headers, verify=False)
 
     # Gateway createCert
     def createCert(self, certFile):
         headers = {'x-tyk-authorization' : self.authKey}
         files={'data': open(certFile,'r')}
-        return requests.post(f'{self.URL}/tyk/certs', files=files, headers=headers, verify=False)
+        return self.session.post(f'{self.URL}/tyk/certs', files=files, headers=headers, verify=False)
 
     # Gateway deleteCert
     def deleteCert(self, certid):
         headers = {'x-tyk-authorization' : self.authKey}
-        return requests.delete(f'{self.URL}/tyk/certs/{certid}', headers=headers, verify=False)
+        return self.session.delete(f'{self.URL}/tyk/certs/{certid}', headers=headers, verify=False)
 
     # Gateway deleteAllCerts
     def deleteAllCerts(self):
@@ -988,7 +954,7 @@ class gateway(tyk):
 
     # Gateway getSystemStatus
     def getSystemStatus(self):
-        return requests.get(f'{self.URL}/hello', verify=False)
+        return self.session.get(f'{self.URL}/hello', verify=False)
 
     # Gateway is up
     def isUp(self):
