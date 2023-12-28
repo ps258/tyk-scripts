@@ -38,8 +38,7 @@ if not (dshb and auth):
     printhelp()
 
 # create a new dashboard
-if dshb:
-    tyk = tyk.dashboard(dshb, auth)
+tyk = tyk.dashboard(dshb, auth)
 
 resp = tyk.getUsers()
 if resp.status_code != 200:
