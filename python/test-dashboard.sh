@@ -1,0 +1,164 @@
+#!/bin/bash -u
+
+SCRIPTNAME=$0
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:$PATH
+
+SCRIPTDIR=$(
+  cd "$(dirname $SCRIPTNAME)"
+  echo $PWD
+)
+
+TM_ADMIN_USER=tyk@admin.com
+TM_ADMIN_PASSWORD=ABC-123
+
+VERSION=5.0.9
+DESC="Python module test deployment"
+. ~/.tyk-sandbox
+
+function continerAdminkey {
+  typeset container
+  container=$1
+  sbctl get $container key
+}
+
+TM_CONTAINER=$(sbctl create -v $VERSION -t "$DESC" -n | awk '/Creating container/ {print $NF}')
+
+# set a trap to delete the sandbox at exit
+trap 'echo "[INFO]Deleting $(sbctl delete $TM_CONTAINER)"' 0 1 2 3 15
+
+TM_ADMIN_SECRET=$(sbctl get $TM_CONTAINER admin_secret)
+TM_DASH_URL=$(sbctl get $TM_CONTAINER dashboard)
+TM_GATW_URL=$(sbctl get $TM_CONTAINER gateway)
+TM_GATW_SECRET=$(sbctl get $TM_CONTAINER secret)
+
+echo "[INFO]Bootstrapping $TM_DASH_URL"
+bootstrap.py --dashboard $TM_DASH_URL --adminsecret $TM_ADMIN_SECRET --licence $SBX_LICENSE
+
+sleep 2
+TM_ADMIN_KEY=$(continerAdminkey $TM_CONTAINER)
+continerAdminkey $TM_CONTAINER
+echo "[INFO]$TM_CONTAINER created"
+echo
+if false; then
+  echo TM_ADMIN_SECRET=$TM_ADMIN_SECRET
+  echo TM_DASH_URL=$TM_DASH_URL
+  echo TM_GATW_URL=$TM_GATW_URL
+  echo TM_GATW_SECRET=$TM_GATW_SECRET
+  echo TM_ADMIN_KEY=$TM_ADMIN_KEY
+  echo TM_ADMIN_USER=$TM_ADMIN_USER
+  echo TM_ADMIN_PASSWORD=$TM_ADMIN_PASSWORD
+  echo
+fi
+
+# check that bootstrap succeeded.
+echo "[INFO]Bootstrap checks"
+echo -n " [INFO]Check that org was created: "
+resp=$(getOrganisations.py --dashboard $TM_DASH_URL --adminsecret $TM_ADMIN_SECRET)
+TM_ORG=$(echo $resp | cut -d, -f1)
+if [[ -z $TM_ORG ]]; then
+  echo FAIL
+  exit 1
+else
+  echo "SUCCESS ($TM_ORG)"
+fi
+echo -n " [INFO]Check that user was created: "
+if [[ -z $TM_ADMIN_KEY ]]; then
+  echo FAIL, no TM_ADMIN_KEY
+  exit 1
+else
+  resp=$(getUsers.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY | sed -e 1d)
+  TM_USER_ID=$(echo $resp | grep -v \# | cut -d, -f1)
+  if [[ -z $TM_USER_ID ]]; then
+    echo FAIL, no TM_USER_ID
+    exit 1
+  else
+    echo "SUCCESS ($TM_USER_ID)"
+  fi
+fi
+echo
+
+# API tests
+# Dashboard createAPI
+echo "[INFO]API checks: "
+echo -n "  [INFO]Create: "
+resp=$(createAPI.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY --template $SCRIPTDIR/API-template-auth.json --name httpbin)
+if [[ $? -lt 1 ]]; then
+  APIID=$(echo $resp | jq -r .ID)
+  echo "SUCCESS ($APIID)"
+else
+  echo FAIL
+  exit 1
+fi
+# Dashboard getAPI
+echo -n "  [INFO]List API $APIID: "
+APIID2=$(getAPI.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY --apiid $APIID | jq -r .api_definition.api_id)
+if [[ $APIID = $APIID2 ]]; then
+  echo "SUCCESS ($APIID2)"
+else
+  echo FAIL
+  exit 1
+fi
+# create a second API
+echo -n "  [INFO]Create Second API: "
+resp=$(createAPI.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY --template $SCRIPTDIR/API-template-auth.json --name httpbin)
+if [[ $? -lt 1 ]]; then
+  APIID2=$(echo $resp | jq -r .ID)
+  echo "SUCCESS: ($APIID)"
+else
+  echo "FAILED to create second API"
+  exit 1
+fi
+echo -n "  [INFO]List both APIs: "
+# Dashboard getAPIs
+if getAPIs.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY | grep -qiw $APIID; then
+  if getAPIs.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY | grep -qiw $APIID2; then
+    echo "SUCCESS ($APIID, $APIID2)"
+  else
+    echo FAIL second API $APIID2 missing
+    exit 1
+  fi
+else
+  echo FAIL first API $APIID missing
+  exit 1
+fi
+echo -n "  [INFO]Delete API $APIID2: "
+# Dashboard deleteAPI
+resp=$(deleteAPI.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY --apiid $APIID2)
+if getAPIs.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY | grep -qiw $APIID2; then
+  echo FAIL $resp
+  exit 1
+else
+  echo SUCCESS
+fi
+echo -n "  [INFO]Delete API $APIID: "
+resp=$(deleteAPI.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY --apiid $APIID)
+if getAPIs.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY | grep -qiw $APIID; then
+  echo FAIL $resp
+  exit 1
+else
+  echo SUCCESS
+fi
+# delete the second api to have an empty dashboard
+# Dashboard createAPIs
+numberToCreate=10
+echo -n "  [INFO]Create APIs: "
+resp=$(createAPIs.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY --template $SCRIPTDIR/API-template-auth.json --name test1 --number $numberToCreate)
+numberCreated=$(getAPIs.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY | grep -v \# | wc -l)
+if [[ $numberCreated -eq $numberToCreate ]]; then
+  echo SUCCESS $numberCreated created
+else
+  echo FAIL $numberCreated of $numberToCreate created
+  exit 1
+fi
+# Dashboard deleteAllAPIs
+echo -n "  [INFO]Delete all APIs: "
+resp=$(deleteAllAPIs.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY)
+numberRemaining=$(getAPIs.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY | grep -v \# | wc -l)
+if [[ $numberRemaining -eq 0 ]]; then
+  echo SUCCESS no APIs left
+else
+  echo FAIL $numberRemaining left
+  exit 1
+fi
+
+# Dashboard updateAPI
