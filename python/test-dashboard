@@ -97,7 +97,8 @@ else
 fi
 # Dashboard getAPI
 echo -n "  [INFO]List API $APIID: "
-APIID2=$(getAPI.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY --apiid $APIID | jq -r .api_definition.api_id)
+resp=$(getAPI.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY --apiid $APIID)
+APIID2=$(echo $resp | jq -r .api_definition.api_id)
 if [[ $APIID = $APIID2 ]]; then
   echo "SUCCESS ($APIID2)"
 else
