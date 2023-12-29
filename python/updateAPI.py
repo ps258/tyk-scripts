@@ -58,7 +58,12 @@ with open(templateFile) as APIFile:
     APIFile.close()
 
 # set the api_id in the definition
-APIjson["api_definition"]["api_id"] = apiid
+if "api_definition" in APIjson:
+    APIjson["api_definition"]["api_id"] = apiid
+elif "api_id" in APIjson:
+    APIjson["api_id"] = apiid
+else:
+    print('[FATAL]Unable to find "api_id" to update')
 
 resp = tyk.updateAPI(json.dumps(APIjson), apiid)
 print(json.dumps(resp.json()))
