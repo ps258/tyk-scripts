@@ -21,6 +21,12 @@ function continerAdminkey {
   sbctl get $container key
 }
 
+function getListenPath {
+  typeset api
+  api="$1"
+  echo "$api" | jq .api_definition.proxy.listen_path
+}
+
 TM_CONTAINER=$(sbctl create -v $VERSION -t "$DESC" -n | awk '/Creating container/ {print $NF}')
 
 # set a trap to delete the sandbox at exit
@@ -98,6 +104,7 @@ else
   echo FAIL
   exit 1
 fi
+
 # create a second API
 echo -n "  [INFO]Create Second API: "
 resp=$(createAPI.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY --template $SCRIPTDIR/API-template-auth.json --name httpbin)
@@ -162,3 +169,42 @@ else
 fi
 
 # Dashboard updateAPI
+# create an API.
+echo "  [INFO]Update API: "
+echo -n "    [INFO]Create API: "
+resp=$(createAPI.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY --template $SCRIPTDIR/API-template-auth.json --name httpbin)
+if [[ $? -lt 1 ]]; then
+  APIID=$(echo $resp | jq -r .ID)
+  echo "SUCCESS ($APIID)"
+else
+  echo FAIL
+  exit 1
+fi
+# retrieve the API, make a note of the listen path
+echo -n "    [INFO]getAPI $APIID: "
+APIJSON=$(getAPI.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY --apiid $APIID)
+if [[ -n $APIJSON ]]; then
+  echo SUCCESS
+else
+  echo FAIL
+  exit 1
+fi
+# change the listen path in the json
+UPDATED_API_JSON=$(echo $APIJSON | jq '(.api_definition.proxy.listen_path="/fred/")')
+# update the API
+TMPFILE=$(mktemp /tmp/XXXX-test-dashboard.json)
+echo $UPDATED_API_JSON > $TMPFILE
+resp=$(updateAPI.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY --template $TMPFILE --apiid $APIID)
+rm $TMPFILE
+# Retrieve the API and check the listen path is changed.
+# Reusing the variable UPDATED_API_JSON to contain the API definition retrieved from the dashboard
+# after posting the change back. It should be very like what was posted
+echo -n "    [INFO]updateAPI $APIID: "
+UPDATED_API_JSON=$(getAPI.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY --apiid $APIID)
+UPDATED_LP=$(getListenPath "$UPDATED_API_JSON")
+if [[ $UPDATED_LP = '"/fred/"' ]]; then
+  echo SUCCESS
+else
+  echo FAIL
+  exit 1
+fi
