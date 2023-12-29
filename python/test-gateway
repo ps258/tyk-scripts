@@ -1,0 +1,156 @@
+#!/bin/bash -u
+
+SCRIPTNAME=$0
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:$PATH
+
+SCRIPTDIR=$(
+  cd "$(dirname $SCRIPTNAME)"
+  echo $PWD
+)
+
+TM_GATW_URL=http://192.168.49.2:31965/
+TM_GATW_SECRET=Secret
+
+trap "deleteAllAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET" 0 1 2 3 15
+
+function getListenPath {
+  typeset api
+  api="$1"
+  echo "$api" | jq .proxy.listen_path
+}
+
+# API tests
+# Gateway createAPI
+echo "[INFO]API checks: "
+echo -n "  [INFO]Create: "
+resp=$(createAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --template $SCRIPTDIR/API-template-auth.json --name httpbin)
+if [[ $? -lt 1 ]]; then
+  APIID=$(echo $resp | jq -r .key)
+  echo "SUCCESS ($APIID)"
+else
+  echo FAIL
+  exit 1
+fi
+sleep 1
+# Gateway getAPI
+echo -n "  [INFO]List API $APIID: "
+resp=$(getAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --apiid $APIID)
+APIID2=$(echo $resp | jq -r .api_id)
+if [[ $APIID = $APIID2 ]]; then
+  echo "SUCCESS ($APIID2)"
+else
+  echo FAIL
+  exit 1
+fi
+
+
+# create a second API
+echo -n "  [INFO]Create Second API: "
+resp=$(createAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --template $SCRIPTDIR/API-template-auth.json --name httpbin)
+if [[ $? -lt 1 ]]; then
+  APIID2=$(echo $resp | jq -r .key)
+  echo "SUCCESS: ($APIID)"
+else
+  echo "FAILED to create second API"
+  exit 1
+fi
+sleep 1
+echo -n "  [INFO]List both APIs: "
+# Gateway getAPIs
+if getAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET | grep -qiw $APIID; then
+  if getAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET | grep -qiw $APIID2; then
+    echo "SUCCESS ($APIID, $APIID2)"
+  else
+    echo FAIL second API $APIID2 missing
+    exit 1
+  fi
+else
+  echo FAIL first API $APIID missing
+  exit 1
+fi
+echo -n "  [INFO]Delete API $APIID2: "
+# Gateway deleteAPI
+resp=$(deleteAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --apiid $APIID2)
+sleep 1
+if getAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET | grep -qiw $APIID2; then
+  echo FAIL $resp
+  exit 1
+else
+  echo SUCCESS
+fi
+echo -n "  [INFO]Delete API $APIID: "
+resp=$(deleteAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --apiid $APIID)
+sleep 1
+if getAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET | grep -qiw $APIID; then
+  echo FAIL $resp
+  exit 1
+else
+  echo SUCCESS
+fi
+# delete the second api to have an empty dashboard
+# Gateway createAPIs
+numberToCreate=10
+echo -n "  [INFO]Create APIs: "
+resp=$(createAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --template $SCRIPTDIR/API-template-auth.json --name test --number $numberToCreate)
+sleep 1
+numberCreated=$(getAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET | grep -v \# | wc -l)
+if [[ $numberCreated -eq $numberToCreate ]]; then
+  echo SUCCESS $numberCreated created
+else
+  echo FAIL $numberCreated of $numberToCreate created
+  exit 1
+fi
+# Gateway deleteAllAPIs
+echo -n "  [INFO]Delete all APIs: "
+resp=$(deleteAllAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET)
+sleep 1
+numberRemaining=$(getAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET | grep -v \# | wc -l)
+if [[ $numberRemaining -eq 0 ]]; then
+  echo SUCCESS no APIs left
+else
+  echo FAIL $numberRemaining left
+  exit 1
+fi
+
+# Gateway updateAPI
+# create an API.
+echo "  [INFO]Update API: "
+echo -n "    [INFO]Create API: "
+resp=$(createAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --template $SCRIPTDIR/API-template-auth.json --name httpbin)
+if [[ $? -lt 1 ]]; then
+  APIID=$(echo $resp | jq -r .key)
+  echo "SUCCESS ($APIID)"
+else
+  echo FAIL
+  exit 1
+fi
+sleep 1
+# retrieve the API, make a note of the listen path
+echo -n "    [INFO]getAPI $APIID: "
+APIJSON=$(getAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --apiid $APIID)
+if [[ -n $APIJSON ]]; then
+  echo SUCCESS
+else
+  echo FAIL
+  exit 1
+fi
+# change the listen path in the json
+UPDATED_API_JSON=$(echo $APIJSON | jq '(.proxy.listen_path="/fred/")')
+# update the API
+TMPFILE=$(mktemp /tmp/XXXX-test-dashboard.json)
+echo $UPDATED_API_JSON > $TMPFILE
+resp=$(updateAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --template $TMPFILE --apiid $APIID)
+rm $TMPFILE
+sleep 1
+# Retrieve the API and check the listen path is changed.
+# Reusing the variable UPDATED_API_JSON to contain the API definition retrieved from the dashboard
+# after posting the change back. It should be very like what was posted
+echo -n "    [INFO]updateAPI $APIID: "
+UPDATED_API_JSON=$(getAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --apiid $APIID)
+UPDATED_LP=$(getListenPath "$UPDATED_API_JSON")
+if [[ $UPDATED_LP = '"/fred/"' ]]; then
+  echo SUCCESS
+else
+  echo FAIL
+  exit 1
+fi
