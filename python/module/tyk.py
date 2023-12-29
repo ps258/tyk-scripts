@@ -201,7 +201,7 @@ class dashboard(tyk):
         apis = self.getAPIs().json()['apis']
         for api in apis:
             id = self.APIid(api)
-            print(f'Deleting API: {self.APIName(api)}: {id}')
+            #print(f'Deleting API: {self.APIName(api)}: {id}')
             response = self.deleteAPI(id)
             if response.status_code != 200:
                 allDeleted = False
@@ -655,9 +655,9 @@ class gateway(tyk):
     def createAPIs(self, APIdefinition, numberToCreate):
         APIdefinition = self.standardiseAPIformat(APIdefinition)
         APIName = APIdefinition['name']
-        apis = self.getAPIs().json()
+        apis = self.getAPIs().json()['apis']
         # create a dictionary of all API names
-        allnames = dict()
+        allnames = {}
         for api in apis:
             allnames[api['name']] = 1
         i = 1
@@ -675,7 +675,7 @@ class gateway(tyk):
             print(f'Adding API {APIdefinition["name"]}, {APIdefinition["proxy"]["listen_path"]}')
             # create the API but don't reload the group
             response = self.__createAPI(json.dumps(APIdefinition))
-            print(response.json())
+            #print(response.json())
             # if a call fails, stop and return the number of successes
             if response.status_code != 200:
                 break
@@ -684,14 +684,13 @@ class gateway(tyk):
         self.reloadGroup()
         return numberCreated
 
-    # TODO: test updateAPI
     # Gateway updateAPI
     def updateAPI(self, APIdefinition, APIid):
         if isinstance(APIdefinition, dict):
             APIdefinition = json.dumps(APIdefinition)
-        headers = {'Authorization' : self.authKey}
+        headers = {'x-tyk-authorization' : self.authKey}
         headers['Content-Type'] = 'application/json'
-        reponse =  self.session.put(f'{self.URL}/tyk/apis/{APIid}', data=APIdefinition, headers=headers, verify=False)
+        response = self.session.put(f'{self.URL}/tyk/apis/{APIid}', data=APIdefinition, headers=headers, verify=False)
         self.reloadGroup()
         return response
 
