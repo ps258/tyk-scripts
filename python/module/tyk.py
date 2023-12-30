@@ -592,6 +592,8 @@ class gateway(tyk):
         self.URL = URL.strip('/')       # The gateway URL
         self.authKey = authKey          # User key to authenticate API calls ('Secret' from tyk.conf)
         self.description = description  # description of this gateway
+        self.session.headers.update({'x-tyk-authorization': self.authKey})
+        self.session.headers.update({'Content-Type': 'application/json'})
 
     def __str__(self):
         return f'Gateway URL: {self.URL}, Auth token: {self.authkey}, Description: {self.description}'
@@ -607,6 +609,7 @@ class gateway(tyk):
 
     def setAuthkey(self, authkey):
         self.authkey = authkey
+        self.session.headers.update({'x-tyk-authorization': self.authKey})
         return self.authkey
 
     def description(self):
@@ -616,21 +619,19 @@ class gateway(tyk):
 
     # Gateway reloadGroup
     def reloadGroup(self):
-        headers = {'x-tyk-authorization' : self.authKey}
-        response = self.session.get(f'{self.URL}/tyk/reload/group', headers=headers, verify=False)
+
+        response = self.session.get(f'{self.URL}/tyk/reload/group', verify=False)
         if response.status_code != 200:
             print(f'[WARN]The group hot reload failed with code {response.status_code}: {response.json()}')
         return response
 
     # Gateway getAPI
     def getAPI(self, APIid):
-        headers = {'x-tyk-authorization' : self.authKey}
-        return self.session.get(f'{self.URL}/tyk/apis/{APIid}', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/tyk/apis/{APIid}', verify=False)
 
     # Gateway getAPIs
     def getAPIs(self):
-        headers = {'x-tyk-authorization' : self.authKey}
-        response = self.session.get(f'{self.URL}/tyk/apis', headers=headers, verify=False)
+        response = self.session.get(f'{self.URL}/tyk/apis', verify=False)
         body_json = {}
         body_json['apis'] = response.json()
         response._content = json.dumps(body_json).encode()
@@ -638,9 +639,7 @@ class gateway(tyk):
 
     # Gateway __createAPI
     def __createAPI(self, APIdefinition):
-        headers = {'x-tyk-authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        return self.session.post(f'{self.URL}/tyk/apis', data=APIdefinition, headers=headers, verify=False)
+        return self.session.post(f'{self.URL}/tyk/apis', data=APIdefinition, verify=False)
 
     # Gateway createAPI
     def createAPI(self, APIdefinition):
@@ -688,16 +687,13 @@ class gateway(tyk):
     def updateAPI(self, APIdefinition, APIid):
         if isinstance(APIdefinition, dict):
             APIdefinition = json.dumps(APIdefinition)
-        headers = {'x-tyk-authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        response = self.session.put(f'{self.URL}/tyk/apis/{APIid}', data=APIdefinition, headers=headers, verify=False)
+        response = self.session.put(f'{self.URL}/tyk/apis/{APIid}', data=APIdefinition, verify=False)
         self.reloadGroup()
         return response
 
     # Gateway deleteAPI (private function which doesn't call reloadGroup)
     def __deleteAPI(self, APIid):
-        headers = {'x-tyk-authorization' : self.authKey}
-        return self.session.delete(f'{self.URL}/tyk/apis/{APIid}', headers=headers, verify=False)
+        return self.session.delete(f'{self.URL}/tyk/apis/{APIid}', verify=False)
 
     # Gateway deleteAPI
     def deleteAPI(self, APIid):
@@ -734,13 +730,11 @@ class gateway(tyk):
 
     # Gateway getPolicy
     def getPolicy(self, policyID):
-        headers = {'x-tyk-authorization' : self.authKey}
-        return self.session.get(f'{self.URL}/tyk/policies/{policyID}', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/tyk/policies/{policyID}', verify=False)
 
     # Gateway getPolicies
     def getPolicies(self):
-        headers = {'x-tyk-authorization' : self.authKey}
-        response = self.session.get(f'{self.URL}/tyk/policies', headers=headers, verify=False)
+        response = self.session.get(f'{self.URL}/tyk/policies', verify=False)
         body_json = {}
         body_json['policies'] = response.json()
         response._content = json.dumps(body_json).encode()
@@ -753,9 +747,7 @@ class gateway(tyk):
                 policyDefinition['id'] = str(uuid.uuid4())
             policyDefinition = json.dumps(policyDefinition)
             print(policyDefinition)
-        headers = {'x-tyk-authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        response =  self.session.post(f'{self.URL}/tyk/policies', data=policyDefinition, headers=headers, verify=False)
+        response =  self.session.post(f'{self.URL}/tyk/policies', data=policyDefinition, verify=False)
         return response
 
     # Gateway createPolicies
@@ -788,14 +780,11 @@ class gateway(tyk):
     def updatePolicy(self, policyDefinition, policyID):
         if isinstance(policyDefinition, dict):
             policyDefinition = json.dumps(policyDefinition)
-        headers = {'x-tyk-authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        return self.session.put(f'{self.URL}/tyk/policies/{policyID}', data=policyDefinition, headers=headers, verify=False)
+        return self.session.put(f'{self.URL}/tyk/policies/{policyID}', data=policyDefinition, verify=False)
 
     # Gateway deletePolicy
     def deletePolicy(self, policyID):
-        headers = {'x-tyk-authorization' : self.authKey}
-        return self.session.delete(f'{self.URL}/tyk/policies/{policyID}', headers=headers, verify=False)
+        return self.session.delete(f'{self.URL}/tyk/policies/{policyID}', verify=False)
 
     # Gateway deleteAllPolicies
     def deleteAllPolicies(self):
@@ -814,8 +803,7 @@ class gateway(tyk):
 
     # Gateway getKeys
     def getKeys(self):
-        headers = {'x-tyk-authorization' : self.authKey}
-        response = self.session.get(f'{self.URL}/tyk/keys', headers=headers, verify=False)
+        response = self.session.get(f'{self.URL}/tyk/keys', verify=False)
         body_json = response.json()
         #print(json.dumps(body_json, indent=2))
         if response.status_code == 200:
@@ -828,8 +816,7 @@ class gateway(tyk):
 
     # Gateway getKeysDetailed
     def getKeysDetailed(self):
-        headers = {'x-tyk-authorization' : self.authKey}
-        response = self.session.get(f'{self.URL}/tyk/keys', headers=headers, verify=False)
+        response = self.session.get(f'{self.URL}/tyk/keys', verify=False)
         body_json = response.json()
         #print(json.dumps(body_json, indent=2))
         if response.status_code == 200:
@@ -856,38 +843,29 @@ class gateway(tyk):
 
     # Gateway getKey
     def getKey(self, keyID):
-        headers = {'x-tyk-authorization' : self.authKey}
-        return self.session.get(f'{self.URL}/tyk/keys/{keyID}', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/tyk/keys/{keyID}', verify=False)
 
     # Gateway createKey
     def createKey(self, keyDefinition):
         if isinstance(keyDefinition, dict):
             keyDefinition = json.dumps(keyDefinition)
-        headers = {'x-tyk-authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        return self.session.post(f'{self.URL}/tyk/keys', data=keyDefinition, headers=headers, verify=False)
+        return self.session.post(f'{self.URL}/tyk/keys', data=keyDefinition, verify=False)
 
     # Gateway createCustomKey
     def createCustomKey(self, keyDefinition, keyID):
         if isinstance(keyDefinition, dict):
             keyDefinition = json.dumps(keyDefinition)
-        headers = {'x-tyk-authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        return self.session.post(f'{self.URL}/tyk/keys/{keyID}', data=keyDefinition, headers=headers, verify=False)
+        return self.session.post(f'{self.URL}/tyk/keys/{keyID}', data=keyDefinition, verify=False)
 
     # Gateway updateKey
     def updateKey(self, keyDefinition, keyID):
         if isinstance(keyDefinition, dict):
             keyDefinition = json.dumps(keyDefinition)
-        headers = {'x-tyk-authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        return self.session.put(f'{self.URL}/tyk/keys/{keyID}', data=keyDefinition, headers=headers, verify=False)
+        return self.session.put(f'{self.URL}/tyk/keys/{keyID}', data=keyDefinition, verify=False)
 
     # Gateway deleteKey
     def deleteKey(self, keyID):
-        headers = {'x-tyk-authorization' : self.authKey}
-        headers['Content-Type'] = 'application/json'
-        return self.session.delete(f'{self.URL}/api/keys/{keyID}', headers=headers, verify=False)
+        return self.session.delete(f'{self.URL}/api/keys/{keyID}', verify=False)
 
     # Gateway deleteAllKeys
     def deleteAllKeys(self):
@@ -904,8 +882,7 @@ class gateway(tyk):
 
     # Gateway keyExists
     def keyExists(self, keyID):
-        headers = {'x-tyk-authorization' : self.authKey}
-        resp = self.session.get(f'{self.URL}/tyk/keys/{keyID}', headers=headers, verify=False)
+        resp = self.session.get(f'{self.URL}/tyk/keys/{keyID}', verify=False)
         return resp.status_code == 200
 
 
@@ -913,30 +890,25 @@ class gateway(tyk):
 
     # Gateway getCerts
     def getCerts(self, orgid):
-        headers = {'x-tyk-authorization' : self.authKey}
         # there seems to be a bug in retrieving certs from the gateway unless the orgid is specified (TT-8211)
-        return self.session.get(f'{self.URL}/tyk/certs?p=-1&org_id={orgid}', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/tyk/certs?p=-1&org_id={orgid}', verify=False)
 
     # Gateway getCert
     def getCert(self, certid):
-        headers = {'x-tyk-authorization' : self.authKey}
-        return self.session.get(f'{self.URL}/tyk/certs/{certid}', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/tyk/certs/{certid}', verify=False)
 
     # Gateway getCertsDetails
     def getCertsDetails(self):
-        headers = {'x-tyk-authorization' : self.authKey}
-        return self.session.get(f'{self.URL}/tyk/certs?p=-1&mode=detailed', headers=headers, verify=False)
+        return self.session.get(f'{self.URL}/tyk/certs?p=-1&mode=detailed', verify=False)
 
     # Gateway createCert
     def createCert(self, certFile):
-        headers = {'x-tyk-authorization' : self.authKey}
         files={'data': open(certFile,'r')}
-        return self.session.post(f'{self.URL}/tyk/certs', files=files, headers=headers, verify=False)
+        return self.session.post(f'{self.URL}/tyk/certs', files=files, verify=False)
 
     # Gateway deleteCert
     def deleteCert(self, certid):
-        headers = {'x-tyk-authorization' : self.authKey}
-        return self.session.delete(f'{self.URL}/tyk/certs/{certid}', headers=headers, verify=False)
+        return self.session.delete(f'{self.URL}/tyk/certs/{certid}', verify=False)
 
     # Gateway deleteAllCerts
     def deleteAllCerts(self):
