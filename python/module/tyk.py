@@ -617,9 +617,15 @@ class gateway(tyk):
 
     # Gateway API functions
 
+    # Gateway reload
+    def reload(self):
+        response = self.session.get(f'{self.URL}/tyk/reload', verify=False)
+        if response.status_code != 200:
+            print(f'[WARN]The hot reload failed with code {response.status_code}: {response.json()}')
+        return response
+
     # Gateway reloadGroup
     def reloadGroup(self):
-
         response = self.session.get(f'{self.URL}/tyk/reload/group', verify=False)
         if response.status_code != 200:
             print(f'[WARN]The group hot reload failed with code {response.status_code}: {response.json()}')
