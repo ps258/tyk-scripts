@@ -56,12 +56,12 @@ class tyk:
         print('')
 
     def printPolicySummaryHeader(self):
-        print('# Name; policyID; API, API, ...')
+        print('# Name; policyID; policy_id; API, API, ...')
 
     def printPolicySummary(self, policy):
         if policy["id"] == "":
             policy["id"] = policy["_id"]
-        print(f'{policy["name"]};{policy["id"]}',end='')
+        print(f'{policy["name"]};{policy["id"]};{policy["_id"]}',end='')
         if "access_rights" in policy and policy["access_rights"] is not None:
             firstAPI=True
             for api in policy["access_rights"]:
@@ -250,7 +250,7 @@ class dashboard(tyk):
         # create a dictionary of all policy names
         PolicyName = policyDefinition['name']
         allnames = dict()
-        for policy in policies:
+        for policy in policies['policies']:
             allnames[policy['name']] = 1
         i = 1
         numberCreated = 0
@@ -264,7 +264,7 @@ class dashboard(tyk):
             policyDefinition['access_rights_array'] = json.loads('[{ "api_id": "' + APIid + '", "versions": [ "Default" ], "allowed_urls": [], "restricted_types": [], "limit": null, "allowance_scope": "" }]')
             print(f'Creating policy: {policyDefinition["name"]}')
             response = self.createPolicy(json.dumps(policyDefinition))
-            print(response.json())
+            #print(response.json())
             # if a call fails, stop and return the number of successes
             if response.status_code != 200:
                 break
