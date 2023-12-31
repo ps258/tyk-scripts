@@ -59,6 +59,6 @@ if verbose:
     print(json.dumps(policy, indent=2))
 
 resp = tyk.createPolicy(policy)
-print(resp.json())
+print(json.dumps(resp.json(), indent=2))
 if resp.status_code != 200:
     sys.exit(1)

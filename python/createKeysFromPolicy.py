@@ -63,6 +63,6 @@ for x in range(number):
     if verbose:
         print(json.dumps(resp.json()), indent=2)
     else:
-        print(resp.json()["key_id"])
+        print(json.dumps(resp.json()["key_id"]), indent=2)
     if resp.status_code != 200:
         sys.exit(1)

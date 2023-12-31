@@ -61,7 +61,7 @@ PolicyName = "Policy"
 policies = tyk.getPolicies().json()
 # create a dictionary of all policy names
 allnames = dict()
-for pol in policies:
+for pol in policies["policies"]:
     name = pol["name"]
     allnames[name] = 1
 
@@ -90,11 +90,11 @@ policy["access_rights_array"].append({
 if not id in policy:
     policy['id'] = policy["name"]
 
-print(f'Adding policy {policy["name"]}')
 if verbose:
     print(json.dumps(policy, indent=2))
 
 resp = tyk.createPolicy(policy)
-print(resp.json())
+print(json.dumps(resp.json(), indent=2))
 if resp.status_code != 200:
+    print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)

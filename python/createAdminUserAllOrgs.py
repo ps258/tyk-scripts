@@ -55,4 +55,4 @@ dashboard = tyk.dashboard(dshb, "", adminsecret)
 organisations = dashboard.getOrganisations().json()
 for org in organisations["organisations"]:
     resp = dashboard.createAdminUser(useremail, userpass, org["id"])
-    print(resp.json())
+    print(json.dumps(resp.json(), indent=2))
