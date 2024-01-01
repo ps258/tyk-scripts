@@ -796,12 +796,15 @@ class gateway(tyk):
     def deleteAllPolicies(self):
         allDeleted = True
         policies = self.getPolicies().json()
+        print(json.dumps(policies, indent=2))
         for policy in policies['policies']:
-            print(f'Deleting policy: {policy["_id"]}')
-            response = self.deletePolicy(policy['_id'])
-            print(response.json())
-            if response.status_code != 200:
-                allDeleted = False
+            if ('access_rights' in policy and policy['access_rights'] is not None) or ('access_rights_array' in policy and policy['access_rights_array'] is not None):
+                print(json.dumps(policy, indent=2))
+                print(f'Deleting policy: {policy["_id"]}')
+                response = self.deletePolicy(policy['_id'])
+                print(response.json())
+                if response.status_code != 200:
+                    allDeleted = False
         return allDeleted
 
 
