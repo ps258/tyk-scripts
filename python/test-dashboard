@@ -284,11 +284,10 @@ else
   echo FAIL $numberCreated of $numberToCreate created
   exit 1
 fi
-exit
 # Dashboard deleteAllAPIs
 echo -n "  [INFO]Delete all Policies: "
-resp=$(deletePolicies.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY)
-numberCreated=$(getPolicies.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY | grep -v \# | wc -l)
+resp=$(deleteAllPolicies.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY)
+numberRemaining=$(getPolicies.py --dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY | grep -v \# | wc -l)
 if [[ $numberRemaining -eq 0 ]]; then
   echo SUCCESS no Policies left
 else
