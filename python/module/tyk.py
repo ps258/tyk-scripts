@@ -746,6 +746,16 @@ class gateway(tyk):
         response._content = json.dumps(body_json).encode()
         return response
 
+    # Gateway __createPolicy (private function which doesn't call reloadGroup)
+    def __createPolicy(self, policyDefinition):
+        if isinstance(policyDefinition, dict):
+            if not 'id' in policyDefinition:
+                policyDefinition['id'] = str(uuid.uuid4())
+            policyDefinition = json.dumps(policyDefinition)
+            print(policyDefinition)
+        response =  self.session.post(f'{self.URL}/tyk/policies', data=policyDefinition, verify=False)
+        return response
+
     # Gateway createPolicy
     def createPolicy(self, policyDefinition):
         if isinstance(policyDefinition, dict):
@@ -754,6 +764,7 @@ class gateway(tyk):
             policyDefinition = json.dumps(policyDefinition)
             print(policyDefinition)
         response =  self.session.post(f'{self.URL}/tyk/policies', data=policyDefinition, verify=False)
+        self.reloadGroup()
         return response
 
     # Gateway createPolicies
@@ -774,34 +785,42 @@ class gateway(tyk):
             policyDefinition['name']=PolicyName+str(i)
             policyDefinition['access_rights_array'] = json.loads('[{ "api_id": "' + APIid + '", "versions": [ "Default" ], "allowed_urls": [], "restricted_types": [], "limit": null, "allowance_scope": "" }]')
             print(f'Creating policy: {policyDefinition["name"]}')
-            response = self.createPolicy(json.dumps(policyDefinition))
+            response = self.__createPolicy(json.dumps(policyDefinition))
             print(response.json())
             # if a call fails, stop and return the number of successes
             if response.status_code != 200:
                 break
             numberCreated += 1
+        self.reloadGroup()
         return numberCreated
 
     # Gateway updatePolicy
     def updatePolicy(self, policyDefinition, policyID):
         if isinstance(policyDefinition, dict):
             policyDefinition = json.dumps(policyDefinition)
-        return self.session.put(f'{self.URL}/tyk/policies/{policyID}', data=policyDefinition, verify=False)
+        response = self.session.put(f'{self.URL}/tyk/policies/{policyID}', data=policyDefinition, verify=False)
+        self.reloadGroup()
+        return response
+
+    # Gateway __deletePolicy (private function which doesn't call reloadGroup)
+    def __deletePolicy(self, policyID):
+        return self.session.delete(f'{self.URL}/tyk/policies/{policyID}', verify=False)
 
     # Gateway deletePolicy
     def deletePolicy(self, policyID):
-        return self.session.delete(f'{self.URL}/tyk/policies/{policyID}', verify=False)
+        response = self.session.delete(f'{self.URL}/tyk/policies/{policyID}', verify=False)
+        self.reloadGroup()
+        return response
 
     # Gateway deleteAllPolicies
     def deleteAllPolicies(self):
         allDeleted = True
         policies = self.getPolicies().json()
-        print(json.dumps(policies, indent=2))
         for policy in policies['policies']:
             if ('access_rights' in policy and policy['access_rights'] is not None) or ('access_rights_array' in policy and policy['access_rights_array'] is not None):
                 print(json.dumps(policy, indent=2))
                 print(f'Deleting policy: {policy["_id"]}')
-                response = self.deletePolicy(policy['_id'])
+                response = self.__deletePolicy(policy['_id'])
                 print(response.json())
                 if response.status_code != 200:
                     allDeleted = False
