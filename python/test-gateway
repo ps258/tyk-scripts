@@ -11,6 +11,8 @@ SCRIPTDIR=$(
 TM_GATW_URL=http://192.168.49.2:31153/
 TM_GATW_SECRET=Secret
 
+# Create a variable to hold the dashboard URL and credentials. This will allow the code to be very similar between dashboard and gateway tests
+URL_AND_CREDENTIAL="--gateway $TM_GATW_URL --cred $TM_GATW_SECRET"
 
 function getListenPath {
   typeset api
@@ -19,12 +21,12 @@ function getListenPath {
 }
 
 # Test that the environment is empty
-numberofAPIs=$(getAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET | grep -v \# | wc -l)
+numberofAPIs=$(getAPIs.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
 if [[ $numberofAPIs -ne 0 ]]; then
   echo FAIL $TM_GATW_URL has $numberofAPIs APIs in it. It must be empty for this script to work
   exit 1
 fi
-numberofPolicies=$(getPolicies.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET | grep -v \# | wc -l)
+numberofPolicies=$(getPolicies.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
 if [[ $numberofAPIs -ne 0 ]]; then
   echo FAIL $TM_GATW_URL has $numberofPolicies policies in it. It must be empty for this script to work
   exit 1
@@ -32,8 +34,8 @@ fi
 
 # use a trap to tidy up on exit
 function tidyup {
-	deleteAllAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET
-	deleteAllPolicies.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET
+	deleteAllAPIs.py $URL_AND_CREDENTIAL
+	deleteAllPolicies.py $URL_AND_CREDENTIAL
 }
 trap tidyup 0 1 2 3 15
 
@@ -42,7 +44,7 @@ if true; then
 	# Gateway createAPI
 	echo "[INFO]API checks: "
 	echo -n "  [INFO]Create: "
-	resp=$(createAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --template $SCRIPTDIR/API-template-auth.json --name httpbin)
+	resp=$(createAPI.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/API-template-auth.json --name httpbin)
 	if [[ $? -lt 1 ]]; then
 		APIID=$(echo $resp | jq -r .key)
 		echo "SUCCESS ($APIID)"
@@ -53,7 +55,7 @@ if true; then
 	sleep 1
 	# Gateway getAPI
 	echo -n "  [INFO]List API $APIID: "
-	resp=$(getAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --apiid $APIID)
+	resp=$(getAPI.py $URL_AND_CREDENTIAL --apiid $APIID)
 	APIID2=$(echo $resp | jq -r .api_id)
 	if [[ $APIID = $APIID2 ]]; then
 		echo "SUCCESS ($APIID2)"
@@ -63,7 +65,7 @@ if true; then
 	fi
 	# create a second API
 	echo -n "  [INFO]Create Second API: "
-	resp=$(createAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --template $SCRIPTDIR/API-template-auth.json --name httpbin)
+	resp=$(createAPI.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/API-template-auth.json --name httpbin)
 	if [[ $? -lt 1 ]]; then
 		APIID2=$(echo $resp | jq -r .key)
 		echo "SUCCESS: ($APIID)"
@@ -74,8 +76,8 @@ if true; then
 	sleep 1
 	echo -n "  [INFO]List both APIs: "
 	# Gateway getAPIs
-	if getAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET | grep -qiw $APIID; then
-		if getAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET | grep -qiw $APIID2; then
+	if getAPIs.py $URL_AND_CREDENTIAL | grep -qiw $APIID; then
+		if getAPIs.py $URL_AND_CREDENTIAL | grep -qiw $APIID2; then
 			echo "SUCCESS ($APIID, $APIID2)"
 		else
 			echo FAIL second API $APIID2 missing
@@ -88,9 +90,9 @@ if true; then
 	# Gateway deleteAPI
 	for API in $APIID $APIID2; do
 		echo -n "  [INFO]Delete API $API: "
-		resp=$(deleteAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --apiid $API)
+		resp=$(deleteAPI.py $URL_AND_CREDENTIAL --apiid $API)
 		sleep 1
-		if getAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET | grep -qiw $API; then
+		if getAPIs.py $URL_AND_CREDENTIAL | grep -qiw $API; then
 			echo FAIL $resp
 			exit 1
 		else
@@ -100,9 +102,9 @@ if true; then
 	# Gateway createAPIs
 	numberToCreate=10
 	echo -n "  [INFO]Create APIs: "
-	resp=$(createAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --template $SCRIPTDIR/API-template-auth.json --name test --number $numberToCreate)
+	resp=$(createAPIs.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/API-template-auth.json --name test --number $numberToCreate)
 	sleep 1
-	numberCreated=$(getAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET | grep -v \# | wc -l)
+	numberCreated=$(getAPIs.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
 	if [[ $numberCreated -eq $numberToCreate ]]; then
 		echo SUCCESS $numberCreated created
 	else
@@ -113,7 +115,7 @@ if true; then
 	# create an API.
 	echo "  [INFO]Update API: "
 	echo -n "    [INFO]Create API: "
-	resp=$(createAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --template $SCRIPTDIR/API-template-auth.json --name httpbin)
+	resp=$(createAPI.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/API-template-auth.json --name httpbin)
 	if [[ $? -lt 1 ]]; then
 		APIID=$(echo $resp | jq -r .key)
 		echo "SUCCESS ($APIID)"
@@ -124,7 +126,7 @@ if true; then
 	sleep 1
 	# retrieve the API, make a note of the listen path
 	echo -n "    [INFO]getAPI $APIID: "
-	APIJSON=$(getAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --apiid $APIID)
+	APIJSON=$(getAPI.py $URL_AND_CREDENTIAL --apiid $APIID)
 	if [[ -n $APIJSON ]]; then
 		echo SUCCESS
 	else
@@ -136,14 +138,14 @@ if true; then
 	# update the API
 	TMPFILE=$(mktemp /tmp/XXXX-test-dashboard.json)
 	echo $UPDATED_API_JSON > $TMPFILE
-	resp=$(updateAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --template $TMPFILE --apiid $APIID)
+	resp=$(updateAPI.py $URL_AND_CREDENTIAL --template $TMPFILE --apiid $APIID)
 	rm $TMPFILE
 	sleep 1
 	# Retrieve the API and check the listen path is changed.
 	# Reusing the variable UPDATED_API_JSON to contain the API definition retrieved from the dashboard
 	# after posting the change back. It should be very like what was posted
 	echo -n "    [INFO]updateAPI $APIID: "
-	UPDATED_API_JSON=$(getAPI.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET --apiid $APIID)
+	UPDATED_API_JSON=$(getAPI.py $URL_AND_CREDENTIAL --apiid $APIID)
 	UPDATED_LP=$(getListenPath "$UPDATED_API_JSON")
 	if [[ $UPDATED_LP = '"/fred/"' ]]; then
 		echo SUCCESS
@@ -153,13 +155,103 @@ if true; then
 	fi
 	# Gateway deleteAllAPIs
 	echo -n "  [INFO]Delete all APIs: "
-	resp=$(deleteAllAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET)
+	resp=$(deleteAllAPIs.py $URL_AND_CREDENTIAL)
 	sleep 1
-	numberRemaining=$(getAPIs.py --gateway $TM_GATW_URL --cred $TM_GATW_SECRET | grep -v \# | wc -l)
+	numberRemaining=$(getAPIs.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
 	if [[ $numberRemaining -eq 0 ]]; then
 		echo SUCCESS no APIs left
 	else
 		echo FAIL $numberRemaining left
 		exit 1
 	fi
+fi
+
+exit
+
+# Policy tests
+# Gateway createPolicy
+echo "[INFO]Policy checks: "
+echo -n "  [INFO]Create an API to use: "
+resp=$(createAPI.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/API-template-auth.json --name httpbin)
+if [[ $? -lt 1 ]]; then
+  APIID=$(echo $resp | jq -r .ID)
+  echo "SUCCESS ($APIID)"
+else
+  echo FAIL
+  exit 1
+fi
+echo -n "  [INFO]Create a policy for $APIID: "
+resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
+if [[ $? -lt 1 ]]; then
+  POLID=$(echo $resp | jq -r .Message)
+  echo "SUCCESS ($POLID)"
+else
+  echo FAIL
+  exit 1
+fi
+# Dashboard getPolicy
+echo -n "  [INFO]List Policy $POLID: "
+resp=$(getPolicy.py $URL_AND_CREDENTIAL --policy $POLID)
+POLID2=$(echo $resp | jq -r ._id)
+if [[ $POLID = $POLID2 ]]; then
+  echo "SUCCESS ($POLID2)"
+else
+  echo FAIL
+  exit 1
+fi
+# create a second Policy
+echo -n "  [INFO]Create Second Policy: "
+resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
+if [[ $? -lt 1 ]]; then
+  POLID2=$(echo $resp | jq -r .Message)
+  echo "SUCCESS ($POLID2)"
+else
+  echo "FAILED to create second policy"
+  exit 1
+fi
+echo -n "  [INFO]List both policies: "
+# Dashboard getPolicies
+if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POLID; then
+  if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POLID2; then
+    echo "SUCCESS ($POLID, $POLID2)"
+  else
+    echo FAIL second policy $POLID2 missing
+    exit 1
+  fi
+else
+  echo FAIL first policy $POLID missing
+  exit 1
+fi
+# Dashboard deletePolicy
+# delete both policies to have none
+for POL in $POLID $POLID2; do
+	echo -n "  [INFO]Delete Policy $POL: "
+	resp=$(deletePolicy.py $URL_AND_CREDENTIAL --policy $POL)
+	if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POL; then
+		echo FAIL $resp
+		exit 1
+	else
+		echo SUCCESS
+	fi
+done
+# Dashboard createPolicies
+numberToCreate=10
+echo -n "  [INFO]Create Policies: "
+resp=$(createPolicies.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --number $numberToCreate --apiid $APIID)
+numberCreated=$(getPolicies.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
+if [[ $numberCreated -eq $numberToCreate ]]; then
+  echo SUCCESS $numberCreated created
+else
+  echo FAIL $numberCreated of $numberToCreate created
+  exit 1
+fi
+# Dashboard deleteAllAPIs
+echo -n "  [INFO]Delete all Policies: "
+resp=$(deleteAllPolicies.py $URL_AND_CREDENTIAL)
+numberRemaining=$(getPolicies.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
+if [[ $numberRemaining -eq 0 ]]; then
+  echo SUCCESS no Policies left
+else
+  echo FAIL $numberRemaining left
+  exit 1
 fi
