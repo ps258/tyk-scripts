@@ -9,6 +9,7 @@
 # -n namespace the context is in
 # -b the name to give the APIs and policies (defaults to httpbin)
 # -r number to create (defaults to 10)
+# -G CE gateway mode (no catalogue etc)
 
 SCRIPTNAME=$0
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:$PATH
@@ -19,6 +20,8 @@ SCRIPTDIR=$(
 
 cd $SCRIPTDIR
 
+KUBECONTEXT=minikube
+GATEWAY_MODE=
 APINAME=httpbin
 POLICYNAME=$APINAME
 COUNT=10
@@ -27,9 +30,12 @@ function help {
 	echo "$0.sh -K kubectl_context -N Namespace_to_publish_CRDs_to -c Operator_context_name -n Namespace_containing_operatorcontext -b api/profile_base_name -r number_of_items_to_create"
 }
 
-while getopts :K:N:c:n:b:r: arg
+while getopts :GK:N:c:n:b:r: arg
 do
   case $arg in
+    G)
+      GATEWAY_MODE=TRUE
+      ;;
     K)
       KUBECONTEXT=$OPTARG
       ;;
@@ -67,9 +73,11 @@ fi
 
 # create a portal config so that the portal will work
 
-yq '.spec.contextRef.name = "'$OPERATORCONTEXT'"' -i PortalConfig.yaml
-yq '.spec.contextRef.namespace = "'$OPERATORNAMESPACE'"' -i PortalConfig.yaml
-kubectl apply -f PortalConfig.yaml -n $CRDNAMESPACE
+if [[ -z $GATEWAY_MODE ]]; then
+	yq '.spec.contextRef.name = "'$OPERATORCONTEXT'"' -i PortalConfig.yaml
+	yq '.spec.contextRef.namespace = "'$OPERATORNAMESPACE'"' -i PortalConfig.yaml
+	kubectl apply -f PortalConfig.yaml -n $CRDNAMESPACE
+fi
 
 API_YAML=ApiDefinition.yaml
 POLICYL_YAML=SecurityPolicy.yaml
@@ -109,17 +117,22 @@ for i in $(seq 1 $COUNT); do
 	kubectl apply -f $DESCRIPTION_YAML -n $CRDNAMESPACE --cluster=$KUBECONTEXT
 done
 
-for i in $(seq 1 $COUNT); do
-  # Portal API Catalogue
-	yq '.spec.contextRef.name = "'$OPERATORCONTEXT'"' -i $PORTALCATALOGUE_YAML
-	yq '.spec.contextRef.namespace = "'$OPERATORNAMESPACE'"' -i $PORTALCATALOGUE_YAML
-	yq '.metadata.name = "sample-portal-api-catalogue"' -i $PORTALCATALOGUE_YAML
-  if [[ $FIRST -eq 1 ]]; then
-    yq '.spec.apis = [{"apiDescriptionRef": {"name": "sample-api-description-'$APINAME$i'", "namespace": "'$CRDNAMESPACE'"}}]' -i $PORTALCATALOGUE_YAML
-    FIRST=2
-  else
-    yq '.spec.apis += [{"apiDescriptionRef": {"name": "sample-api-description-'$APINAME$i'", "namespace": "'$CRDNAMESPACE'"}}]' -i $PORTALCATALOGUE_YAML
-  fi
-done
-# apply the catalogue after everything so that it's only done once with all APIs in it
-kubectl apply -f $PORTALCATALOGUE_YAML -n $CRDNAMESPACE --cluster=$KUBECONTEXT
+if [[ -z $GATEWAY_MODE ]]; then
+	for i in $(seq 1 $COUNT); do
+		# Portal API Catalogue
+		yq '.spec.contextRef.name = "'$OPERATORCONTEXT'"' -i $PORTALCATALOGUE_YAML
+		yq '.spec.contextRef.namespace = "'$OPERATORNAMESPACE'"' -i $PORTALCATALOGUE_YAML
+		yq '.metadata.name = "sample-portal-api-catalogue"' -i $PORTALCATALOGUE_YAML
+		if [[ $FIRST -eq 1 ]]; then
+			yq '.spec.apis = [{"apiDescriptionRef": {"name": "sample-api-description-'$APINAME$i'", "namespace": "'$CRDNAMESPACE'"}}]' -i $PORTALCATALOGUE_YAML
+			FIRST=2
+		else
+			yq '.spec.apis += [{"apiDescriptionRef": {"name": "sample-api-description-'$APINAME$i'", "namespace": "'$CRDNAMESPACE'"}}]' -i $PORTALCATALOGUE_YAML
+		fi
+	done
+	# apply the catalogue after everything so that it's only done once with all APIs in it
+	kubectl apply -f $PORTALCATALOGUE_YAML -n $CRDNAMESPACE --cluster=$KUBECONTEXT
+fi
+
+# show the results
+kubectl api-resources --verbs=list --namespaced -o name | grep tyk | xargs -n 1 kubectl get --show-kind --ignore-not-found -n $CRDNAMESPACE --cluster=$KUBECONTEXT

@@ -8,7 +8,7 @@ SCRIPTDIR=$(
   echo $PWD
 )
 
-TM_GATW_URL=http://192.168.49.2:31153/
+TM_GATW_URL=http://192.168.49.2:30473/
 TM_GATW_SECRET=Secret
 
 # Create a variable to hold the dashboard URL and credentials. This will allow the code to be very similar between dashboard and gateway tests
@@ -34,12 +34,17 @@ fi
 
 # use a trap to tidy up on exit
 function tidyup {
-	deleteAllAPIs.py $URL_AND_CREDENTIAL
+	trap - 0 1 2 3 15
+	sleep 1
+	echo deleteAllPolicies.py $URL_AND_CREDENTIAL
 	deleteAllPolicies.py $URL_AND_CREDENTIAL
+	sleep 1
+	echo deleteAllAPIs.py $URL_AND_CREDENTIAL
+	deleteAllAPIs.py $URL_AND_CREDENTIAL
 }
 trap tidyup 0 1 2 3 15
 
-if true; then
+if false; then
 	# API tests
 	# Gateway createAPI
 	echo "[INFO]API checks: "
@@ -166,33 +171,33 @@ if true; then
 	fi
 fi
 
-exit
-
 # Policy tests
 # Gateway createPolicy
 echo "[INFO]Policy checks: "
 echo -n "  [INFO]Create an API to use: "
 resp=$(createAPI.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/API-template-auth.json --name httpbin)
 if [[ $? -lt 1 ]]; then
-  APIID=$(echo $resp | jq -r .ID)
+  APIID=$(echo $resp | jq -r .key)
   echo "SUCCESS ($APIID)"
 else
   echo FAIL
   exit 1
 fi
+sleep 1
 echo -n "  [INFO]Create a policy for $APIID: "
 resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
 if [[ $? -lt 1 ]]; then
-  POLID=$(echo $resp | jq -r .Message)
+  POLID=$(echo $resp | jq -r .key)
   echo "SUCCESS ($POLID)"
 else
   echo FAIL
   exit 1
 fi
-# Dashboard getPolicy
+sleep 1
+# Gateway getPolicy
 echo -n "  [INFO]List Policy $POLID: "
 resp=$(getPolicy.py $URL_AND_CREDENTIAL --policy $POLID)
-POLID2=$(echo $resp | jq -r ._id)
+POLID2=$(echo $resp | jq -r .id)
 if [[ $POLID = $POLID2 ]]; then
   echo "SUCCESS ($POLID2)"
 else
@@ -203,14 +208,15 @@ fi
 echo -n "  [INFO]Create Second Policy: "
 resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
 if [[ $? -lt 1 ]]; then
-  POLID2=$(echo $resp | jq -r .Message)
+  POLID2=$(echo $resp | jq -r .key)
   echo "SUCCESS ($POLID2)"
 else
   echo "FAILED to create second policy"
   exit 1
 fi
+sleep 1
 echo -n "  [INFO]List both policies: "
-# Dashboard getPolicies
+# Gateway getPolicies
 if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POLID; then
   if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POLID2; then
     echo "SUCCESS ($POLID, $POLID2)"
@@ -222,6 +228,7 @@ else
   echo FAIL first policy $POLID missing
   exit 1
 fi
+exit
 # Dashboard deletePolicy
 # delete both policies to have none
 for POL in $POLID $POLID2; do
