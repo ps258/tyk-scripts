@@ -740,7 +740,9 @@ class gateway(tyk):
 
     # Gateway getPolicies
     def getPolicies(self):
-        response = self.session.get(f'{self.URL}/tyk/policies', verify=False)
+        #print(f'{self.URL}/tyk/policies')
+        response = self.session.get(f'{self.URL}/tyk/policies/', verify=False)
+        #print(response)
         body_json = {}
         body_json['policies'] = response.json()
         response._content = json.dumps(body_json).encode()
@@ -762,7 +764,7 @@ class gateway(tyk):
             if not 'id' in policyDefinition:
                 policyDefinition['id'] = str(uuid.uuid4())
             policyDefinition = json.dumps(policyDefinition)
-            print(policyDefinition)
+            #print(policyDefinition)
         response =  self.session.post(f'{self.URL}/tyk/policies', data=policyDefinition, verify=False)
         self.reloadGroup()
         return response
@@ -818,10 +820,10 @@ class gateway(tyk):
         policies = self.getPolicies().json()
         for policy in policies['policies']:
             if ('access_rights' in policy and policy['access_rights'] is not None) or ('access_rights_array' in policy and policy['access_rights_array'] is not None):
-                print(json.dumps(policy, indent=2))
-                print(f'Deleting policy: {policy["_id"]}')
-                response = self.__deletePolicy(policy['_id'])
-                print(response.json())
+                #print(json.dumps(policy, indent=2))
+                print(f'Deleting policy: {policy["id"]}')
+                response = self.__deletePolicy(policy['id'])
+                print(json.dumps(response.json()))
                 if response.status_code != 200:
                     allDeleted = False
         return allDeleted
