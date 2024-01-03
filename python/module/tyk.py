@@ -6,6 +6,9 @@ import json
 import requests
 import time
 import uuid
+import sys
+import hashlib
+from packaging import version
 
 # Suppress the warnings from urllib3 when using a self signed certs
 from urllib3.exceptions import InsecureRequestWarning
@@ -728,7 +731,9 @@ class gateway(tyk):
             # convert to a dict so we can test for the api_definition key
             APIdefinition = json.loads(APIdefinition)
         if 'api_definition' in APIdefinition:
-            return APIdefinition['api_definition']
+            APIdefinition = APIdefinition['api_definition']
+        if 'api_id' not in APIdefinition or APIdefinition['api_id'] is None:
+            APIdefinition['api_id'] = hashlib.md5(json.dumps(APIdefinition, sort_keys=True).encode('utf-8')).hexdigest()
         return APIdefinition
 
 
@@ -741,6 +746,11 @@ class gateway(tyk):
     # Gateway getPolicies
     def getPolicies(self):
         #print(f'{self.URL}/tyk/policies')
+        cutoffVersion = "4.1.0"
+        gatewayVersion = self.getVersion()
+        if (version.parse(gatewayVersion) < version.parse(cutoffVersion)):
+            print(f'[FATAL]Current gateway is {gatewayVersion}. Cannot retrieve polcies until v{cutoffVersion}', file=sys.stderr)
+            sys.exit(1)
         response = self.session.get(f'{self.URL}/tyk/policies/', verify=False)
         #print(response)
         body_json = {}
@@ -979,3 +989,7 @@ class gateway(tyk):
                 time.sleep(1)
         return self.isUp()
 
+    # Gateway getVersion
+    def getVersion(self):
+        version = self.getSystemStatus().json()['version']
+        return version.replace('v', '')
