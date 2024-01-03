@@ -8,7 +8,12 @@ SCRIPTDIR=$(
   echo $PWD
 )
 
-TM_GATW_URL=http://192.168.49.2:30473/
+if [[ $# -gt 0 ]]; then
+	TM_GATW_URL=$1
+else
+	TM_GATW_URL=http://192.168.49.2:30019/
+fi
+
 TM_GATW_SECRET=Secret
 
 # Create a variable to hold the dashboard URL and credentials. This will allow the code to be very similar between dashboard and gateway tests
@@ -36,15 +41,13 @@ fi
 function tidyup {
 	trap - 0 1 2 3 15
 	sleep 1
-	echo deleteAllPolicies.py $URL_AND_CREDENTIAL
 	deleteAllPolicies.py $URL_AND_CREDENTIAL
 	sleep 1
-	echo deleteAllAPIs.py $URL_AND_CREDENTIAL
 	deleteAllAPIs.py $URL_AND_CREDENTIAL
 }
 trap tidyup 0 1 2 3 15
 
-if false; then
+if true; then
 	# API tests
 	# Gateway createAPI
 	echo "[INFO]API checks: "
