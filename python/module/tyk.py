@@ -733,7 +733,8 @@ class gateway(tyk):
         if 'api_definition' in APIdefinition:
             APIdefinition = APIdefinition['api_definition']
         if 'api_id' not in APIdefinition or APIdefinition['api_id'] is None:
-            APIdefinition['api_id'] = hashlib.md5(json.dumps(APIdefinition, sort_keys=True).encode('utf-8')).hexdigest()
+            #APIdefinition['api_id'] = hashlib.md5(json.dumps(APIdefinition, sort_keys=True).encode('utf-8')).hexdigest()
+            APIdefinition['api_id'] = str(uuid.uuid4())
         return APIdefinition
 
 
@@ -750,32 +751,33 @@ class gateway(tyk):
         gatewayVersion = self.getVersion()
         if (version.parse(gatewayVersion) < version.parse(cutoffVersion)):
             print(f'[FATAL]Current gateway is {gatewayVersion}. Cannot retrieve polcies until v{cutoffVersion}', file=sys.stderr)
-            sys.exit(1)
+            #sys.exit(1)
         response = self.session.get(f'{self.URL}/tyk/policies/', verify=False)
-        #print(response)
-        body_json = {}
-        body_json['policies'] = response.json()
-        response._content = json.dumps(body_json).encode()
+        if response.status_code == 200:
+            body_json = {}
+            body_json['policies'] = response.json()
+            response._content = json.dumps(body_json).encode()
         return response
 
     # Gateway __createPolicy (private function which doesn't call reloadGroup)
     def __createPolicy(self, policyDefinition):
+        # convert to a dictionary so we can set the 'id'
+        if isinstance(policyDefinition, str):
+            policyDefinition = json.loads(policyDefinition)
         if isinstance(policyDefinition, dict):
             if not 'id' in policyDefinition:
                 policyDefinition['id'] = str(uuid.uuid4())
-            policyDefinition = json.dumps(policyDefinition)
-            print(policyDefinition)
+            #print(json.dumps(policyDefinition, indent=2), file=sys.stderr)
+        #policyID=policyDefinition["id"]
+        policyDefinition = json.dumps(policyDefinition)
+        #print(f'{self.URL}/tyk/keys/policy/{policyID}', file=sys.stderr)
+        #response =  self.session.post(f'{self.URL}/tyk/keys/policy/{policyID}', data=policyDefinition, verify=False)
         response =  self.session.post(f'{self.URL}/tyk/policies', data=policyDefinition, verify=False)
         return response
 
     # Gateway createPolicy
     def createPolicy(self, policyDefinition):
-        if isinstance(policyDefinition, dict):
-            if not 'id' in policyDefinition:
-                policyDefinition['id'] = str(uuid.uuid4())
-            policyDefinition = json.dumps(policyDefinition)
-            #print(policyDefinition)
-        response =  self.session.post(f'{self.URL}/tyk/policies', data=policyDefinition, verify=False)
+        response = self.__createPolicy(policyDefinition)
         self.reloadGroup()
         return response
 
@@ -827,15 +829,18 @@ class gateway(tyk):
     # Gateway deleteAllPolicies
     def deleteAllPolicies(self):
         allDeleted = True
-        policies = self.getPolicies().json()
-        for policy in policies['policies']:
-            if ('access_rights' in policy and policy['access_rights'] is not None) or ('access_rights_array' in policy and policy['access_rights_array'] is not None):
-                #print(json.dumps(policy, indent=2))
-                print(f'Deleting policy: {policy["id"]}')
-                response = self.__deletePolicy(policy['id'])
-                print(json.dumps(response.json()))
-                if response.status_code != 200:
-                    allDeleted = False
+        policies_response = self.getPolicies()
+        if policies_response == 200:
+            for policy in policies_response.json()['policies']:
+                if ('access_rights' in policy and policy['access_rights'] is not None) or ('access_rights_array' in policy and policy['access_rights_array'] is not None):
+                    #print(json.dumps(policy, indent=2))
+                    print(f'Deleting policy: {policy["id"]}')
+                    response = self.__deletePolicy(policy['id'])
+                    print(json.dumps(response.json()))
+                    if response.status_code != 200:
+                        allDeleted = False
+        else:
+            allDeleted = False
         return allDeleted
 
 

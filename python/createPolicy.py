@@ -58,27 +58,48 @@ with open(templateFile) as PolicyFile:
     PolicyFile.close()
 PolicyName = "Policy"
 # get the existing Policies
-policies = tyk.getPolicies().json()
-# create a dictionary of all policy names
-allnames = dict()
-for pol in policies["policies"]:
-    name = pol["name"]
-    allnames[name] = 1
+policies = tyk.getPolicies()
+if policies.status_code == 200:
+    #print(f'[FATAL]{scriptName}: Tyk returned {policies.status_code}', file=sys.stderr)
+    # create a dictionary of all policy names
+    allnames = dict()
+    for pol in policies.json()["policies"]:
+        name = pol["name"]
+        allnames[name] = 1
 
-# find the first available name
-i = 1
-while PolicyName+str(i) in allnames:
-    i += 1
-policy["name"]=PolicyName+str(i)
-policy["access_rights"][apiid] = {
+    # find the first available name
+    i = 1
+    while PolicyName+str(i) in allnames:
+        i += 1
+    policy["name"]=PolicyName+str(i)
+    policy["access_rights"][apiid] = {
+            "api_id": "' + apiid + '",
+            "versions": [ "Default" ],
+            "allowed_urls": [],
+            "restricted_types": [],
+            "limit": None,
+            "allowance_scope": ""
+        }
+    policy["access_rights_array"].append({
+            "allowance_scope": "",
+            "allowed_urls": [],
+            "api_id": apiid,
+            "api_name": "",
+            "limit": None,
+            "restricted_types": [],
+            "versions": [ "Default" ]
+        })
+else:
+    # Just use the existing json
+    policy["access_rights"][apiid] = {
         "api_id": "' + apiid + '",
         "versions": [ "Default" ],
         "allowed_urls": [],
         "restricted_types": [],
         "limit": None,
         "allowance_scope": ""
-    }
-policy["access_rights_array"].append({
+        }
+    policy["access_rights_array"].append({
         "allowance_scope": "",
         "allowed_urls": [],
         "api_id": apiid,
@@ -86,15 +107,14 @@ policy["access_rights_array"].append({
         "limit": None,
         "restricted_types": [],
         "versions": [ "Default" ]
-    })
-if not id in policy:
-    policy['id'] = policy["name"]
+        })
 
 if verbose:
     print(json.dumps(policy, indent=2))
 
 resp = tyk.createPolicy(policy)
-print(json.dumps(resp.json(), indent=2))
 if resp.status_code != 200:
-    print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
+    print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
+else:
+    print(json.dumps(resp.json(), indent=2))
