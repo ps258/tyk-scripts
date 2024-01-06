@@ -10,11 +10,34 @@ SCRIPTDIR=$(
 
 if [[ $# -gt 0 ]]; then
 	TM_GATW_URL=$1
+	TM_GATW_SECRET=$2
+	if [[ -z TM_GATW_SECRET ]]; then
+		echo "[FATAL]Must specify both URL and gateway secret"
+		exit 1
+	fi
+	# use a trap to tidy up on exit
+	function tidyup {
+		trap - 0 1 2 3 15
+		sleep 1
+		deleteAllPolicies.py $URL_AND_CREDENTIAL
+		sleep 1
+		deleteAllAPIs.py $URL_AND_CREDENTIAL
+	}
+	trap tidyup 0 1 2 3 15
 else
-	TM_GATW_URL=http://192.168.49.2:30019/
+	VERSION=5.0.9
+	DESC="Python module test deployment"
+	TM_CONTAINER=$(sbctl create -v $VERSION -t "$DESC" -n -s | awk '/Creating container/ {print $NF}')
+	TM_GATW_URL=$(sbctl get $TM_CONTAINER gateway)
+	TM_GATW_SECRET=$(sbctl get $TM_CONTAINER secret)
+	waitUp.py --gateway $TM_GATW_URL --time 20
+	# use a trap to tidy up on exit
+	function tidyup {
+		trap - 0 1 2 3 15
+		sbctl delete $TM_CONTAINER
+	}
+	trap tidyup 0 1 2 3 15
 fi
-
-TM_GATW_SECRET=Secret
 
 # Create a variable to hold the dashboard URL and credentials. This will allow the code to be very similar between dashboard and gateway tests
 URL_AND_CREDENTIAL="--gateway $TM_GATW_URL --cred $TM_GATW_SECRET"
@@ -37,15 +60,6 @@ if [[ $numberofAPIs -ne 0 ]]; then
   exit 1
 fi
 
-# use a trap to tidy up on exit
-function tidyup {
-	trap - 0 1 2 3 15
-	sleep 1
-	deleteAllPolicies.py $URL_AND_CREDENTIAL
-	sleep 1
-	deleteAllAPIs.py $URL_AND_CREDENTIAL
-}
-trap tidyup 0 1 2 3 15
 
 if true; then
 	# API tests
