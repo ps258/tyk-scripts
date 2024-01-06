@@ -7,7 +7,6 @@ import requests
 import time
 import uuid
 import sys
-import hashlib
 from packaging import version
 
 # Suppress the warnings from urllib3 when using a self signed certs
@@ -98,7 +97,7 @@ class tyk:
 
 ###################### DASHBOARD CLASS ######################
 class dashboard(tyk):
-    def __init__(self, URL, authKey, adminSecret = 'N/A' , description = 'N/A'):
+    def __init__(self, URL, authKey = '', adminSecret = 'N/A' , description = 'N/A', verify = False):
         super().__init__()
         self.URL = URL.strip('/')       # The dashboard URL
         self.authKey = authKey          # User key to authenticate API calls
@@ -106,34 +105,50 @@ class dashboard(tyk):
         self.adminSecret = adminSecret  # The admin secret for the admin API (admin_secret in tyk_analytics.conf, AdminSecret in tyk.conf)
         self.session.headers.update({'Authorization': self.authKey})
         self.session.headers.update({'admin-auth': self.adminSecret})
+        self.session.verify = verify    # insecure skip verify
 
     def __str__(self):
-        return f'Dashboard URL: {self.URL}, Auth token: {self.authkey}, Admin Secret: {self.adminSecret}, Description: {self.description}'
+        return f'Dashboard URL: {self.URL}, Auth token: {self.authKey}, Admin Secret: {self.adminSecret}, Description: {self.description} Verify dashboard cert: {self.verify}'
 
     def __repr__(self):
-        return f'tyk.dashboard("{self.URL}", "{self.authkey}", "{self.adminSecret}", "{self.description}")'
+        return f'tyk.dashboard("URL={self.URL}", authKey="{self.authKey}", adminSecret="{self.adminSecret}", description="{self.description}", verify={self.verify})'
 
-    def url(self):
+    def getUrl(self):
         return self.URL
 
-    def authkey(self):
-        return self.authkey
+    def setUrl(self, URL):
+        self.URL = URL
+        return URL
 
-    def setAuthkey(self, authkey):
-        self.authkey = authkey
-        self.session.headers.update({'Authorization': self.authKey})
-        return self.authkey
+    def getAuthKey(self):
+        return self.authKey
 
-    def description(self):
-        return self.description
+    def setAuthKey(self, authKey):
+        self.authKey = authKey
+        self.session.headers.update({'Authorization': authKey})
+        return self.authKey
 
-    def adminSecret(self):
-        self.session.headers.update({'admin-auth': self.adminSecret})
+    def getAdminSecret(self):
         return self.adminSecret
 
     def setAdminSecret(self, adminSecret):
         self.adminSecret = adminSecret
-        return adminSecret
+        self.session.headers.update({'admin-auth': adminSecret})
+        return self.adminSecret
+
+    def getDescription(self):
+        return self.description
+
+    def setDescription(self, description):
+        self.description = description
+        return description
+
+    def setVerify(self, verify):
+        self.session.verify = verify
+        return verify
+
+    def getVerify(self):
+        return self.session.verify
 
 
     # Dashboard API functions
@@ -442,7 +457,7 @@ class dashboard(tyk):
             return createResp
         # need to set the user password immediately
         userdata = createResp.json()
-        self.setAuthkey(userdata['Meta']['access_key'])
+        self.setAuthKey(userdata['Meta']['access_key'])
         headers = {'Content-Type': 'application/json'}
         resetResp = self.session.post(f'{self.URL}/api/users/{userdata["Meta"]["id"]}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers, verify=False)
         return createResp
@@ -590,33 +605,49 @@ class dashboard(tyk):
 
 ###################### GATEWAY CLASS ######################
 class gateway(tyk):
-    def __init__(self, URL, authKey, description = 'N/A'):
+    def __init__(self, URL, authKey = '', description = 'N/A', verify = False):
         super().__init__()
         self.URL = URL.strip('/')       # The gateway URL
         self.authKey = authKey          # User key to authenticate API calls ('Secret' from tyk.conf)
         self.description = description  # description of this gateway
         self.session.headers.update({'x-tyk-authorization': self.authKey})
         self.session.headers.update({'Content-Type': 'application/json'})
+        self.session.verify = verify    # insecure skip verify
 
     def __str__(self):
-        return f'Gateway URL: {self.URL}, Auth token: {self.authkey}, Description: {self.description}'
+        return f'Gateway URL: {self.URL}, Auth token: {self.authKey}, Description: {self.description}, Verify gateway cert: {self.verify}'
 
     def __repr__(self):
-        return f'tyk.gateway("{self.URL}", "{self.authkey}", "{self.description}")'
+        return f'tyk.gateway(URL="{self.URL}", authKey="{self.authKey}", description="{self.description}", verify={self.verify})'
 
-    def url(self):
+    def getUrl(self):
         return self.URL
 
-    def authkey(self):
-        return self.authkey
+    def setUrl(self, URL):
+        self.URL = URL
+        return URL
 
-    def setAuthkey(self, authkey):
-        self.authkey = authkey
-        self.session.headers.update({'x-tyk-authorization': self.authKey})
-        return self.authkey
+    def getAuthKey(self):
+        return self.authKey
 
-    def description(self):
+    def setAuthKey(self, authKey):
+        self.authKey = authKey
+        self.session.headers.update({'x-tyk-authorization': authKey})
+        return authKey
+
+    def getDescription(self):
         return self.description
+
+    def setDescription(self, description):
+        self.description = description
+        return description
+
+    def setVerify(self, verify):
+        self.session.verify = verify
+        return verify
+
+    def getVerify(self):
+        return self.session.verify
 
     # Gateway API functions
 
@@ -733,7 +764,6 @@ class gateway(tyk):
         if 'api_definition' in APIdefinition:
             APIdefinition = APIdefinition['api_definition']
         if 'api_id' not in APIdefinition or APIdefinition['api_id'] is None:
-            #APIdefinition['api_id'] = hashlib.md5(json.dumps(APIdefinition, sort_keys=True).encode('utf-8')).hexdigest()
             APIdefinition['api_id'] = str(uuid.uuid4())
         return APIdefinition
 
@@ -976,9 +1006,17 @@ class gateway(tyk):
     def isUp(self):
         try:
             response = self.getSystemStatus()
-            # This is nice for versions after 3.0 but before that it was only 'Hello Tiki', so just use status_code
-            # return response.json()["status"] == "pass"
-            return response.status_code == 200
+            # for v3+ where there are some details
+            if response.headers.get('content-type') == 'application/json':
+                resp_json = response.json()
+                if 'details' in resp_json:
+                    if 'redis' in resp_json['details']:
+                        if 'status' in resp_json['details']['redis']:
+                            return resp_json['details']['redis']['status'] == "pass"
+                return False
+            else:
+                # for earlier when it was just 'hello tikki'
+                return response.status_code == 200
         except:
             return False
 
