@@ -16,8 +16,41 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 ###################### BASE CLASS ######################
 # mostly for functions to print stuff out
 class tyk:
-    def __init__(self):
+    def __init__(self, URL, authKey, description, verify):
         self.session = requests.Session()
+        self.URL = URL.strip('/')       # The dashboard or gateway URL
+        self.authKey = authKey          # User key to authenticate API calls (admin key or gateway secret)
+        self.description = description  # description of this instance
+        self.session.verify = verify    # insecure skip verify
+
+    def getUrl(self):
+        return self.URL
+
+    def setUrl(self, URL):
+        self.URL = URL
+        return URL
+
+    def getDescription(self):
+        return self.description
+
+    def setDescription(self, description):
+        self.description = description
+        return description
+
+    def getAuthKey(self):
+        return self.authKey
+
+    def setAuthKey(self, authKey):
+        self.authKey = authKey
+        self.session.headers.update({'Authorization': authKey})
+        return self.authKey
+
+    def setVerify(self, verify):
+        self.session.verify = verify
+        return verify
+
+    def getVerify(self):
+        return self.session.verify
 
     def printUserSummaryHeader(self):
         print('# ID,IsActive,org_id,first_name,last_name,email,IsAdmin,accessKey')
@@ -98,35 +131,16 @@ class tyk:
 ###################### DASHBOARD CLASS ######################
 class dashboard(tyk):
     def __init__(self, URL, authKey = '', adminSecret = 'N/A' , description = 'N/A', verify = False):
-        super().__init__()
-        self.URL = URL.strip('/')       # The dashboard URL
-        self.authKey = authKey          # User key to authenticate API calls
-        self.description = description  # description of this dashboard
+        super().__init__(URL=URL, authKey=authKey, description=description, verify=verify)
         self.adminSecret = adminSecret  # The admin secret for the admin API (admin_secret in tyk_analytics.conf, AdminSecret in tyk.conf)
         self.session.headers.update({'Authorization': self.authKey})
         self.session.headers.update({'admin-auth': self.adminSecret})
-        self.session.verify = verify    # insecure skip verify
 
     def __str__(self):
         return f'Dashboard URL: {self.URL}, Auth token: {self.authKey}, Admin Secret: {self.adminSecret}, Description: {self.description} Verify dashboard cert: {self.verify}'
 
     def __repr__(self):
         return f'tyk.dashboard("URL={self.URL}", authKey="{self.authKey}", adminSecret="{self.adminSecret}", description="{self.description}", verify={self.verify})'
-
-    def getUrl(self):
-        return self.URL
-
-    def setUrl(self, URL):
-        self.URL = URL
-        return URL
-
-    def getAuthKey(self):
-        return self.authKey
-
-    def setAuthKey(self, authKey):
-        self.authKey = authKey
-        self.session.headers.update({'Authorization': authKey})
-        return self.authKey
 
     def getAdminSecret(self):
         return self.adminSecret
@@ -136,19 +150,6 @@ class dashboard(tyk):
         self.session.headers.update({'admin-auth': adminSecret})
         return self.adminSecret
 
-    def getDescription(self):
-        return self.description
-
-    def setDescription(self, description):
-        self.description = description
-        return description
-
-    def setVerify(self, verify):
-        self.session.verify = verify
-        return verify
-
-    def getVerify(self):
-        return self.session.verify
 
 
     # Dashboard API functions
@@ -606,48 +607,15 @@ class dashboard(tyk):
 ###################### GATEWAY CLASS ######################
 class gateway(tyk):
     def __init__(self, URL, authKey = '', description = 'N/A', verify = False):
-        super().__init__()
-        self.URL = URL.strip('/')       # The gateway URL
-        self.authKey = authKey          # User key to authenticate API calls ('Secret' from tyk.conf)
-        self.description = description  # description of this gateway
+        super().__init__(URL=URL, authKey=authKey, description=description, verify=verify)
         self.session.headers.update({'x-tyk-authorization': self.authKey})
         self.session.headers.update({'Content-Type': 'application/json'})
-        self.session.verify = verify    # insecure skip verify
 
     def __str__(self):
         return f'Gateway URL: {self.URL}, Auth token: {self.authKey}, Description: {self.description}, Verify gateway cert: {self.verify}'
 
     def __repr__(self):
         return f'tyk.gateway(URL="{self.URL}", authKey="{self.authKey}", description="{self.description}", verify={self.verify})'
-
-    def getUrl(self):
-        return self.URL
-
-    def setUrl(self, URL):
-        self.URL = URL
-        return URL
-
-    def getAuthKey(self):
-        return self.authKey
-
-    def setAuthKey(self, authKey):
-        self.authKey = authKey
-        self.session.headers.update({'x-tyk-authorization': authKey})
-        return authKey
-
-    def getDescription(self):
-        return self.description
-
-    def setDescription(self, description):
-        self.description = description
-        return description
-
-    def setVerify(self, verify):
-        self.session.verify = verify
-        return verify
-
-    def getVerify(self):
-        return self.session.verify
 
     # Gateway API functions
 
@@ -815,6 +783,7 @@ class gateway(tyk):
     def createPolicies(self, policyDefinition, APIid, numberToCreate):
         policies = self.getPolicies().json()
         # create a dictionary of all policy names
+        allnames = []
         PolicyName = policyDefinition['name']
         for policy in policies['policies']:
             allnames[policy['name']] = 1
