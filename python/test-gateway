@@ -30,6 +30,7 @@ else
 	TM_CONTAINER=$(sbctl create -v $VERSION -t "$DESC" -n -s | awk '/Creating container/ {print $NF}')
 	TM_GATW_URL=$(sbctl get $TM_CONTAINER gateway)
 	TM_GATW_SECRET=$(sbctl get $TM_CONTAINER secret)
+	echo "[INFO]$TM_CONTAINER created, waiting for it to be ready"
 	waitUp.py --gateway $TM_GATW_URL --time 20
 	# use a trap to tidy up on exit
 	function tidyup {
