@@ -25,7 +25,7 @@ if [[ $# -gt 0 ]]; then
 	}
 	trap tidyup 0 1 2 3 15
 else
-	VERSION=5.0.9
+	VERSION=5.2.5
 	DESC="Python module test deployment"
 	TM_CONTAINER=$(sbctl create -v $VERSION -t "$DESC" -n -s | awk '/Creating container/ {print $NF}')
 	TM_GATW_URL=$(sbctl get $TM_CONTAINER gateway)
@@ -62,7 +62,7 @@ if [[ $numberofAPIs -ne 0 ]]; then
 fi
 
 
-if true; then
+if false; then
 	# API tests
 	# Gateway createAPI
 	echo "[INFO]API checks: "
@@ -246,12 +246,12 @@ else
   echo FAIL first policy $POLID missing
   exit 1
 fi
-exit
-# Dashboard deletePolicy
+# Gateway deletePolicy
 # delete both policies to have none
 for POL in $POLID $POLID2; do
 	echo -n "  [INFO]Delete Policy $POL: "
 	resp=$(deletePolicy.py $URL_AND_CREDENTIAL --policy $POL)
+	sleep 1
 	if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POL; then
 		echo FAIL $resp
 		exit 1
@@ -259,6 +259,7 @@ for POL in $POLID $POLID2; do
 		echo SUCCESS
 	fi
 done
+exit
 # Dashboard createPolicies
 numberToCreate=10
 echo -n "  [INFO]Create Policies: "

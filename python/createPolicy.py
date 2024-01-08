@@ -11,7 +11,7 @@ scriptName = os.path.basename(__file__)
 
 def printhelp():
     print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key|Gateway secret> --template <Policy template file> --apiid <apiid> --verbose')
-    print("    Will create a new unique policy for the API_ID given")
+    print("    Will create policy for the API_ID given")
     sys.exit(1)
 
 dshb = ""
