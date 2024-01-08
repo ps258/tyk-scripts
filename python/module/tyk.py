@@ -783,7 +783,7 @@ class gateway(tyk):
     def createPolicies(self, policyDefinition, APIid, numberToCreate):
         policies = self.getPolicies().json()
         # create a dictionary of all policy names
-        allnames = []
+        allnames = dict()
         PolicyName = policyDefinition['name']
         for policy in policies['policies']:
             allnames[policy['name']] = 1
