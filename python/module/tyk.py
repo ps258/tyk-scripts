@@ -1003,5 +1003,10 @@ class gateway(tyk):
 
     # Gateway getVersion
     def getVersion(self):
-        version = self.getSystemStatus().json()['version']
-        return version.replace('v', '')
+        response = self.getSystemStatus()
+        if 'application/json' in response.headers.get('content-type'):
+            version = response.json()['version']
+            return version.replace('v', '')
+        if 'text/plain' in response.headers.get('content-type'):
+            return '2.0'
+        return '0.0'
