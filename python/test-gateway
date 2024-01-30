@@ -62,7 +62,7 @@ if [[ $numberofAPIs -ne 0 ]]; then
 fi
 
 
-if false; then
+if true; then
 	# API tests
 	# Gateway createAPI
 	echo "[INFO]API checks: "
