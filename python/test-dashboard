@@ -47,7 +47,7 @@ sleep 2
 TM_ADMIN_KEY=$(continerAdminkey $TM_CONTAINER)
 echo "[INFO]$TM_CONTAINER created"
 echo
-if false; then
+if true; then
   echo TM_ADMIN_SECRET=$TM_ADMIN_SECRET
   echo TM_DASH_URL=$TM_DASH_URL
   echo TM_GATW_URL=$TM_GATW_URL
