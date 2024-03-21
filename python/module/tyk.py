@@ -362,8 +362,7 @@ class dashboard(tyk):
     def deleteAllKeys(self):
         allDeleted = True
         keys = self.getKeys().json()
-        for key in keys['data']['keys']:
-            keyID = key['key_id']
+        for keyID in keys['data']['keys']:
             print(f'Deleting key: {keyID}')
             response = self.deleteKey(keyID)
             print(response.json())
