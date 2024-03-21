@@ -52,11 +52,14 @@ if verbose:
     print(f'Policy {policyID} has {keycount} APIs attached')
 # get the APIs
 apis = dashboard.getAPIs()
+#print(json.dumps(apis.json(), indent=2, sort_keys=True))
 if verbose:
     keycount = len(apis.json())
     print(f'A total of {keycount} APSs are defined')
 addedCount = 0
-for api in apis.json():
+for api in apis.json()["apis"]:
+    api=api["api_definition"]
+    #print(json.dumps(api, indent=2, sort_keys=True))
     apiid=api["api_id"]
     apiName = api["name"]
     if addedCount < toAdd:
