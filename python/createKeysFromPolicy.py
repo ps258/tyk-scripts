@@ -61,8 +61,8 @@ for x in range(number):
     resp = dashboard.createKey(json.dumps(TykKey))
 
     if verbose:
-        print(json.dumps(resp.json()), indent=2)
+        print(json.dumps(resp.json(), indent=2))
     else:
-        print(json.dumps(resp.json()["key_id"]), indent=2)
+        print(json.dumps(resp.json()["key_id"], indent=2))
     if resp.status_code != 200:
         sys.exit(1)
