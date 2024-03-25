@@ -10,7 +10,7 @@ import tyk
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret> --apiid <apiid> --rate <rate> --per <period in seconds>')
+    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret> --apiid <apiid> --rate <rate> --per <period in seconds> --verbose')
     print("    Will create a new authentication key for the API_ID given")
     sys.exit(1)
 
