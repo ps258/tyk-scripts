@@ -10,18 +10,19 @@ import tyk
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} --policy <policy ID, policy ID> --dashboard <dashboard URL> --cred <Dashboard API credentials> --verbose --number = <number of keys to create>')
+    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret> --policy <policy ID> --number = <number of keys to create> --verbose')
     print("    Will create keys from the given policy or policies taking the defaults from them")
     sys.exit(1)
 
 dshb = ""
+gatw = ""
 auth = ""
 policyID = ""
 verbose = 0
 number = 1
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "policy=", "dashboard=", "cred=", "number=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "cred=", "policy=", "number=", "verbose"])
 except getopt.GetoptError as opterr:
     print(f'Error in option: {opterr}')
     printhelp()
@@ -29,21 +30,27 @@ except getopt.GetoptError as opterr:
 for opt, arg in opts:
     if opt == '--help':
         printhelp()
-    elif opt == '--policy':
-        policyID = arg
     elif opt == '--dashboard':
         dshb = arg.strip().strip('/')
-    elif opt == '--number':
-        number = int(arg)
+    elif opt == '--gateway':
+        gatw = arg.strip().strip('/')
     elif opt == '--cred':
         auth = arg
+    elif opt == '--policy':
+        policyID = arg
+    elif opt == '--number':
+        number = int(arg)
     elif opt == '--verbose':
         verbose = 1
 
-if not (dshb and policyID and auth):
+if not ((dshb or gatw) and policyID):
     printhelp()
 
-dashboard = tyk.dashboard(dshb, auth)
+# create a new dashboard or gateway object
+if dshb:
+    tyk = tyk.dashboard(dshb, auth)
+else:
+    tyk = tyk.gateway(gatw, auth)
 
 TykKey = {
   "apply_policies": [],
@@ -58,11 +65,15 @@ for pol in policyID.split(","):
     TykKey["apply_policies"].append(pol)
 
 for x in range(number):
-    resp = dashboard.createKey(json.dumps(TykKey))
+    resp = tyk.createKey(json.dumps(TykKey))
 
     if verbose:
         print(json.dumps(resp.json(), indent=2))
     else:
-        print(json.dumps(resp.json()["key_id"], indent=2))
+        respJSON = resp.json()
+        if "key_id" in respJSON:
+            print(json.dumps(respJSON()["key_id"], indent=2))
+        else:
+            print(json.dumps(respJSON["key"]))
     if resp.status_code != 200:
         sys.exit(1)
