@@ -72,8 +72,8 @@ for x in range(number):
     else:
         respJSON = resp.json()
         if "key_id" in respJSON:
-            print(json.dumps(respJSON()["key_id"], indent=2))
+            print(respJSON["key_id"])
         else:
-            print(json.dumps(respJSON["key"]))
+            print(respJSON["key"])
     if resp.status_code != 200:
         sys.exit(1)
