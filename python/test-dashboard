@@ -11,7 +11,7 @@ SCRIPTDIR=$(
 TM_ADMIN_USER=tyk@admin.com
 TM_ADMIN_PASSWORD=ABC-123
 
-VERSION=5.0.9
+VERSION=${ARGV[1]-"5.0.10"}
 DESC="Python module test deployment"
 . ~/.tyk-sandbox
 
@@ -41,7 +41,7 @@ TM_GATW_URL=$(sbctl get $TM_CONTAINER gateway)
 TM_GATW_SECRET=$(sbctl get $TM_CONTAINER secret)
 
 echo "[INFO]Bootstrapping $TM_DASH_URL"
-bootstrap.py --dashboard $TM_DASH_URL --adminsecret $TM_ADMIN_SECRET --licence $SBX_LICENSE
+bootstrap.py --dashboard $TM_DASH_URL --adminsecret $TM_ADMIN_SECRET --licence $SBX_LICENSE --adminEmail $TM_ADMIN_USER --adminPassword $TM_ADMIN_PASSWORD
 
 sleep 2
 TM_ADMIN_KEY=$(continerAdminkey $TM_CONTAINER)
@@ -88,7 +88,17 @@ else
 fi
 echo
 
-if true; then
+echo -n "[INFO]Waiting up to 20s for gateway to be ready: "
+waitUp.py --gateway $TM_GATW_URL --time 20
+if [[ $? -lt 1 ]]; then
+  echo OK
+else
+  echo FAIL
+  exit 1
+fi
+
+
+if false; then
 	# API tests
 	# Dashboard createAPI
 	echo "[INFO]API checks: "
@@ -211,88 +221,150 @@ fi
 
 # Policy tests
 # Dashboard createPolicy
-echo "[INFO]Policy checks: "
-echo -n "  [INFO]Create an API to use: "
-resp=$(createAPI.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/API-template-auth.json --name httpbin)
-if [[ $? -lt 1 ]]; then
-  APIID=$(echo $resp | jq -r .ID)
-  echo "SUCCESS ($APIID)"
-else
-  echo FAIL
-  exit 1
-fi
-echo -n "  [INFO]Create a policy for $APIID: "
-resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
-if [[ $? -lt 1 ]]; then
-  POLID=$(echo $resp | jq -r .Message)
-  echo "SUCCESS ($POLID)"
-else
-  echo FAIL
-  exit 1
-fi
-# Dashboard getPolicy
-echo -n "  [INFO]List Policy $POLID: "
-resp=$(getPolicy.py $URL_AND_CREDENTIAL --policy $POLID)
-POLID2=$(echo $resp | jq -r ._id)
-if [[ $POLID = $POLID2 ]]; then
-  echo "SUCCESS ($POLID2)"
-else
-  echo FAIL
-  exit 1
-fi
-# create a second Policy
-echo -n "  [INFO]Create Second Policy: "
-resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
-if [[ $? -lt 1 ]]; then
-  POLID2=$(echo $resp | jq -r .Message)
-  echo "SUCCESS ($POLID2)"
-else
-  echo "FAILED to create second policy"
-  exit 1
-fi
-echo -n "  [INFO]List both policies: "
-# Dashboard getPolicies
-if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POLID; then
-  if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POLID2; then
-    echo "SUCCESS ($POLID, $POLID2)"
+if false; then
+  echo "[INFO]Policy checks: "
+  echo -n "  [INFO]Create an API to use: "
+  resp=$(createAPI.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/API-template-auth.json --name httpbin)
+  if [[ $? -lt 1 ]]; then
+    APIID=$(echo $resp | jq -r .ID)
+    echo "SUCCESS ($APIID)"
   else
-    echo FAIL second policy $POLID2 missing
+    echo FAIL
     exit 1
   fi
-else
-  echo FAIL first policy $POLID missing
-  exit 1
+  echo -n "  [INFO]Create a policy for $APIID: "
+  resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
+  if [[ $? -lt 1 ]]; then
+    POLID=$(echo $resp | jq -r .Message)
+    echo "SUCCESS ($POLID)"
+  else
+    echo FAIL
+    exit 1
+  fi
+  # Dashboard getPolicy
+  echo -n "  [INFO]List Policy $POLID: "
+  resp=$(getPolicy.py $URL_AND_CREDENTIAL --policy $POLID)
+  POLID2=$(echo $resp | jq -r ._id)
+  if [[ $POLID = $POLID2 ]]; then
+    echo "SUCCESS ($POLID2)"
+  else
+    echo FAIL
+    exit 1
+  fi
+  # create a second Policy
+  echo -n "  [INFO]Create Second Policy: "
+  resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
+  if [[ $? -lt 1 ]]; then
+    POLID2=$(echo $resp | jq -r .Message)
+    echo "SUCCESS ($POLID2)"
+  else
+    echo "FAILED to create second policy"
+    exit 1
+  fi
+  echo -n "  [INFO]List both policies: "
+  # Dashboard getPolicies
+  if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POLID; then
+    if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POLID2; then
+      echo "SUCCESS ($POLID, $POLID2)"
+    else
+      echo FAIL second policy $POLID2 missing
+      exit 1
+    fi
+  else
+    echo FAIL first policy $POLID missing
+    exit 1
+  fi
+  # Dashboard deletePolicy
+  # delete both policies to have none
+  for POL in $POLID $POLID2; do
+    echo -n "  [INFO]Delete Policy $POL: "
+    resp=$(deletePolicy.py $URL_AND_CREDENTIAL --policy $POL)
+    if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POL; then
+      echo FAIL $resp
+      exit 1
+    else
+      echo SUCCESS
+    fi
+  done
+  # Dashboard createPolicies
+  numberToCreate=10
+  echo -n "  [INFO]Create Policies: "
+  resp=$(createPolicies.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --number $numberToCreate --apiid $APIID)
+  numberCreated=$(getPolicies.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
+  if [[ $numberCreated -eq $numberToCreate ]]; then
+    echo SUCCESS $numberCreated created
+  else
+    echo FAIL $numberCreated of $numberToCreate created
+    exit 1
+  fi
+  # Dashboard deleteAllAPIs
+  echo -n "  [INFO]Delete all Policies: "
+  resp=$(deleteAllPolicies.py $URL_AND_CREDENTIAL)
+  numberRemaining=$(getPolicies.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
+  if [[ $numberRemaining -eq 0 ]]; then
+    echo SUCCESS no Policies left
+  else
+    echo FAIL $numberRemaining left
+    exit 1
+  fi
 fi
-# Dashboard deletePolicy
-# delete both policies to have none
-for POL in $POLID $POLID2; do
-	echo -n "  [INFO]Delete Policy $POL: "
-	resp=$(deletePolicy.py $URL_AND_CREDENTIAL --policy $POL)
-	if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POL; then
-		echo FAIL $resp
-		exit 1
-	else
-		echo SUCCESS
-	fi
-done
-# Dashboard createPolicies
-numberToCreate=10
-echo -n "  [INFO]Create Policies: "
-resp=$(createPolicies.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --number $numberToCreate --apiid $APIID)
-numberCreated=$(getPolicies.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
-if [[ $numberCreated -eq $numberToCreate ]]; then
-  echo SUCCESS $numberCreated created
-else
-  echo FAIL $numberCreated of $numberToCreate created
-  exit 1
-fi
-# Dashboard deleteAllAPIs
-echo -n "  [INFO]Delete all Policies: "
-resp=$(deleteAllPolicies.py $URL_AND_CREDENTIAL)
-numberRemaining=$(getPolicies.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
-if [[ $numberRemaining -eq 0 ]]; then
-  echo SUCCESS no Policies left
-else
-  echo FAIL $numberRemaining left
-  exit 1
+
+# Key tests
+# Dashboard createPolicy
+if true; then
+ # set -x
+  echo "[INFO]Key checks: "
+  echo -n "  [INFO]Create an API to use: "
+  resp=$(createAPI.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/API-template-auth.json --name httpbin)
+  if [[ $? -lt 1 ]]; then
+    APIID=$(echo $resp | jq -r .ID)
+    echo "SUCCESS ($APIID)"
+  else
+    echo FAIL
+    exit 1
+  fi
+  echo -n "  [INFO]Create a key for $APIID: "
+  KEY=$(createKeyForAPI.py $URL_AND_CREDENTIAL --apiid $APIID)
+  if [[ $? -lt 1 ]]; then
+    KEY=$(echo $KEY | xargs)
+    echo "SUCCESS ($KEY)"
+  else
+    echo "FAIL ($KEY)"
+    exit 1
+  fi
+  echo -n "  [INFO]Retrieve key: "
+  resp=$(getKey.py $URL_AND_CREDENTIAL --keyid $KEY)
+  if [[ $? -lt 1 ]]; then
+    echo "SUCCESS"
+  else
+    echo FAIL
+    exit 1
+  fi
+  echo -n "  [INFO]Delete key: "
+  resp=$(deleteKey.py $URL_AND_CREDENTIAL --keyid $KEY)
+  if [[ $? -lt 1 ]]; then
+    echo "SUCCESS"
+  else
+    echo FAIL
+    exit 1
+  fi
+  echo -n "  [INFO]Create a policy for $APIID: "
+  resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
+  if [[ $? -lt 1 ]]; then
+    POLID=$(echo $resp | jq -r .Message)
+    echo "SUCCESS ($POLID)"
+  else
+    echo FAIL
+    exit 1
+  fi
+  sleep 2
+  echo -n "  [INFO]Create a key from policy $POLID for API $APIID: "
+  resp=$(createKeysFromPolicy.py $URL_AND_CREDENTIAL --policy $POLID --number 1)
+  if [[ $? -lt 1 ]]; then
+    echo "SUCCESS $resp"
+  else
+    echo FAIL $resp
+    exit 1
+  fi
+
 fi
