@@ -358,7 +358,7 @@ if true; then
   fi
   sleep 2
   echo -n "  [INFO]Create a key from policy $POLID for API $APIID: "
-  resp=$(createKeysFromPolicy.py $URL_AND_CREDENTIAL --policy $POLID --number 1)
+  resp=$(createKeyFromPolicy.py $URL_AND_CREDENTIAL --policy $POLID) 
   if [[ $? -lt 1 ]]; then
     echo "SUCCESS ($resp)"
     KEY=$resp
