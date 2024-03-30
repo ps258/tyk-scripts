@@ -10,21 +10,25 @@ import tyk
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret> --apiid <apiid> --rate <rate> --per <period in seconds> --verbose')
+    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret> --apiid <apiid,apiid> --rate <rate> --per <period in seconds> --customKeyName <Custom key name> --keyFile <key json file> --verbose')
     print("    Will create a new authentication key for the API_ID given")
     sys.exit(1)
 
 dshb = ""
 gatw = ""
 auth = ""
-apiid = ""
+apiids = ""
+keyName = ""
+keyFileName = ""
 verbose = 0
-rate = 1000
-per = 60
+rate = 0
+per = 0
+defaultRate = 1000
+defaultPer = 60
 
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "cred=", "apiid=", "per=", "rate=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "cred=", "apiid=", "per=", "rate=", "customKeyName=", "keyFile=", "verbose"])
 except getopt.GetoptError as opterr:
     print(f'Error in option: {opterr}')
     printhelp()
@@ -39,15 +43,26 @@ for opt, arg in opts:
     elif opt == '--cred':
         auth = arg
     elif opt == '--apiid':
-        apiid = arg
+        apiids = arg
     elif opt == '--rate':
         rate = int(arg)
     elif opt == '--per':
         per = int(arg)
+    elif opt == '--customKeyName':
+        keyName = arg
+    elif opt == '--keyFile':
+        keyFileName = arg
     elif opt == '--verbose':
         verbose = 1
 
-if not ((dshb or gatw) and auth and apiid):
+if not ((dshb or gatw) and auth):
+    print('Error: Either --dashboard or --gateway and --cred must be given')
+    printhelp()
+if not (keyFileName or apiids):
+    print('Error: Either --apiid or --keyFile must be given')
+    printhelp()
+if (rate and not per) or (per and not rate):
+    print('Error: Both --rate and --pre must be given if either is')
     printhelp()
 
 # create a new dashboard or gateway object
@@ -56,34 +71,57 @@ if dshb:
 else:
     tyk = tyk.gateway(gatw, auth)
 
-KeyJson = {}
-KeyJson["access_rights"] = {}
+if keyFileName:
+    with open(keyFileName) as keyFile:
+        KeyJson=json.load(keyFile)
+else:
+    KeyJson = {}
+    KeyJson["access_rights"] = {}
 
-KeyJson["access_rights"][apiid] = {
-        "api_id": apiid,
-        "api_name": "",
-        "versions": [ "Default" ],
-        "allowed_urls": [],
-        "restricted_types": [],
-        "limit": None,
-        "allowance_scope": ""
-    }
-KeyJson["rate"] = rate
-KeyJson["per"] = per
-KeyJson["alias"] = "Created by createKeyForAPI.py for " + apiid
-KeyJson["last_check"] = 1421674410
-KeyJson["expires"] = 0
-KeyJson["quota_max"] = -1
-KeyJson["quota_renews"] = 1699629658
-KeyJson["quota_remaining"] = -1
-KeyJson["quota_renewal_rate"] = 60
-KeyJson["allowance"] = rate
+if rate:
+    KeyJson["rate"] = rate
+    KeyJson["per"] = per
+    KeyJson["allowance"] = rate
+else:
+    KeyJson["rate"] = defaultRate
+    KeyJson["per"] = defaultPer
+    KeyJson["allowance"] = defaultRate
 
+if apiids:
+    for apiid in apiids.split(','):
+        KeyJson["access_rights"][apiid] = {
+                "api_id": apiid,
+                "api_name": "",
+                "versions": [ "Default" ],
+                "allowed_urls": [],
+                "restricted_types": [],
+                "limit": None,
+                "allowance_scope": ""
+            }
 
-#if verbose:
-#    print(json.dumps(KeyJson, indent=2))
+if not 'alias' in KeyJson:
+    KeyJson["alias"] = "Created by createKeyForAPI.py for " + apiid
+if not 'last_check' in KeyJson:
+    KeyJson["last_check"] = 1421674410
+if not 'expires' in KeyJson:
+    KeyJson["expires"] = 0
+if not 'quota_max' in KeyJson:
+    KeyJson["quota_max"] = -1
+if not 'quota_renews' in KeyJson:
+    KeyJson["quota_renews"] = 1699629658
+if not 'quota_remaining' in KeyJson:
+    KeyJson["quota_remaining"] = -1
+if not 'quota_renewal_rate' in KeyJson:
+    KeyJson["quota_renewal_rate"] = 60
 
-resp = tyk.createKey(KeyJson)
+if verbose:
+    print(json.dumps(KeyJson, indent=2))
+
+if keyName:
+    resp = tyk.createCustomKey(KeyJson, keyName)
+else:
+    resp = tyk.createKey(KeyJson)
+
 if resp.status_code != 200:
     print(resp)
     sys.exit(1)
