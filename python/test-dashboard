@@ -310,9 +310,8 @@ if true; then
 fi
 
 # Key tests
-# Dashboard createPolicy
+# Dashboard createKeyForAPI
 if true; then
- # set -x
   echo "[INFO]Key checks: "
   echo -n "  [INFO]Create an API to use: "
   resp=$(createAPI.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/API-template-auth.json --name httpbin)
