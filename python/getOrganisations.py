@@ -42,9 +42,9 @@ for opt, arg in opts:
 if not (dshb and adminsecret):
     printhelp()
 
-dashboard = tyk.dashboard(dshb, "", adminsecret)
+tykInstance = tyk.dashboard(dshb, "", adminsecret)
 
-organisations = dashboard.getOrganisations().json()
+organisations = tykInstance.getOrganisations().json()
 for org in organisations["organisations"]:
     if verbose:
         print(json.dumps(org, indent=2))

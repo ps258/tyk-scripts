@@ -43,9 +43,9 @@ for opt, arg in opts:
 if not (dshb and auth and policyId):
     printhelp()
 
-dashboard = tyk.dashboard(dshb, auth)
+tykInstance = tyk.dashboard(dshb, auth)
 
-catalogue = dashboard.getCatalogue().json()
+catalogue = tykInstance.getCatalogue().json()
 # create a dictionary of all entry names
 allnames = dict()
 for policy in catalogue['apis']:
@@ -72,5 +72,5 @@ if verbose:
 
 
 print(f'Adding catalogue entry {EntryName+str(i)}')
-resp = dashboard.updateCatalogue(json.dumps(catalogue))
+resp = tykInstance.updateCatalogue(json.dumps(catalogue))
 print(resp)

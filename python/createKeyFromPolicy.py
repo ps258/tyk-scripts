@@ -48,34 +48,27 @@ if not ((dshb or gatw) and policyID):
 
 # create a new dashboard or gateway object
 if dshb:
-    tyk = tyk.dashboard(dshb, auth)
+    tykInstance = tyk.dashboard(dshb, auth)
 else:
-    tyk = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(gatw, auth)
 
-TykKey = {
-  "apply_policies": [],
-  "allowance": 0,
-  "per": 0,
-  "quota_max": 0,
-  "rate": 0,
-  "meta_data": {"Created by": scriptName}
-}
+key = tyk.authKey()
 
 for pol in policyID.split(","):
-    TykKey["apply_policies"].append(pol)
+    key.addPolicy(pol)
 
 if keyName:
-    resp = tyk.createCustomKey(TykKey, keyName)
+    resp = tykInstance.createCustomKey(key.json(), keyName)
 else:
-    resp = tyk.createKey(TykKey)
+    resp = tykInstance.createKey(key.json())
 
-    if verbose:
-        print(json.dumps(resp.json(), indent=2))
+if verbose:
+    print(json.dumps(resp.json(), indent=2))
+else:
+    respJSON = resp.json()
+    if "key_id" in respJSON:
+        print(respJSON["key_id"])
     else:
-        respJSON = resp.json()
-        if "key_id" in respJSON:
-            print(respJSON["key_id"])
-        else:
-            print(respJSON["key"])
-    if resp.status_code != 200:
-        sys.exit(1)
+        print(respJSON["key"])
+if resp.status_code != 200:
+    sys.exit(1)

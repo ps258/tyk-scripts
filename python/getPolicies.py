@@ -42,12 +42,11 @@ if not ((dshb or gatw) and auth):
 
 # create a new dashboard or gateway object
 if dshb:
-    tyk = tyk.dashboard(dshb, auth)
+    tykInstance = tyk.dashboard(dshb, auth)
 else:
-    tyk = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(gatw, auth)
 
-
-resp = tyk.getPolicies()
+resp = tykInstance.getPolicies()
 if resp.status_code != 200:
     print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
@@ -56,6 +55,6 @@ policies = resp.json()
 if verbose:
     print(json.dumps(policies, indent=2))
 else:
-    tyk.printPolicySummaryHeader()
+    tykInstance.printPolicySummaryHeader()
     for policy in policies['policies']:
-        tyk.printPolicySummary(policy)
+        tykInstance.printPolicySummary(policy)

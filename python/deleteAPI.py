@@ -45,11 +45,11 @@ if not ((dshb or gatw) and auth and apiid):
 
 # create a new dashboard or gateway object
 if dshb:
-    tyk = tyk.dashboard(dshb, auth)
+    tykInstance = tyk.dashboard(dshb, auth)
 else:
-    tyk = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(gatw, auth)
 
-resp = tyk.deleteAPI(apiid)
+resp = tykInstance.deleteAPI(apiid)
 print(json.dumps(resp.json()))
 if resp.status_code != 200:
     sys.exit(1)

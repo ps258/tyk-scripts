@@ -46,9 +46,9 @@ if not (dshb and adminsecret and orgid):
     print(f'dshb = {dshb}, adminsecret = {adminsecret}, orgid = {orgid}')
     printhelp()
 
-dashboard = tyk.dashboard(dshb, "", adminsecret)
+tykInstance = tyk.dashboard(dshb, "", adminsecret)
 
-resp = dashboard.getOrganisation(orgid)
+resp = tykInstance.getOrganisation(orgid)
 organisation = resp.json()
 print(json.dumps(organisation, indent=2))
 if resp.status_code != 200:

@@ -48,9 +48,9 @@ if not ((dshb or gatw) and templateFile and auth and apiid):
 
 # create a new dashboard or gateway object
 if dshb:
-    tyk = tyk.dashboard(dshb, auth)
+    tykInstance = tyk.dashboard(dshb, auth)
 else:
-    tyk = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(gatw, auth)
 
 # read the API defn
 with open(templateFile) as APIFile:
@@ -65,7 +65,7 @@ elif "api_id" in APIjson:
 else:
     print('[FATAL]Unable to find "api_id" to update')
 
-resp = tyk.updateAPI(json.dumps(APIjson), apiid)
+resp = tykInstance.updateAPI(json.dumps(APIjson), apiid)
 print(json.dumps(resp.json()))
 if resp.status_code != 200:
     print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)

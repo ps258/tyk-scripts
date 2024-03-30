@@ -48,7 +48,7 @@ if not startdate:
 if not enddate:
     enddate = time.strftime("%Y/%m/%d")
 
-dashboard = tyk.dashboard(dshb, auth)
+tykInstance = tyk.dashboard(dshb, auth)
 
 start = startdate.split('/')
 end = enddate.split('/')
@@ -57,7 +57,7 @@ year = 0
 day = 2
 month = 1
 
-resp = dashboard.getAPIUsage(startday=start[day], startmonth=start[month], startyear=start[year], endday=end[day], endmonth=end[month], endyear=end[year])
+resp = tykInstance.getAPIUsage(startday=start[day], startmonth=start[month], startyear=start[year], endday=end[day], endmonth=end[month], endyear=end[year])
 print(json.dumps(resp.json(), indent=2))
 if resp.status_code != 200:
     sys.exit(1)

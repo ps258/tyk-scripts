@@ -42,10 +42,9 @@ if not ((dshb or gatw) and auth):
 
 # create a new dashboard or gateway object
 if dshb:
-    tyk = tyk.dashboard(dshb, auth)
+    tykInstance = tyk.dashboard(dshb, auth)
 else:
-    tyk = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(gatw, auth)
 
-
-tyk.deleteAllCerts()
+tykInstance.deleteAllCerts()
 sys.exit(1)

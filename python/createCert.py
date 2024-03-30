@@ -45,12 +45,12 @@ if not ((dshb or gatw) and certFile and auth):
 
 # create a new dashboard or gateway object
 if dshb:
-    tyk = tyk.dashboard(dshb, auth)
+    tykInstance = tyk.dashboard(dshb, auth)
 else:
-    tyk = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(gatw, auth)
 
 
-resp = tyk.createCert(certFile)
+resp = tykInstance.createCert(certFile)
 print(json.dumps(resp.json()))
 if resp.status_code != 200:
     print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)

@@ -44,14 +44,14 @@ if not (dshb and templateFile and auth and policyid):
     printhelp()
 
 # create a new dashboard object
-dashboard = tyk.dashboard(dshb, auth)
+tykInstance = tyk.dashboard(dshb, auth)
 
 # read the policy defn
 with open(templateFile) as PolicyFile:
     PolicyJSON=json.load(PolicyFile)
     PolicyFile.close()
 
-resp = dashboard.updatePolicy(json.dumps(PolicyJSON), policyid)
+resp = tykInstance.updatePolicy(json.dumps(PolicyJSON), policyid)
 print(json.dumps(resp.json()))
 if resp.status_code != 200:
     sys.exit(1)

@@ -1009,3 +1009,76 @@ class gateway(tyk):
         if 'text/plain' in response.headers.get('content-type'):
             return '2.0'
         return '0.0'
+
+
+###################### Auth Key Class ######################
+# mostly for functions to print stuff out
+class authKey(tyk):
+    def __init__(self, keyFileName=""):
+        if keyFileName:
+            with open(keyFileName) as keyFile:
+                self.JSON=json.load(keyFile)
+        else:
+            self.JSON = {}
+
+        if not "access_rights" in self.JSON:
+            self.JSON["access_rights"] = {}
+        if not "alias" in self.JSON:
+            self.JSON["alias"] = "Created by Pete's python module"
+        if not "last_check" in self.JSON:
+            self.JSON["last_check"] = 1421674410
+        if not "expires" in self.JSON:
+            self.JSON["expires"] = 0
+        if not "quota_max" in self.JSON:
+            self.JSON["quota_max"] = -1
+        if not "quota_renews" in self.JSON:
+            self.JSON["quota_renews"] = 1699629658
+        if not "quota_remaining" in self.JSON:
+            self.JSON["quota_remaining"] = -1
+        if not "quota_renewal_rate" in self.JSON:
+            self.JSON["quota_renewal_rate"] = 60
+        if not "rate" in self.JSON:
+            self.JSON["rate"] = 0
+        if not "per" in self.JSON:
+            self.JSON["per"] = 60
+        if not "apply_policies" in self.JSON:
+            self.JSON["apply_policies"] = []
+        if not "allowance" in self.JSON:
+            self.JSON["allowance"] = 0
+
+    def __str__(self):
+        return json.dumps(self.JSON, indent=2, sort_keys=True)
+
+    def getRate(self):
+        return self.JSON["rate"]
+
+    def setRate(self, rate):
+        self.JSON["rate"] = rate
+        self.JSON["allowance"] = rate
+        return self.JSON["rate"]
+
+    def getPer(self):
+        return self.JSON["per"]
+
+    def setPer(self, per):
+        self.JSON["per"] = per
+        return self.JSON["per"]
+
+    def addAPI(self, apiid):
+        self.JSON["access_rights"][apiid] = {
+            "api_id": apiid,
+            "api_name": "",
+            "versions": [ "Default" ],
+            "allowed_urls": [],
+            "restricted_types": [],
+            "limit": None,
+            "allowance_scope": ""
+        }
+
+    def addPolicy(self, polid):
+        self.JSON["apply_policies"].append(polid)
+
+    def json(self):
+        return json.dumps(self.JSON)
+
+

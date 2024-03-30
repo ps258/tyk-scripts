@@ -51,9 +51,9 @@ if not ((dshb or gatw) and templateFile and auth and toAdd):
 
 # create a new dashboard or gateway object
 if dshb:
-    tyk = tyk.dashboard(dshb, auth)
+    tykInstance = tyk.dashboard(dshb, auth)
 else:
-    tyk = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(gatw, auth)
 
 # read the API defn
 with open(templateFile) as APIFile:
@@ -66,7 +66,7 @@ with open(templateFile) as APIFile:
         else:
             APIjson["name"] = name
 
-numberCreated = tyk.createAPIs(APIjson, toAdd)
+numberCreated = tykInstance.createAPIs(APIjson, toAdd)
 
 if verbose:
     if numberCreated == toAdd:

@@ -48,9 +48,9 @@ if not ((dshb or gatw) and templateFile and auth and apiid):
 
 # create a new dashboard or gateway object
 if dshb:
-    tyk = tyk.dashboard(dshb, auth)
+    tykInstance = tyk.dashboard(dshb, auth)
 else:
-    tyk = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(gatw, auth)
 
 # read the policy defn
 with open(templateFile) as PolicyFile:
@@ -58,7 +58,7 @@ with open(templateFile) as PolicyFile:
     PolicyFile.close()
 PolicyName = "Policy"
 # get the existing Policies
-policies = tyk.getPolicies()
+policies = tykInstance.getPolicies()
 if policies.status_code == 200:
     #print(f'[FATAL]{scriptName}: Tyk returned {policies.status_code}', file=sys.stderr)
     # create a dictionary of all policy names
@@ -112,7 +112,7 @@ else:
 if verbose:
     print(json.dumps(policy, indent=2))
 
-resp = tyk.createPolicy(policy)
+resp = tykInstance.createPolicy(policy)
 if resp.status_code != 200:
     print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)

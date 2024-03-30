@@ -45,9 +45,9 @@ if not ((dshb or gatw) and policyJSON and auth):
 
 # create a new dashboard or gateway object
 if dshb:
-    tyk = tyk.dashboard(dshb, auth)
+    tykInstance = tyk.dashboard(dshb, auth)
 else:
-    tyk = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(gatw, auth)
 
 # read the policy defn
 with open(policyJSON) as PolicyFile:
@@ -58,7 +58,7 @@ print(f'Adding policy {policy["name"]}')
 if verbose:
     print(json.dumps(policy, indent=2))
 
-resp = tyk.createPolicy(policy)
+resp = tykInstance.createPolicy(policy)
 print(json.dumps(resp.json(), indent=2))
 if resp.status_code != 200:
     sys.exit(1)

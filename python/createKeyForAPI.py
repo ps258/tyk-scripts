@@ -67,60 +67,33 @@ if (rate and not per) or (per and not rate):
 
 # create a new dashboard or gateway object
 if dshb:
-    tyk = tyk.dashboard(dshb, auth)
+    tykInstance = tyk.dashboard(dshb, auth)
 else:
-    tyk = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(gatw, auth)
 
 if keyFileName:
-    with open(keyFileName) as keyFile:
-        KeyJson=json.load(keyFile)
+    key = tyk.authKey(keyFileName)
 else:
-    KeyJson = {}
-    KeyJson["access_rights"] = {}
+    key = tyk.authKey()
 
 if rate:
-    KeyJson["rate"] = rate
-    KeyJson["per"] = per
-    KeyJson["allowance"] = rate
+    key.setRate(rate)
+    key.setPer(per)
 else:
-    KeyJson["rate"] = defaultRate
-    KeyJson["per"] = defaultPer
-    KeyJson["allowance"] = defaultRate
+    key.setRate(defaultRate)
+    key.setPer(defaultPer)
 
 if apiids:
     for apiid in apiids.split(','):
-        KeyJson["access_rights"][apiid] = {
-                "api_id": apiid,
-                "api_name": "",
-                "versions": [ "Default" ],
-                "allowed_urls": [],
-                "restricted_types": [],
-                "limit": None,
-                "allowance_scope": ""
-            }
-
-if not 'alias' in KeyJson:
-    KeyJson["alias"] = "Created by createKeyForAPI.py for " + apiid
-if not 'last_check' in KeyJson:
-    KeyJson["last_check"] = 1421674410
-if not 'expires' in KeyJson:
-    KeyJson["expires"] = 0
-if not 'quota_max' in KeyJson:
-    KeyJson["quota_max"] = -1
-if not 'quota_renews' in KeyJson:
-    KeyJson["quota_renews"] = 1699629658
-if not 'quota_remaining' in KeyJson:
-    KeyJson["quota_remaining"] = -1
-if not 'quota_renewal_rate' in KeyJson:
-    KeyJson["quota_renewal_rate"] = 60
+        key.addAPI(apiid)
 
 if verbose:
-    print(json.dumps(KeyJson, indent=2))
+    print(key)
 
 if keyName:
-    resp = tyk.createCustomKey(KeyJson, keyName)
+    resp = tykInstance.createCustomKey(key.json(), keyName)
 else:
-    resp = tyk.createKey(KeyJson)
+    resp = tykInstance.createKey(key.json())
 
 if resp.status_code != 200:
     print(resp)

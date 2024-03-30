@@ -39,10 +39,10 @@ if not (dshb or gatw):
 
 # create a dashboard or gateway object
 if dshb:
-    tyk = tyk.dashboard(dshb)
+    tykInstance = tyk.dashboard(dshb)
 else:
-    tyk = tyk.gateway(gatw)
+    tykInstance = tyk.gateway(gatw)
 
-if not tyk.waitUp(max_wait_time):
+if not tykInstance.waitUp(max_wait_time):
     print(f'[FATAL]Tyk is not up after waiting {max_wait_time}s', file=sys.stderr)
     sys.exit(1)

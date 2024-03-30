@@ -49,12 +49,12 @@ if not slug:
     slug = name
 
 # create a new dashboard object
-dashboard = tyk.dashboard(dshb, "", adminsecret)
+tykInstance = tyk.dashboard(dshb, "", adminsecret)
 
 # Create the org data structure
 orgDef = { "owner_name": name, "owner_slug": slug, "cname_enabled": True, "cname": cname}
 
-resp = dashboard.createOrganisation(orgDef)
+resp = tykInstance.createOrganisation(orgDef)
 print(json.dumps(resp.json()))
 if resp.status_code != 200:
     sys.exit(1)

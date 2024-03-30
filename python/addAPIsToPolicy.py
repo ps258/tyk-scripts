@@ -43,15 +43,15 @@ for opt, arg in opts:
 if not (dshb and policyID and auth and toAdd):
     printhelp()
 
-dashboard = tyk.dashboard(dshb, auth)
+tykInstance = tyk.dashboard(dshb, auth)
 
 # get the polcy
-policy = dashboard.getPolicy(policyID).json()
+policy = tykInstance.getPolicy(policyID).json()
 if verbose:
     keycount = len(policy["access_rights"])
     print(f'Policy {policyID} has {keycount} APIs attached')
 # get the APIs
-apis = dashboard.getAPIs()
+apis = tykInstance.getAPIs()
 #print(json.dumps(apis.json(), indent=2, sort_keys=True))
 if verbose:
     keycount = len(apis.json())
@@ -97,7 +97,7 @@ print(f'Policy {policyID} will have a total of {len(policy["access_rights"])} AP
 if verbose:
     print(json.dumps(policy, indent=2, sort_keys=True))
 print("Uploading policy to dashboard")
-resp = dashboard.updatePolicy(json.dumps(policy), policyID)
+resp = tykInstance.updatePolicy(json.dumps(policy), policyID)
 print(json.dumps(resp.json()))
 if resp.status_code != 200:
     sys.exit(1)

@@ -51,16 +51,16 @@ if not ((dshb or gatw) and templateFile and auth and apiid and toAdd):
 
 # create a new dashboard or gateway object
 if dshb:
-    tyk = tyk.dashboard(dshb, auth)
+    tykInstance = tyk.dashboard(dshb, auth)
 else:
-    tyk = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(gatw, auth)
 
 # read the policy defn
 with open(templateFile) as PolicyFile:
     PolicyJSON=json.load(PolicyFile)
     PolicyFile.close()
 
-numberCreated = tyk.createPolicies(PolicyJSON, apiid, toAdd)
+numberCreated = tykInstance.createPolicies(PolicyJSON, apiid, toAdd)
 
 if numberCreated == toAdd:
     print(f'Success: {numberCreated} Policies created')

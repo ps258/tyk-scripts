@@ -15,7 +15,7 @@ adminEmail = "admin@tyk.io"
 adminPassword = "ABC-123"
 licence = ""
 verbose = 0
-cname = "portal.cname.com"
+portalCNAME = "portal.cname.com"
 
 def printhelp():
     print(f'{scriptName} --dashboard <dashboard URL> --adminsecret <Dashboard Admin Secret> --adminEmail <admin email address> --adminPassword <admin password in plain text> --licence <dashboard licence> --portalcname <portal CNAME>')
@@ -44,7 +44,7 @@ for opt, arg in opts:
     elif opt == '--licence':
         licence = arg
     elif opt == '--portalcname':
-        cname = arg
+        portalCNAME = arg
     elif opt == '--verbose':
         verbose = 1
 
@@ -53,11 +53,11 @@ if not (dshb and adminsecret and licence):
     printhelp()
 
 # create a new dashboard object
-dashboard = tyk.dashboard(dshb, "", adminsecret)
+tykInstance = tyk.dashboard(dshb, "", adminsecret)
 
 # Bootstrap when the dashboard is up
-if dashboard.waitUp(10):
-    resp = dashboard.bootstrap(adminEmail, adminPassword, licence, cname)
+if tykInstance.waitUp(10):
+    resp = tykInstance.bootstrap(adminEmail, adminPassword, licence, portalCNAME)
     if resp.status_code != 200:
         print(f'[FATAL]Failed to bootstrap. The dashboard returned {resp.status_code}', file=sys.stderr)
         print(json.dumps(resp.json()), file=sys.stderr)

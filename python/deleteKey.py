@@ -40,9 +40,9 @@ for opt, arg in opts:
 if not (dshb and auth and keyid):
     printhelp()
 
-dashboard = tyk.dashboard(dshb, auth)
+tykInstance = tyk.dashboard(dshb, auth)
 
-resp = dashboard.deleteKey(keyid)
+resp = tykInstance.deleteKey(keyid)
 print(json.dumps(resp.json()))
 if resp.status_code != 200:
     sys.exit(1)

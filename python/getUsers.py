@@ -38,9 +38,9 @@ if not (dshb and auth):
     printhelp()
 
 # create a new dashboard
-tyk = tyk.dashboard(dshb, auth)
+tykInstance = tyk.dashboard(dshb, auth)
 
-resp = tyk.getUsers()
+resp = tykInstance.getUsers()
 if resp.status_code != 200:
     print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
@@ -48,6 +48,6 @@ if resp.json()['users'] is not None:
     if verbose:
         print(json.dumps(resp.json(), indent=2))
     else:
-        tyk.printUserSummaryHeader()
+        tykInstance.printUserSummaryHeader()
         for user in resp.json()['users']:
-            tyk.printUserSummary(user)
+            tykInstance.printUserSummary(user)

@@ -37,6 +37,6 @@ for opt, arg in opts:
 if not (dshb and auth):
     printhelp()
 
-dashboard = tyk.dashboard(dshb, auth)
+tykInstance = tyk.dashboard(dshb, auth)
 
-dashboard.deleteAllKeys()
+tykInstance.deleteAllKeys()
