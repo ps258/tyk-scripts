@@ -10,7 +10,7 @@ import tyk
 scriptName = os.path.basename(__file__)
 
 def printhelp():
-    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret> --policy <policy ID> --number = <number of keys to create> --verbose')
+    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret> --policy <policy ID> --customKeyName = <Custom key name> --verbose')
     print("    Will create keys from the given policy or policies taking the defaults from them")
     sys.exit(1)
 
@@ -19,10 +19,10 @@ gatw = ""
 auth = ""
 policyID = ""
 verbose = 0
-number = 1
+keyName = ""
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "cred=", "policy=", "number=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "cred=", "policy=", "customKeyName=", "verbose"])
 except getopt.GetoptError as opterr:
     print(f'Error in option: {opterr}')
     printhelp()
@@ -38,8 +38,8 @@ for opt, arg in opts:
         auth = arg
     elif opt == '--policy':
         policyID = arg
-    elif opt == '--number':
-        number = int(arg)
+    elif opt == '--customKeyName':
+        keyName = arg
     elif opt == '--verbose':
         verbose = 1
 
@@ -64,8 +64,10 @@ TykKey = {
 for pol in policyID.split(","):
     TykKey["apply_policies"].append(pol)
 
-for x in range(number):
-    resp = tyk.createKey(json.dumps(TykKey))
+if keyName:
+    resp = tyk.createCustomKey(TykKey, keyName)
+else:
+    resp = tyk.createKey(TykKey)
 
     if verbose:
         print(json.dumps(resp.json(), indent=2))
