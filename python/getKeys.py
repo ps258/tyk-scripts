@@ -56,6 +56,6 @@ keys = resp.json()
 if verbose:
     print(json.dumps(keys, indent=2))
 else:
-    tyk.printKeySummaryHeader()
+    tykInstance.printKeySummaryHeader()
     for key in keys["keys"]:
-        tyk.printKeySummary(key)
+        tykInstance.printKeySummary(key)
