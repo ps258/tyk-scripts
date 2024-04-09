@@ -323,7 +323,6 @@ if true; then
     exit 1
   fi
   echo -n "  [INFO]Create a key for $APIID: "
-  echo createKeyForAPI.py $URL_AND_CREDENTIAL --apiid $APIID --verbose
   KEY=$(createKeyForAPI.py $URL_AND_CREDENTIAL --apiid $APIID)
   if [[ $? -lt 1 ]]; then
     KEY=$(echo $KEY | xargs)
@@ -367,5 +366,15 @@ if true; then
     echo FAIL $resp
     exit 1
   fi
-
+  echo -n "  [INFO]Counting keys "
+  count=$(getKeys.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
+  echo $count
+  echo -n "  [INFO]Deleting all keys "
+  resp=$(deleteAllKeys.py $URL_AND_CREDENTIAL)
+  count=$(getKeys.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
+  if [[ $count -eq 0 ]]; then
+    echo SUCCESS
+  else
+    echo FAIL $count remain
+  fi
 fi
