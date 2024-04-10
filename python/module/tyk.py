@@ -908,17 +908,16 @@ class gateway(tyk):
 
     # Gateway deleteKey
     def deleteKey(self, keyID):
-        return self.session.delete(f'{self.URL}/api/keys/{keyID}', verify=False)
+        return self.session.delete(f'{self.URL}/tyk/keys/{keyID}', verify=False)
 
     # Gateway deleteAllKeys
     def deleteAllKeys(self):
         allDeleted = True
         keys = self.getKeys().json()
-        for key in keys['keys']:
-            keyID = key['key_id']
+        for keyID in keys:
             print(f'Deleting key: {keyID}')
             response = self.deleteKey(keyID)
-            print(response.json())
+            #print(response.status_code)
             if response.status_code != 200:
                 allDeleted = False
         return allDeleted

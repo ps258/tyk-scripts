@@ -11,7 +11,7 @@ scriptName = os.path.basename(__file__)
 
 def printhelp():
     print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key|Gateway secret> --policyid <polid>')
-    print("    Will the given poicy")
+    print("    Will delete the given poicy")
     sys.exit(1)
 
 dshb = ""
