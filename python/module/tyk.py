@@ -514,6 +514,13 @@ class dashboard(tyk):
 
     # Dashboard Analytics functions
 
+    # Dashboard getLogs (defaults to the last 10 minutes. Parameters are in epoch seconds
+    def getLogs(self, start = int(time.time()), end = int(time.time()) - 6000, apiid = ''):
+        if apiid:
+            apiid=f'&api={apiid}'
+        #print(f'{self.URL}/api/logs/?start={start}&end={end}&p=-1{apiid}')
+        return self.session.get(f'{self.URL}/api/logs?start={start}&end={end}&p=-1{apiid}', verify=False)
+
     # Dashboard getAPIUsage
     def getAPIUsage(self, startday = time.strftime('%d'), startmonth = time.strftime('%m'), startyear = time.strftime('%Y'), endday = time.strftime('%d'), endmonth = time.strftime('%m'), endyear = time.strftime('%Y')):
         # Get the usage of all APIs for a period (defaults to today)
