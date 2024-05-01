@@ -47,11 +47,11 @@ for opt, arg in opts:
     elif opt == '--verbose':
         verbose = 1
 
+if not (dshb and startDate and endDate and tags and auth ):
+    printhelp()
+
 for tag in tags:
     tagUse[tag] = 0
-
-if not (dshb or startDate or endDate or tags or auth ):
-    printhelp()
 
 # split out startDate and endDate
 try:
@@ -74,8 +74,11 @@ endYr = endDate.year
 
 # get keys
 auth_header = {'Authorization' : auth}
-resp = requests.get(f'{dshb}/api/activity/keys/{startDay}/{startMon}/{startYr}/{endDay}/{endMon}/{endYr}?p=-1', headers=auth_header)
-keys = json.loads(resp.text)
+keyURL=f'{dshb}/api/activity/keys/{startDay}/{startMon}/{startYr}/{endDay}/{endMon}/{endYr}?p=-1'
+resp = requests.get(keyURL, headers=auth_header)
+keys = resp.json()
+#print(f'URL to retrieve keys is {keyURL}')
+#print(json.dumps(keys, indent=4))
 
 if verbose:
     print("List of all keys:")
@@ -83,32 +86,41 @@ if verbose:
         print(keyid['id']['key'])
 
 if verbose:
-    print("API use by each key:")
+    print("Detailed calls per key per day for all keys:")
     for keyid in keys['data']:
         key = keyid['id']['key']
-        resp = requests.get(f'{dshb}/api/activity/keys/{key}/{startDay}/{startMon}/{startYr}/{endDay}/{endMon}/{endYr}?res=day&p=-1', headers=auth_header)
-        keyUse = json.loads(resp.text)
-        print(f'Key {key}: Success {keyUse["data"][0]["success"]}')
-        print(f'Key {key}: Failed  {keyUse["data"][0]["error"]}')
-        print(f'Key {key}: Total   {keyUse["data"][0]["hits"]}')
+        activityByDayURL=f'{dshb}/api/activity/keys/{key}/{startDay}/{startMon}/{startYr}/{endDay}/{endMon}/{endYr}?res=day&p=-1'
+        resp = requests.get(activityByDayURL, headers=auth_header)
+        keysByDay = resp.json()
+        #print(f'URL to retrieve activity by day is is {activityByDayURL}')
+        #print(json.dumps(keysByDay, indent=4))
+        for record in keysByDay["data"]:
+            if record["success"] or record["error"] or record["hits"]:
+                print(f'Date: {record["id"]["day"]}/{record["id"]["month"]}/{record["id"]["year"]}')
+                print(f'Key {key}: Success {record["success"]}')
+                print(f'Key {key}: Failed  {record["error"]}')
+                print(f'Key {key}: Total   {record["hits"]}')
 
 if verbose:
     print("Tag success by key:")
 for keyid in keys['data']:
     key = keyid['id']['key']
     for tag in tags:
-        url=f'{dshb}/api/activity/keys/{key}/{startDay}/{startMon}/{startYr}/{endDay}/{endMon}/{endYr}?res=day&p=-1&tags={tag}'
-        #print(url)
-        resp = requests.get(url, headers=auth_header)
-        keyUse = json.loads(resp.text)
-        try:
-            hits = keyUse["data"][0]["success"]
-        except:
-            hits = 0
-        if verbose:
-            print(f'Key {key}: Tag {tag}, Success {hits}')
-        tagUse[tag] += hits
+        activityByTagURL=f'{dshb}/api/activity/keys/{key}/{startDay}/{startMon}/{startYr}/{endDay}/{endMon}/{endYr}?res=day&p=-1&tags={tag}'
+        resp = requests.get(activityByTagURL, headers=auth_header)
+        keysByTag = resp.json()
+        #print(f'URL to retrieve activity by tag "{tag}" is is {activityByTagURL}')
+        #print(json.dumps(keysByTag, indent=4))
+        if keysByTag["data"]:
+            for record in keysByTag["data"]:
+                try:
+                    hits = record["success"]
+                except:
+                    hits = 0
+                if verbose:
+                    print(f'Key {key}: Tag {tag}, Success {hits}')
+                tagUse[tag] += hits
 
 print("Use by tag across all keys:")
 for tag in tags:
-    print(tag, " -> ", tagUse[tag])
+    print(tag, " : ", tagUse[tag])
