@@ -77,7 +77,7 @@ auth_header = {'Authorization' : auth}
 keyURL=f'{dshb}/api/activity/keys/{startDay}/{startMon}/{startYr}/{endDay}/{endMon}/{endYr}?p=-1'
 resp = requests.get(keyURL, headers=auth_header)
 keys = resp.json()
-#print(f'URL to retrieve keys is {keyURL}')
+print(f'URL to retrieve keys is {keyURL}')
 #print(json.dumps(keys, indent=4))
 
 if verbose:
@@ -92,7 +92,7 @@ if verbose:
         activityByDayURL=f'{dshb}/api/activity/keys/{key}/{startDay}/{startMon}/{startYr}/{endDay}/{endMon}/{endYr}?res=day&p=-1'
         resp = requests.get(activityByDayURL, headers=auth_header)
         keysByDay = resp.json()
-        #print(f'URL to retrieve activity by day is is {activityByDayURL}')
+        #print(f'URL to retrieve activity by day is {activityByDayURL}')
         #print(json.dumps(keysByDay, indent=4))
         for record in keysByDay["data"]:
             if record["success"] or record["error"] or record["hits"]:
@@ -109,7 +109,7 @@ for keyid in keys['data']:
         activityByTagURL=f'{dshb}/api/activity/keys/{key}/{startDay}/{startMon}/{startYr}/{endDay}/{endMon}/{endYr}?res=day&p=-1&tags={tag}'
         resp = requests.get(activityByTagURL, headers=auth_header)
         keysByTag = resp.json()
-        #print(f'URL to retrieve activity by tag "{tag}" is is {activityByTagURL}')
+        #print(f'URL to retrieve activity by tag "{tag}" is {activityByTagURL}')
         #print(json.dumps(keysByTag, indent=4))
         if keysByTag["data"]:
             for record in keysByTag["data"]:
