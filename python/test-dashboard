@@ -98,7 +98,7 @@ else
 fi
 
 
-if false; then
+if true; then
 	# API tests
 	# Dashboard createAPI
 	echo "[INFO]API checks: "
@@ -221,7 +221,7 @@ fi
 
 # Policy tests
 # Dashboard createPolicy
-if false; then
+if true; then
   echo "[INFO]Policy checks: "
   echo -n "  [INFO]Create an API to use: "
   resp=$(createAPI.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/API-template-auth.json --name httpbin)
