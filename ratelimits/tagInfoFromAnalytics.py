@@ -23,10 +23,10 @@ parser = argparse.ArgumentParser(description=f'{scriptName}: Retrieves all of th
 
 parser.add_argument('-d', '--dashboard', required=True, help="URL of the dashboard")
 parser.add_argument('-c', '--credential', required=True, help="Admin access key")
-parser.add_argument('-a', '--apiids', required=True, help="API or list of APIs to retrieve analytics of")
+parser.add_argument('-a', '--apiids', help="API or list of APIs to retrieve analytics of")
 parser.add_argument('-s', '--start', required=True, type=int, help="Start epoch second")
 parser.add_argument('-e', '--end', required=True, type=int, help="End epoch second")
-parser.add_argument('-v', '--verbose', help="Verbose output")
+parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
 
 args = parser.parse_args()
 args.dashboard = args.dashboard.strip('/')
@@ -72,7 +72,8 @@ if apiids:
         recordHits(resp.json()['data'], results)
 else:
     # No API IDs given, get all
-    print(f'Calling {dshb}/api/logs?start={start}&end={end}&p=-1')
+    if args.verbose:
+        print(f'Calling {dshb}/api/logs?start={start}&end={end}&p=-1')
     resp = requests.get(f'{dshb}/api/logs?start={start}&end={end}&p=-1', headers={'Authorization': auth}, verify=False)
     if resp.status_code != 200:
         print(resp)
