@@ -119,7 +119,8 @@ results['keys'] = dict()
 if apiids:
     # restrict search to the given API IDs
     for apiid in apiids.split(','):
-        print(f'Calling {dshb}/api/logs?start={start}&end={end}&p=-1&api={apiid}')
+        if args.verbose:
+            print(f'Calling {dshb}/api/logs?start={start}&end={end}&p=-1&api={apiid}')
         resp = requests.get(f'{dshb}/api/logs?start={start}&end={end}&p=-1&api={apiid}', headers={'Authorization': auth}, verify=False)
         if resp.status_code != 200:
             print(resp)
@@ -144,14 +145,14 @@ if True:
         first = True
         for response_code in sorted(results['timestamps'][epoch_time].keys()):
             updateRate(rate,epoch_time,response_code)
-            #if response_code == 429:
-            if first:
-                print(f'{epoch_time/1_000_000}: ',end='')
-                print(f'{response_code}: {results["timestamps"][epoch_time][response_code]}', end='')
-                first = False
-            else:
-                print(f', {response_code}: {results["timestamps"][epoch_time][response_code]} ', end='')
-            print(f' rate: {rate["count"]}')
+            if (response_code == 429 and rate["count"] <= args.rate) or (rate["count"] > args.rate):
+                if first:
+                    print(f'{epoch_time/1_000_000}: ',end='')
+                    print(f'{response_code}: {results["timestamps"][epoch_time][response_code]}', end='')
+                    first = False
+                else:
+                    print(f', {response_code}: {results["timestamps"][epoch_time][response_code]} ', end='')
+                print(f' rate: {rate["count"]}')
 
 for policy in sorted(results['policies'].keys()):
     print(f'Policy {policy} -> {results["policies"][policy]}')

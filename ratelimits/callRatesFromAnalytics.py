@@ -7,6 +7,7 @@ import sys
 import time
 import requests
 import datetime
+import argparse
 
 scriptName = os.path.basename(__file__)
 
@@ -22,44 +23,28 @@ verbose = 0
 start = int(time.time())
 end = int(time.time()) - 600 # the last 10 minutes
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "cred=", "apiid=", "start=", "end=", "verbose"])
-except getopt.GetoptError as opterr:
-    print(f'Error in option: {opterr}')
-    printhelp()
+parser = argparse.ArgumentParser(description=f'{scriptName}: Verifies that the given rate limit has been applied correctly by using analytics records')
 
-for opt, arg in opts:
-    if opt == '--help':
-        printhelp()
-    elif opt == '--dashboard':
-        dshb = arg.strip().strip('/')
-    elif opt == '--cred':
-        auth = arg
-    elif opt == '--start':
-        start = int(arg)
-    elif opt == '--end':
-        end = int(arg)
-    elif opt == '--apiid':
-        apiids = arg
-    elif opt == '--verbose':
-        verbose = 1
+parser.add_argument('-d', '--dashboard', required=True, help="URL of the dashboard")
+parser.add_argument('-c', '--credential', required=True, help="Admin access key")
+parser.add_argument('-a', '--apiids', required=True, help="API or list of APIs to retrieve analytics of")
+parser.add_argument('-s', '--start', required=True, type=int, help="Start epoch second")
+parser.add_argument('-e', '--end', required=True, type=int, help="End epoch second")
+parser.add_argument('-v', '--verbose', help="Verbose output")
 
-if not (dshb and auth and start and end and apiids):
-    printhelp()
+args = parser.parse_args()
+args.dashboard = args.dashboard.strip('/')
+
+start = args.start
+end = args.end
+dshb = args.dashboard
+auth = args.credential
+apiids = args.apiids
 
 if end <= start:
     print('[FATAL]--end must be after --start')
 
-
-results = dict()
-for apiid in apiids.split(','):
-    print(f'Calling {dshb}/api/logs?start={start}&end={end}&p=-1&api={apiid}')
-    resp = requests.get(f'{dshb}/api/logs?start={start}&end={end}&p=-1&api={apiid}', headers={'Authorization': auth}, verify=False)
-    if resp.status_code != 200:
-        print(resp)
-        sys.exit(1)
-
-    analytics = resp.json()['data']
+def recordHits(analytics, results):
     for log in analytics:
         try:
             timestamp = datetime.datetime.strptime(log['TimeStamp'], "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -74,16 +59,36 @@ for apiid in apiids.split(','):
             results[epoch_time][log['ResponseCode']] = 0
         results[epoch_time][log['ResponseCode']] += 1
 
+results = dict()
+if apiids:
+    # restrict search to the given API IDs
+    for apiid in apiids.split(','):
+        print(f'Calling {dshb}/api/logs?start={start}&end={end}&p=-1&api={apiid}')
+        resp = requests.get(f'{dshb}/api/logs?start={start}&end={end}&p=-1&api={apiid}', headers={'Authorization': auth}, verify=False)
+        if resp.status_code != 200:
+            print(resp)
+            sys.exit(1)
+        recordHits(resp.json()['data'], results)
+else:
+    # No API IDs given, get all
+    print(f'Calling {dshb}/api/logs?start={start}&end={end}&p=-1')
+    resp = requests.get(f'{dshb}/api/logs?start={start}&end={end}&p=-1', headers={'Authorization': auth}, verify=False)
+    if resp.status_code != 200:
+        print(resp)
+        sys.exit(1)
+    recordHits(resp.json()['data'], results)
+
+#for epoch_time in range(start, end+1):
 for epoch_time in sorted(results.keys()):
     first = True
     print(f'{epoch_time}: ',end='')
-    for response_code in sorted(results[epoch_time].keys()):
-        if first:
-            print(f'{response_code}: {results[epoch_time][response_code]}', end='')
-            first = False
-        else:
-            print(f', {response_code}: {results[epoch_time][response_code]} ', end='')
+    if epoch_time in results:
+        for response_code in sorted(results[epoch_time].keys()):
+            if first:
+                print(f'{response_code}: {results[epoch_time][response_code]}', end='')
+                first = False
+            else:
+                print(f', {response_code}: {results[epoch_time][response_code]} ', end='')
     print()
 
 
-#print(json.dumps(resp.json(), indent=2))
