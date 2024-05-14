@@ -23,7 +23,7 @@ verbose = 0
 start = int(time.time())
 end = int(time.time()) - 600 # the last 10 minutes
 
-parser = argparse.ArgumentParser(description=f'{scriptName}: Verifies that the given rate limit has been applied correctly by using analytics records')
+parser = argparse.ArgumentParser(description=f'{scriptName}: prints the number of http response codes issued per second')
 
 parser.add_argument('-d', '--dashboard', required=True, help="URL of the dashboard")
 parser.add_argument('-c', '--credential', required=True, help="Admin access key")
