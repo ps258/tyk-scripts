@@ -90,26 +90,40 @@ def recordHits(analytics, results):
 
 # create a list of the events in the last 'per' seconds
 # to make sure we're not missing our rate limit
-def updateRate(rate, timestamp, response_code):
+def updateHistory(history, timestamp, response_code):
+    # delete the records older than args.per seconds old
     delete = dict()
-    for i in rate:
-        if i != 'count' and i < (timestamp - args.per*1_000_000):
+    for i in history['timestamps']:
+        if i < (timestamp - args.per*1_000_000):
             # need to save this to another dict because we can't change this one underneath the loop
             delete[i] = 1
-    # remove the entries in the rate dict that are older than the 'per' ago
+    # remove the entries in the history dict that are older than the 'per' ago
     for i in delete:
-        for response_code in rate[i]:
+        for response_code in history['timestamps'][i]:
             # keep a running tally of the number of responses in the per span
-            rate['count'] -= rate[i][response_code]
-        del rate[i]
-    if not timestamp in rate:
-        rate[timestamp] = dict()
-    if not response_code in rate[timestamp]:
-        rate[timestamp][response_code] = 0
-    rate[timestamp][response_code] += 1
+            history['count'] -= history['timestamps'][i][response_code]
+        del history['timestamps'][i]
+    if not timestamp in history['timestamps']:
+        history['timestamps'][timestamp] = dict()
+    if not response_code in history['timestamps'][timestamp]:
+        history['timestamps'][timestamp][response_code] = 0
+    history['timestamps'][timestamp][response_code] += 1
     # keep a running tally of the number of responses in the per span
-    rate['count'] += 1
+    history['count'] += 1
 
+def printHistory(history):
+    i = 1
+    for epoch_time in sorted(history['timestamps']):
+        first = True
+        for response_code in sorted(history['timestamps'][epoch_time].keys()):
+            if first:
+                print(f'\t{i} {epoch_time/1_000_000}: ',end='')
+                print(f'{response_code}: {history["timestamps"][epoch_time][response_code]}', end='')
+                first = False
+            else:
+                print(f', {response_code}: {history["timestamps"][epoch_time][response_code]} ', end='')
+            print()
+        i += 1
 
 # some globals to keep track of things
 results = dict()
@@ -138,24 +152,25 @@ else:
 # once the data is loaded analyse the results
 # we could do this while loading the data if we were sure it always came in time order.
 # but it won't when we check against multiple APIs
-if True:
-    rate = dict()
-    rate['count'] = 0
-    for epoch_time in sorted(results['timestamps'].keys()):
-        first = True
-        for response_code in sorted(results['timestamps'][epoch_time].keys()):
-            updateRate(rate,epoch_time,response_code)
-            if (response_code == 429 and rate["count"] <= args.rate) or (rate["count"] > args.rate):
-                if first:
-                    print(f'{epoch_time/1_000_000}: ',end='')
-                    print(f'{response_code}: {results["timestamps"][epoch_time][response_code]}', end='')
-                    first = False
-                else:
-                    print(f', {response_code}: {results["timestamps"][epoch_time][response_code]} ', end='')
-                print(f' rate: {rate["count"]}')
+history = dict()
+history['timestamps'] = dict()
+history['count'] = 0
+for epoch_time in sorted(results['timestamps'].keys()):
+    first = True
+    for response_code in sorted(results['timestamps'][epoch_time].keys()):
+        updateHistory(history,epoch_time,response_code)
+        if (response_code == 429 and history["count"] <= args.rate) or (history["count"] > args.rate/args.per):
+            if first:
+                print(f'{epoch_time/1_000_000}: ',end='')
+                print(f'{response_code}: {results["timestamps"][epoch_time][response_code]}', end='')
+                first = False
+            else:
+                print(f', {response_code}: {results["timestamps"][epoch_time][response_code]} ', end='')
+            print(f' rate: {history["count"]}')
+            printHistory(history)
 
 for policy in sorted(results['policies'].keys()):
-    print(f'Policy {policy} -> {results["policies"][policy]}')
+print(f'Policy {policy} -> {results["policies"][policy]}')
 for key in sorted(results['keys'].keys()):
-    print(f'Key {key} -> {results["keys"][key]}')
+print(f'Key {key} -> {results["keys"][key]}')
 
