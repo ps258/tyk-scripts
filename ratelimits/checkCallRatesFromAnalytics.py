@@ -19,21 +19,23 @@ def printhelp():
 dshb = ""
 auth = ""
 apiids = ""
-verbose = 0
+verbose = False
 start = int(time.time())
 end = int(time.time()) - 600 # the last 10 minutes
+timeoffset = round((datetime.datetime.now()-datetime.datetime.utcnow()).total_seconds())
 
 parser = argparse.ArgumentParser(description=f'{scriptName}: Verifies that the given rate limit has been applied correctly by using analytics records')
 
 parser.add_argument('-d', '--dashboard', required=True, help="URL of the dashboard")
 parser.add_argument('-c', '--credential', required=True, help="Admin access key")
-parser.add_argument('-a', '--apiids', required=True, help="API or list of APIs to retrieve analytics of")
+parser.add_argument('-a', '--apiids', help="API or list of APIs to retrieve analytics of")
 parser.add_argument('-s', '--start', required=True, type=int, help="Start epoch second")
 parser.add_argument('-e', '--end', required=True, type=int, help="End epoch second")
 parser.add_argument('-r', '--rate', required=True, type=int, help="Number per interval")
 parser.add_argument('-p', '--per', required=True, type=int, help="Per interval in seconds")
 parser.add_argument('-t', '--tag', required=False, help="Analytics tag to restrict the results by")
-parser.add_argument('-v', '--verbose', help="Verbose output")
+parser.add_argument('-o', '--GMToffset', type=int, default=timeoffset, help="The number of seconds from GMT that is localtime")
+parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
 
 args = parser.parse_args()
 args.dashboard = args.dashboard.strip('/')
@@ -43,6 +45,7 @@ end = args.end
 dshb = args.dashboard
 auth = args.credential
 apiids = args.apiids
+GMToffset = args.GMToffset
 
 if end <= start:
     print('[FATAL]--end must be after --start')
@@ -117,7 +120,7 @@ def printHistory(history):
         first = True
         for response_code in sorted(history['timestamps'][epoch_time].keys()):
             if first:
-                print(f'\t{i} {epoch_time/1_000_000}: ',end='')
+                print(f'\t{i} {(epoch_time/1_000_000)+GMToffset}: ',end='')
                 print(f'{response_code}: {history["timestamps"][epoch_time][response_code]}', end='')
                 first = False
             else:
@@ -142,7 +145,8 @@ if apiids:
         recordHits(resp.json()['data'], results)
 else:
     # No API IDs given, get all
-    print(f'Calling {dshb}/api/logs?start={start}&end={end}&p=-1')
+    if args.verbose:
+        print(f'Calling {dshb}/api/logs?start={start}&end={end}&p=-1')
     resp = requests.get(f'{dshb}/api/logs?start={start}&end={end}&p=-1', headers={'Authorization': auth}, verify=False)
     if resp.status_code != 200:
         print(resp)
@@ -161,7 +165,7 @@ for epoch_time in sorted(results['timestamps'].keys()):
         updateHistory(history,epoch_time,response_code)
         if (response_code == 429 and history["count"] <= args.rate) or (history["count"] > args.rate/args.per):
             if first:
-                print(f'{epoch_time/1_000_000}: ',end='')
+                print(f'{(epoch_time/1_000_000)+GMToffset}: ',end='')
                 print(f'{response_code}: {results["timestamps"][epoch_time][response_code]}', end='')
                 first = False
             else:
@@ -170,7 +174,7 @@ for epoch_time in sorted(results['timestamps'].keys()):
             printHistory(history)
 
 for policy in sorted(results['policies'].keys()):
-print(f'Policy {policy} -> {results["policies"][policy]}')
+    print(f'Policy {policy} -> {results["policies"][policy]}')
 for key in sorted(results['keys'].keys()):
-print(f'Key {key} -> {results["keys"][key]}')
+    print(f'Key {key} -> {results["keys"][key]}')
 
