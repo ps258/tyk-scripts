@@ -171,7 +171,8 @@ for epoch_time in sorted(results['timestamps'].keys()):
             else:
                 print(f', {response_code}: {results["timestamps"][epoch_time][response_code]} ', end='')
             print(f' rate: {history["count"]}')
-            printHistory(history)
+            if args.verbose:
+                printHistory(history)
 
 for policy in sorted(results['policies'].keys()):
     print(f'Policy {policy} -> {results["policies"][policy]}')
