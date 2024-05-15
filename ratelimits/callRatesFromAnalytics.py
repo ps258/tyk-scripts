@@ -11,10 +11,6 @@ import argparse
 
 scriptName = os.path.basename(__file__)
 
-def printhelp():
-    print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API key or Gateway secret> --start <start epoch second> --end <end epoch second> --apiid <apiid,apiid,apiid...>')
-    print("    prints the number of http response codes issued per second")
-    sys.exit(1)
 
 dshb = ""
 auth = ""
