@@ -15,7 +15,7 @@ scriptName = os.path.basename(__file__)
 dshb = ""
 auth = ""
 apiids = ""
-verbose = 0
+verbose = False
 start = int(time.time())
 end = int(time.time()) - 600 # the last 10 minutes
 timeoffset = round((datetime.datetime.now()-datetime.datetime.utcnow()).total_seconds())
@@ -28,6 +28,7 @@ parser.add_argument('-a', '--apiids', help="API or list of APIs to retrieve anal
 parser.add_argument('-s', '--start', required=True, type=int, help="Start epoch second")
 parser.add_argument('-e', '--end', required=True, type=int, help="End epoch second")
 parser.add_argument('-t', '--tag', required=False, help="Analytics tag to restrict the results by")
+parser.add_argument('-m', '--multiplier', type=int, default=1, help="The timestamp multiplier. Defaults to 1, but can be up to 1000000")
 parser.add_argument('-o', '--GMToffset', type=int, default=timeoffset, help="The number of seconds from GMT that is localtime")
 parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
 
@@ -40,6 +41,7 @@ dshb = args.dashboard
 auth = args.credential
 apiids = args.apiids
 GMToffset = args.GMToffset
+multiplier = args.multiplier
 
 if end <= start:
     print('[FATAL]--end must be after --start')
@@ -71,8 +73,7 @@ def recordHits(analytics, results):
             timestamp = datetime.datetime.strptime(log['TimeStamp'], "%Y-%m-%dT%H:%M:%S.%fZ")
         except:
             timestamp = datetime.datetime.strptime(log['TimeStamp'], "%Y-%m-%dT%H:%M:%SZ")
-        epoch_time = int(timestamp.timestamp())
-        # it might be an idea to make sure that there upstream latency is 0 here.
+        epoch_time = int(timestamp.timestamp()*multiplier)
         # non-zero latencies come from upstream so 429s should all have 0 latency
         if log["ResponseCode"] == 429 and log["RequestTime"] > 0:
             print(f'[WARN] at {log["RequestTime"]} a 429 had a latency of {log["RequestTime"]}')
@@ -110,7 +111,7 @@ for epoch_time in sorted(results['timestamps'].keys()):
     first = True
     for response_code in sorted(results['timestamps'][epoch_time].keys()):
         if first:
-            print(f'{(epoch_time)+GMToffset}: ',end='')
+            print(f'{(epoch_time/multiplier)+GMToffset}: ',end='')
             print(f'{response_code}: {results["timestamps"][epoch_time][response_code]}', end='')
             first = False
         else:
