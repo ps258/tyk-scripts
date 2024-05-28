@@ -9,17 +9,16 @@ import tyk
 
 scriptName = os.path.basename(__file__)
 
-parser = argparse.ArgumentParser(description=f'{scriptName}: Will add any available APIs into the policy named. There is no way to select which APIs are added ')
+parser = argparse.ArgumentParser(description=f'{scriptName}: Will add any available APIs into the policy named. There is no way to select which APIs are added')
 
 parser.add_argument('-d', '--dashboard', required=True, dest='dshb', help="URL of the dashboard")
 parser.add_argument('-p', '--policy', required=True, dest='policy', help="Policy ID to add APIs to")
 parser.add_argument('-c', '--cred', required=True, dest='auth', help="Access credential")
 parser.add_argument('-n', '--number', required=True, type=int, dest='toAdd', help="Number of APIs to add to the policy")
-parser.add_argument('-v', '--verbose', required=False, type=bool, dest='verbose', help="Verbose output")
+parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
 
 args = parser.parse_args()
 args.dshb = args.dshb.strip('/')
-
 
 tykInstance = tyk.dashboard(args.dshb, args.auth)
 

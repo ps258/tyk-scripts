@@ -5,9 +5,9 @@
 # arguments are dashboard, dashboard admin secret, username, user password
 ###############################################################
 
+import argparse
 import json
 import os
-import getopt
 import sys
 import time
 sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/module')
@@ -15,44 +15,22 @@ import tyk
 
 scriptName = os.path.basename(__file__)
 
-def printhelp():
-    print(f'{scriptName} --dashboard <dashboard URL> --adminsecret <Dashboard Admin Secret> --useremail <user email> --userpass <user password>')
-    print("    Create an admin user in all orgs in the dashboard instance")
-    sys.exit(1)
+parser = argparse.ArgumentParser(description=f'{scriptName}: Create an admin user in all orgs in the dashboard instance')
 
-dshb = ""
-auth = ""
-useremail = ""
-userpass = ""
-verbose = 0
-adminsecret = ""
+parser.add_argument('-d', '--dashboard', required=True, dest='dshb', help="URL of the dashboard")
+parser.add_argument('-a', '--adminSecret', required=True, dest='adminSecret', help="Dashboard admin secret")
+parser.add_argument('-e', '--userEmail', required=True, dest='userEmail', help="User email address")
+parser.add_argument('-p', '--userPassword', required=True, dest='userPassword', help="User password")
+parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "adminsecret=", "useremail=", "userpass=", "number=", "verbose"])
-except getopt.GetoptError as opterr:
-    print(f'Error in option: {opterr}')
-    printhelp()
+args = parser.parse_args()
+args.dshb = args.dshb.strip('/')
 
-for opt, arg in opts:
-    if opt == '--help':
-        printhelp()
-    elif opt == '--dashboard':
-        dshb = arg.strip().strip('/')
-    elif opt == '--adminsecret':
-        adminsecret = arg
-    elif opt == '--useremail':
-        useremail = arg
-    elif opt == '--userpass':
-        userpass = arg
-    elif opt == '--verbose':
-        verbose = 1
-
-if not (dshb and useremail and userpass and adminsecret):
-    printhelp()
-
-tykInstance = tyk.dashboard(dshb, "", adminsecret)
+tykInstance = tyk.dashboard(args.dshb, "", args.adminSecret)
 
 organisations = tykInstance.getOrganisations().json()
 for org in organisations["organisations"]:
-    resp = tykInstance.createAdminUser(useremail, userpass, org["id"])
+    if args.verbose:
+        print(f'[INFO]Creating {args.userEmail} in {org=}')
+    resp = tykInstance.createAdminUser(args.userEmail, args.userpass, org["id"])
     print(json.dumps(resp.json(), indent=2))
