@@ -1,49 +1,27 @@
 #!/usr/bin/python3
 
+import argparse
 import json
 import os
-import getopt
 import sys
 sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/module')
 import tyk
 
 scriptName = os.path.basename(__file__)
 
-def printhelp():
-    print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API credentials> --policy <policy id> --verbose')
-    print("    Will create a catalogue entry for the policy given")
-    sys.exit(1)
+parser = argparse.ArgumentParser(description=f'{scriptName}: Will create a old portal catalogue entry for the policy given')
+parser.add_argument('-d', '--dashboard', required=True, dest='dshb', help="URL of the dashboard")
+parser.add_argument('-c', '--cred', required=True, dest='auth', help="Dashboard API key")
+parser.add_argument('-p', '--policyId', required=True, dest='policyId', help="Policy ID to publish")
+parser.add_argument('-n', '--noShow', action='store_true', dest='noShow', help="Set show to false")
+parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
 
-dshb = ""
-auth = ""
-policyId = ""
-verbose = 0
-show = True
+args = parser.parse_args()
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "cred=", "policyId=", "noShow", "verbose"])
-except getopt.GetoptError as opterr:
-    print(f'Error in option: {opterr}')
-    printhelp()
-
-for opt, arg in opts:
-    if opt == '--help':
-        printhelp()
-    elif opt == '--dashboard':
-        dshb = arg.strip().strip('/')
-    elif opt == '--cred':
-        auth = arg
-    elif opt == '--noShow':
-        show = False
-    elif opt == '--policyId':
-        policyId = arg
-    elif opt == '--verbose':
-        verbose = 1
-
-if not (dshb and auth and policyId):
-    printhelp()
-
-tykInstance = tyk.dashboard(dshb, auth)
+show = not args.noShow
+args.dshb = args.dshb.strip('/')
+# create the dashboard connection
+tykInstance = tyk.dashboard(args.dshb, args.auth)
 
 catalogue = tykInstance.getCatalogue().json()
 # create a dictionary of all entry names
@@ -63,10 +41,10 @@ catalogue["apis"].append({"name": EntryName+str(i),\
         "short_description": short_description+str(i),\
         "long_description": long_description+str(i),\
         "show": show,\
-        "policy_id": policyId,\
+        "policy_id": args.policyId,\
         "version": "v2"})
 
-if verbose:
+if args.verbose:
     print('[INFO]JSON being sent')
     print(json.dumps(catalogue, indent=2))
 
