@@ -1,72 +1,52 @@
 #!/usr/bin/python3
 
+import argparse
 import json
 import os
-import getopt
 import sys
 sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/module')
 import tyk
 
 scriptName = os.path.basename(__file__)
 
-def printhelp():
-    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret> --template <API template file> --name <base name of API> --verbose')
-    print("    Will take the template apply the name (if given) then add it as an API to the dashboard or gateway")
-    sys.exit(1)
+parser = argparse.ArgumentParser(description=f'{scriptName}: Will take the template, apply the name (if given) then add it as an API to the dashboard or gateway')
 
-dshb = ""
-gatw = ""
-auth = ""
-templateFile = ""
-name = ""
-verbose = 0
+group = parser.add_mutually_exclusive_group(required=True)
+group.add_argument('-d', '--dashboard', dest='dshb', help="URL of the dashboard")
+group.add_argument('-g', '--gateway', dest='gatw', help="URL of the gateway")
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "template=", "dashboard=", "gateway=", "cred=", "name=", "verbose"])
-except getopt.GetoptError as opterr:
-    print(f'Error in option: {opterr}')
-    printhelp()
+parser.add_argument('-c', '--cred', required=True, dest='auth', help="Dashboard API key or Gateway secret")
+parser.add_argument('-t', '--template', required=True, dest='templateFile', help="API template file")
+parser.add_argument('-n', '--name', required=True, dest='name', help="Base name of API")
+parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
 
-for opt, arg in opts:
-    if opt == '--help':
-        printhelp()
-    elif opt == '--template':
-        templateFile = arg
-    elif opt == '--dashboard':
-        dshb = arg.strip().strip('/')
-    elif opt == '--gateway':
-        gatw = arg.strip().strip('/')
-    elif opt == '--cred':
-        auth = arg
-    elif opt == '--name':
-        name = arg
-    elif opt == '--verbose':
-        verbose = 1
-
-if not ((dshb or gatw) and templateFile and auth):
-    printhelp()
+args = parser.parse_args()
+if args.dshb:
+    args.dshb = args.dshb.strip('/')
+else:
+    args.gatw = args.gatw.strip('/')
 
 # create a new dashboard or gateway object
-if dshb:
-    tykInstance = tyk.dashboard(dshb, auth)
+if args.dshb:
+    tykInstance = tyk.dashboard(args.dshb, args.auth)
 else:
-    tykInstance = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(args.gatw, args.auth)
 
 # read the API defn
-with open(templateFile) as APIFile:
+with open(args.templateFile) as APIFile:
     APIjson=json.load(APIFile)
     APIFile.close()
-    if name:
+    if args.name:
         if 'api_definition' in APIjson:
-            APIjson["api_definition"]["name"] = name
-            APIjson["api_definition"]["slug"] = name
-            APIjson["api_definition"]["proxy"]["listen_path"] = '/'+name+'/'
+            APIjson["api_definition"]["name"] = args.name
+            APIjson["api_definition"]["slug"] = args.name
+            APIjson["api_definition"]["proxy"]["listen_path"] = '/'+args.name+'/'
             if verbose:
                 print(f'[INFO]Creating API with name: {APIjson["api_definition"]["name"]}, slug:{APIjson["api_definition"]["slug"]}, listen_path {APIjson["api_definition"]["proxy"]["listen_path"]}')
         else:
-            APIjson["name"] = name
-            APIjson["slug"] = name
-            APIjson["proxy"]["listen_path"] = '/'+name+'/'
+            APIjson["name"] = args.name
+            APIjson["slug"] = args.name
+            APIjson["proxy"]["listen_path"] = '/'+args.name+'/'
             if verbose:
                 print(f'[INFO]Creating API with name: {APIjson["name"]}, slug:{APIjson["slug"]}, listen_path {APIjson["proxy"]["listen_path"]}')
 
