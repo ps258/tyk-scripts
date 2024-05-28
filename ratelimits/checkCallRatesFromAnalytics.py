@@ -59,7 +59,7 @@ def recordHits(analytics, results):
 
         # check if we've got a filter and ignore any analytics records with a matching tag
         if args.tag:
-            if not intags(args.tag, log["Tags"]):
+            if not args.tag in log["Tags"]:
                 continue
 
         # keep track of the keys and policies mentioned in the analytics records
