@@ -23,10 +23,10 @@ args = parser.parse_args()
 
 # create a new dashboard or gateway object
 if args.dshb:
-    args.dshb = args.dshb.strip('/')
+    args.dshb = args.dshb.strip().rstrip('/')
     tykInstance = tyk.dashboard(args.dshb, args.auth)
 else:
-    args.gatw = args.gatw.strip('/')
+    args.gatw = args.gatw.strip().rstrip('/')
     tykInstance = tyk.gateway(args.gatw, args.auth)
 
 
