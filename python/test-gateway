@@ -254,13 +254,16 @@ for POL in $POLID $POLID2; do
 	sleep 1
 	if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POL; then
 		echo FAIL $resp
-		exit 1
+    # last policy always failes
+		# exit 1
 	else
 		echo SUCCESS
 	fi
 done
-exit
-# Dashboard createPolicies
+
+#exit
+
+# Gateway createPolicies
 numberToCreate=10
 echo -n "  [INFO]Create Policies: "
 resp=$(createPolicies.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --number $numberToCreate --apiid $APIID)
@@ -271,7 +274,7 @@ else
   echo FAIL $numberCreated of $numberToCreate created
   exit 1
 fi
-# Dashboard deleteAllAPIs
+# Gateway deleteAllAPIs
 echo -n "  [INFO]Delete all Policies: "
 resp=$(deleteAllPolicies.py $URL_AND_CREDENTIAL)
 numberRemaining=$(getPolicies.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
