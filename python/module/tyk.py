@@ -983,10 +983,8 @@ class gateway(tyk):
             # for v3+ where there are some details
             if response.headers.get('content-type') == 'application/json':
                 resp_json = response.json()
-                if 'details' in resp_json:
-                    if 'redis' in resp_json['details']:
-                        if 'status' in resp_json['details']['redis']:
-                            return resp_json['details']['redis']['status'] == "pass"
+                if 'status' in resp_json:
+                    return resp_json['status'] == "pass"
                 return False
             else:
                 # for earlier when it was just 'hello tikki'
