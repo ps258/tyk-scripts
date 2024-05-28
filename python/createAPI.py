@@ -21,15 +21,13 @@ parser.add_argument('-n', '--name', required=True, dest='name', help="Base name 
 parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
 
 args = parser.parse_args()
-if args.dshb:
-    args.dshb = args.dshb.strip('/')
-else:
-    args.gatw = args.gatw.strip('/')
 
 # create a new dashboard or gateway object
 if args.dshb:
+    args.dshb = args.dshb.strip('/')
     tykInstance = tyk.dashboard(args.dshb, args.auth)
 else:
+    args.gatw = args.gatw.strip('/')
     tykInstance = tyk.gateway(args.gatw, args.auth)
 
 # read the API defn
