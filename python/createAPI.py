@@ -16,8 +16,8 @@ group.add_argument('-d', '--dashboard', dest='dshb', help="URL of the dashboard"
 group.add_argument('-g', '--gateway', dest='gatw', help="URL of the gateway")
 
 parser.add_argument('-c', '--cred', required=True, dest='auth', help="Dashboard API key or Gateway secret")
+parser.add_argument('-n', '--name', dest='name', help="Base name of API")
 parser.add_argument('-t', '--template', required=True, dest='templateFile', help="API template file")
-parser.add_argument('-n', '--name', required=True, dest='name', help="Base name of API")
 parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
 
 args = parser.parse_args()
@@ -35,17 +35,18 @@ with open(args.templateFile) as APIFile:
     APIjson=json.load(APIFile)
     APIFile.close()
     if args.name:
+        # if we've been given a name then apply that
         if 'api_definition' in APIjson:
             APIjson["api_definition"]["name"] = args.name
             APIjson["api_definition"]["slug"] = args.name
             APIjson["api_definition"]["proxy"]["listen_path"] = '/'+args.name+'/'
-            if verbose:
+            if args.verbose:
                 print(f'[INFO]Creating API with name: {APIjson["api_definition"]["name"]}, slug:{APIjson["api_definition"]["slug"]}, listen_path {APIjson["api_definition"]["proxy"]["listen_path"]}')
         else:
             APIjson["name"] = args.name
             APIjson["slug"] = args.name
             APIjson["proxy"]["listen_path"] = '/'+args.name+'/'
-            if verbose:
+            if args.verbose:
                 print(f'[INFO]Creating API with name: {APIjson["name"]}, slug:{APIjson["slug"]}, listen_path {APIjson["proxy"]["listen_path"]}')
 
 resp = tykInstance.createAPI(APIjson)
