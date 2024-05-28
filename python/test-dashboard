@@ -41,7 +41,7 @@ TM_GATW_URL=$(sbctl get $TM_CONTAINER gateway)
 TM_GATW_SECRET=$(sbctl get $TM_CONTAINER secret)
 
 echo "[INFO]Bootstrapping $TM_DASH_URL"
-bootstrap.py --dashboard $TM_DASH_URL --adminsecret $TM_ADMIN_SECRET --licence $SBX_LICENSE --adminEmail $TM_ADMIN_USER --adminPassword $TM_ADMIN_PASSWORD
+bootstrap.py --dashboard $TM_DASH_URL --adminSecret $TM_ADMIN_SECRET --licence $SBX_LICENSE --adminEmail $TM_ADMIN_USER --adminPassword $TM_ADMIN_PASSWORD
 
 sleep 2
 TM_ADMIN_KEY=$(continerAdminkey $TM_CONTAINER)

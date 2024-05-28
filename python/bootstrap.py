@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import argparse
 import json
 import os
 import getopt
@@ -10,57 +11,33 @@ import tyk
 scriptName = os.path.basename(__file__)
 
 dshb = ""
-adminsecret = ""
+adminSecret = ""
 adminEmail = "admin@tyk.io"
 adminPassword = "ABC-123"
 licence = ""
-verbose = 0
 portalCNAME = "portal.cname.com"
 
-def printhelp():
-    print(f'{scriptName} --dashboard <dashboard URL> --adminsecret <Dashboard Admin Secret> --adminEmail <admin email address> --adminPassword <admin password in plain text> --licence <dashboard licence> --portalcname <portal CNAME>')
-    print('    Will create a new org with the given org name')
-    print(f'    Default admin user email: {adminEmail}')
-    print(f'    Default admin user password: {adminPassword}')
-    sys.exit(1)
+parser = argparse.ArgumentParser(description=f'{scriptName}: Bootstraps a Pro install (not needed for CE or helm)')
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "adminsecret=", "adminEmail=", "adminPassword=", "licence=", "portalcname=", "verbose"])
-except getopt.GetoptError as opterr:
-    print(f'Error in option: {opterr}')
-    printhelp()
+parser.add_argument('-d', '--dashboard', required=True, dest='dshb', help="URL of the dashboard")
+parser.add_argument('-s', '--adminSecret', required=True, dest='adminSecret', help="Dashboard Admin Secret")
+parser.add_argument('-e', '--adminEmail', required=True, default=adminEmail, dest='adminEmail', help="Dashboard Admin email address")
+parser.add_argument('-p', '--adminPassword', required=True, default=adminPassword, dest='adminPassword', help="Dashboard Admin password")
+parser.add_argument('-l', '--licence', required=True, dest='licence', help="Dashboard pro licence")
+parser.add_argument('-c', '--portalCNAME', required=False, default=portalCNAME, dest='portalCNAME', help="Portal CNAME")
 
-for opt, arg in opts:
-    if opt == '--help':
-        printhelp()
-    elif opt == '--dashboard':
-        dshb = arg.strip().strip('/')
-    elif opt == '--adminsecret':
-        adminsecret = arg
-    elif opt == '--adminEmail':
-        adminEmail = arg
-    elif opt == '--adminPassword':
-        adminPassword = arg
-    elif opt == '--licence':
-        licence = arg
-    elif opt == '--portalcname':
-        portalCNAME = arg
-    elif opt == '--verbose':
-        verbose = 1
-
-if not (dshb and adminsecret and licence):
-    print(f'{scriptName}: must specify --dashboard, --adminsecret and --licence')
-    printhelp()
+args = parser.parse_args()
+args.dshb = args.dshb.strip('/')
 
 # create a new dashboard object
-tykInstance = tyk.dashboard(dshb, "", adminsecret)
+tykInstance = tyk.dashboard(args.dshb, "", args.adminSecret)
 
 # Bootstrap when the dashboard is up
 if tykInstance.waitUp(10):
-    resp = tykInstance.bootstrap(adminEmail, adminPassword, licence, portalCNAME)
+    resp = tykInstance.bootstrap(args.adminEmail, args.adminPassword, args.licence, args.portalCNAME)
     if resp.status_code != 200:
         print(f'[FATAL]Failed to bootstrap. The dashboard returned {resp.status_code}', file=sys.stderr)
         print(json.dumps(resp.json()), file=sys.stderr)
         sys.exit(1)
 else:
-    print(f'[FATAL]Failed to bootstrap. Dashboard did not respond', file=sys.stderr)
+    print(f'[FATAL]Failed to bootstrap. Dashboard ({args.dshb}) did not respond', file=sys.stderr)
