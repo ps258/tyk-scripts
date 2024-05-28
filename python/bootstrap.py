@@ -10,11 +10,8 @@ import tyk
 
 scriptName = os.path.basename(__file__)
 
-dshb = ""
-adminSecret = ""
 adminEmail = "admin@tyk.io"
 adminPassword = "ABC-123"
-licence = ""
 portalCNAME = "portal.cname.com"
 
 parser = argparse.ArgumentParser(description=f'{scriptName}: Bootstraps a Pro install (not needed for CE or helm)')
