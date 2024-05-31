@@ -28,9 +28,9 @@ for opt, arg in opts:
     if opt == '--help':
         printhelp()
     elif opt == '--dashboard':
-        dshb = arg.strip().strip('/')
+        dshb = arg
     elif opt == '--gateway':
-        gatw = arg.strip().strip('/')
+        gatw = arg
     elif opt == '--time':
         max_wait_time = int(arg)
 

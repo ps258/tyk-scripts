@@ -28,7 +28,7 @@ for opt, arg in opts:
     if opt == '--help':
         printhelp()
     elif opt == '--gateway':
-        gatw = arg.strip().strip('/')
+        gatw = arg
     elif opt == '--cred':
         auth = arg
     elif opt == '--group':

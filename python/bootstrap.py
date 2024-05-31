@@ -23,7 +23,6 @@ parser.add_argument('-l', '--licence', required=True, dest='licence', help="Dash
 parser.add_argument('-c', '--portalCNAME', required=False, default=portalCNAME, dest='portalCNAME', help="Portal CNAME")
 
 args = parser.parse_args()
-args.dshb = args.dshb.strip().rstrip('/')
 
 # create a new dashboard object
 tykInstance = tyk.dashboard(args.dshb, "", args.adminSecret)

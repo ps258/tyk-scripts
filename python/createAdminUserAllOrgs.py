@@ -24,7 +24,6 @@ parser.add_argument('-p', '--userPassword', required=True, dest='userPassword', 
 parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
 
 args = parser.parse_args()
-args.dshb = args.dshb.strip().rstrip('/')
 
 tykInstance = tyk.dashboard(args.dshb, "", args.adminSecret)
 

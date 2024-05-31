@@ -1,97 +1,66 @@
 #!/usr/bin/python3
 
+import argparse
 import json
 import os
-import getopt
 import sys
 sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/module')
 import tyk
 
 scriptName = os.path.basename(__file__)
-
-def printhelp():
-    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret> --apiid <apiid,apiid> --rate <rate> --per <period in seconds> --customKeyName <Custom key name> --keyFile <key json file> --verbose')
-    print("    Will create a new authentication key for the API_ID given")
-    sys.exit(1)
-
-dshb = ""
-gatw = ""
-auth = ""
-apiids = ""
-keyName = ""
-keyFileName = ""
-verbose = 0
-rate = 0
-per = 0
 defaultRate = 1000
 defaultPer = 60
 
+parser = argparse.ArgumentParser(description=f'{scriptName}: Will create a new authentication key for the API_ID given or from the json key file given')
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "cred=", "apiid=", "per=", "rate=", "customKeyName=", "keyFile=", "verbose"])
-except getopt.GetoptError as opterr:
-    print(f'Error in option: {opterr}')
-    printhelp()
+DashboardOrGateway = parser.add_mutually_exclusive_group(required=True)
+DashboardOrGateway.add_argument('-d', '--dashboard', dest='dshb', help="URL of the dashboard")
+DashboardOrGateway.add_argument('-g', '--gateway', dest='gatw', help="URL of the gateway")
 
-for opt, arg in opts:
-    if opt == '--help':
-        printhelp()
-    elif opt == '--dashboard':
-        dshb = arg.strip().strip('/')
-    elif opt == '--gateway':
-        gatw = arg.strip().strip('/')
-    elif opt == '--cred':
-        auth = arg
-    elif opt == '--apiid':
-        apiids = arg
-    elif opt == '--rate':
-        rate = int(arg)
-    elif opt == '--per':
-        per = int(arg)
-    elif opt == '--customKeyName':
-        keyName = arg
-    elif opt == '--keyFile':
-        keyFileName = arg
-    elif opt == '--verbose':
-        verbose = 1
+parser.add_argument('-a', '--apiid', dest='apiids', nargs='+', help="List of API IDs which the key can access")
+parser.add_argument('-c', '--cred', required=True, dest='auth', help="Dashboard API key or Gateway secret")
+parser.add_argument('-C', '--customKeyName', dest='keyName', help="Custom key name")
+parser.add_argument('-k', '--keyFile', dest='keyFileName', help="JSON key file")
+parser.add_argument('-p', '--per', dest='per', type=int, help="Per period in seconds")
+parser.add_argument('-r', '--rate', dest='rate', type=int, help="Rate: the number of requests allowed in the 'per' period")
+parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
 
-if not ((dshb or gatw) and auth):
+args = parser.parse_args()
+
+if not ((args.dshb or args.gatw) and args.auth):
     print('Error: Either --dashboard or --gateway and --cred must be given')
-    printhelp()
-if not (keyFileName or apiids):
+if not (args.keyFileName or args.apiids):
     print('Error: Either --apiid or --keyFile must be given')
-    printhelp()
-if (rate and not per) or (per and not rate):
+if not (args.rate and args.per):
     print('Error: Both --rate and --pre must be given if either is')
-    printhelp()
 
 # create a new dashboard or gateway object
-if dshb:
-    tykInstance = tyk.dashboard(dshb, auth)
+if args.dshb:
+    tykInstance = tyk.dashboard(args.dshb, args.auth)
 else:
-    tykInstance = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(args.gatw, args.auth)
 
-if keyFileName:
-    key = tyk.authKey(keyFileName)
+if args.keyFileName:
+    key = tyk.authKey(args.keyFileName)
 else:
     key = tyk.authKey()
 
 if rate:
-    key.setRate(rate)
-    key.setPer(per)
+    key.setRate(args.rate)
+    key.setPer(args.per)
 else:
     key.setRate(defaultRate)
     key.setPer(defaultPer)
 
 if apiids:
-    for apiid in apiids.split(','):
-        key.addAPI(apiid)
+    for apiid in args.apiids:
+        key.addAPI(args.apiid)
 
-if verbose:
+if args.verbose:
     print(key)
 
-if keyName:
-    resp = tykInstance.createCustomKey(key.json(), keyName)
+if args.keyName:
+    resp = tykInstance.createCustomKey(key.json(), args.keyName)
 else:
     resp = tykInstance.createKey(key.json())
 
@@ -99,7 +68,7 @@ if resp.status_code != 200:
     print(resp)
     sys.exit(1)
 else:
-    if verbose:
+    if args.verbose:
         print(json.dumps(resp.json(), indent=2))
     else:
         if "key_id" in resp.json():

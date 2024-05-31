@@ -32,9 +32,9 @@ for opt, arg in opts:
     elif opt == '--policy':
         policyJSON = arg
     elif opt == '--dashboard':
-        dshb = arg.strip().strip('/')
+        dshb = arg
     elif opt == '--gateway':
-        gatw = arg.strip().strip('/')
+        gatw = arg
     elif opt == '--cred':
         auth = arg
     elif opt == '--verbose':

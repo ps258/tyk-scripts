@@ -32,7 +32,7 @@ for opt, arg in opts:
     elif opt == '--template':
         templateFile = arg
     elif opt == '--dashboard':
-        dshb = arg.strip().strip('/')
+        dshb = arg
     elif opt == '--cred':
         auth = arg
     elif opt == '--policyid':

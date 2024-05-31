@@ -19,7 +19,6 @@ parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help
 args = parser.parse_args()
 
 show = not args.noShow
-args.dshb = args.dshb.strip().rstrip('/')
 # create the dashboard connection
 tykInstance = tyk.dashboard(args.dshb, args.auth)
 

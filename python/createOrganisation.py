@@ -31,7 +31,7 @@ for opt, arg in opts:
     if opt == '--help':
         printhelp()
     elif opt == '--dashboard':
-        dshb = arg.strip().strip('/')
+        dshb = arg
     elif opt == '--adminsecret':
         adminsecret = arg
     elif opt == '--name':

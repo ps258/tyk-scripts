@@ -18,7 +18,7 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 class tyk:
     def __init__(self, URL, authKey, description, verify):
         self.session = requests.Session()
-        self.URL = URL.strip('/')       # The dashboard or gateway URL
+        self.URL = URL.strip().rstrip('/')       # The dashboard or gateway URL
         self.authKey = authKey          # User key to authenticate API calls (admin key or gateway secret)
         self.description = description  # description of this instance
         self.session.verify = verify    # insecure skip verify

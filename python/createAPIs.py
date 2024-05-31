@@ -11,9 +11,9 @@ scriptName = os.path.basename(__file__)
 
 parser = argparse.ArgumentParser(description=f'{scriptName}: Will take the template and increment its name and listen path so that they do not clash, then add it as an API to the dashboard or gateway')
 
-group = parser.add_mutually_exclusive_group(required=True)
-group.add_argument('-d', '--dashboard', dest='dshb', help="URL of the dashboard")
-group.add_argument('-g', '--gateway', dest='gatw', help="URL of the gateway")
+DashboardOrGateway = parser.add_mutually_exclusive_group(required=True)
+DashboardOrGateway.add_argument('-d', '--dashboard', dest='dshb', help="URL of the dashboard")
+DashboardOrGateway.add_argument('-g', '--gateway', dest='gatw', help="URL of the gateway")
 
 parser.add_argument('-c', '--cred', required=True, dest='auth', help="Dashboard API key or Gateway secret")
 parser.add_argument('-n', '--name', dest='name', help="Base name of API")
@@ -25,10 +25,8 @@ args = parser.parse_args()
 
 # create a new dashboard or gateway object
 if args.dshb:
-    args.dshb = args.dshb.strip().rstrip('/')
     tykInstance = tyk.dashboard(args.dshb, args.auth)
 else:
-    args.gatw = args.gatw.strip().rstrip('/')
     tykInstance = tyk.gateway(args.gatw, args.auth)
 
 # read the API defn
