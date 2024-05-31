@@ -27,11 +27,9 @@ parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help
 
 args = parser.parse_args()
 
-if not ((args.dshb or args.gatw) and args.auth):
-    print('Error: Either --dashboard or --gateway and --cred must be given')
 if not (args.keyFileName or args.apiids):
     print('Error: Either --apiid or --keyFile must be given')
-if not (args.rate and args.per):
+if (args.rate or args.per) and not (args.rate and args.per):
     print('Error: Both --rate and --pre must be given if either is')
 
 # create a new dashboard or gateway object
