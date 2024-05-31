@@ -1,64 +1,40 @@
 #!/usr/bin/python3
 
+import argparse
 import json
 import os
-import getopt
 import sys
 sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/module')
 import tyk
 
 scriptName = os.path.basename(__file__)
 
-def printhelp():
-    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret> --policy <policy ID> --customKeyName = <Custom key name> --verbose')
-    print("    Will create keys from the given policy or policies taking the defaults from them")
-    sys.exit(1)
+parser = argparse.ArgumentParser(description=f'{scriptName}: Will create a key from the given policies')
 
-dshb = ""
-gatw = ""
-auth = ""
-policyID = ""
-verbose = 0
-keyName = ""
+DashboardOrGateway = parser.add_mutually_exclusive_group(required=True)
+DashboardOrGateway.add_argument('-d', '--dashboard', dest='dshb', help="URL of the dashboard")
+DashboardOrGateway.add_argument('-g', '--gateway', dest='gatw', help="URL of the gateway")
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "cred=", "policy=", "customKeyName=", "verbose"])
-except getopt.GetoptError as opterr:
-    print(f'Error in option: {opterr}')
-    printhelp()
+parser.add_argument('-c', '--cred', required=True, dest='auth', help="Dashboard API key or Gateway secret")
+parser.add_argument('-C', '--customKeyName', dest='keyName', help="Custom key name")
+parser.add_argument('-p', '--policy', required=True, dest='policyID', nargs='+', help="List of policy IDs which the key is based on")
+parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
 
-for opt, arg in opts:
-    if opt == '--help':
-        printhelp()
-    elif opt == '--dashboard':
-        dshb = arg
-    elif opt == '--gateway':
-        gatw = arg
-    elif opt == '--cred':
-        auth = arg
-    elif opt == '--policy':
-        policyID = arg
-    elif opt == '--customKeyName':
-        keyName = arg
-    elif opt == '--verbose':
-        verbose = 1
-
-if not ((dshb or gatw) and policyID):
-    printhelp()
+args = parser.parse_args()
 
 # create a new dashboard or gateway object
-if dshb:
-    tykInstance = tyk.dashboard(dshb, auth)
+if args.dshb:
+    tykInstance = tyk.dashboard(args.dshb, args.auth)
 else:
-    tykInstance = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(args.gatw, args.auth)
 
 key = tyk.authKey()
 
-for pol in policyID.split(","):
+for pol in args.policyID:
     key.addPolicy(pol)
 
-if keyName:
-    resp = tykInstance.createCustomKey(key.json(), keyName)
+if args.keyName:
+    resp = tykInstance.createCustomKey(key.json(), args.keyName)
 else:
     resp = tykInstance.createKey(key.json())
 
