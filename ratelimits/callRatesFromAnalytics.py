@@ -2,7 +2,6 @@
 
 import json
 import os
-import getopt
 import sys
 import time
 import requests
@@ -10,7 +9,6 @@ import datetime
 import argparse
 
 scriptName = os.path.basename(__file__)
-
 
 dshb = ""
 auth = ""
@@ -46,16 +44,13 @@ multiplier = args.multiplier
 if end <= start:
     print('[FATAL]--end must be after --start')
 
-def intags(tag, tags):
-    return tag in tags
-
 # filter the results and store them by 10E-6 seconds
 def recordHits(analytics, results):
     for log in analytics:
 
         # check if we've got a filter and ignore any analytics records with a matching tag
         if args.tag:
-            if not intags(args.tag, log["Tags"]):
+            if not args.tag in log["Tags"]:
                 continue
 
         # keep track of the keys and policies mentioned in the analytics records
@@ -69,10 +64,18 @@ def recordHits(analytics, results):
                 if not tag in results["keys"]:
                     results["keys"][tag] = 0
                 results["keys"][tag] += 1
+
+        # read the analytics record and save its timestamp with the number of each ResponseCode
+        # given that we're dealing with 10E-6 second accuracy there will probably only be one in a timestamp
+        #  but don't assume that
         try:
             timestamp = datetime.datetime.strptime(log['TimeStamp'], "%Y-%m-%dT%H:%M:%S.%fZ")
         except:
-            timestamp = datetime.datetime.strptime(log['TimeStamp'], "%Y-%m-%dT%H:%M:%SZ")
+            try:
+                timestamp = datetime.datetime.strptime(log['TimeStamp'], "%Y-%m-%dT%H:%M:%SZ")
+            except:
+                print(f"[FATAL]Still couldn't pars {log['TimeStamp']=}")
+                sys.exit(1)
         epoch_time = int(timestamp.timestamp()*multiplier)
         # non-zero latencies come from upstream so 429s should all have 0 latency
         if log["ResponseCode"] == 429 and log["RequestTime"] > 0:
@@ -100,7 +103,8 @@ if apiids:
         recordHits(resp.json()['data'], results)
 else:
     # No API IDs given, get all
-    print(f'Calling {dshb}/api/logs?start={start}&end={end}&p=-1')
+    if args.verbose:
+        print(f'Calling {dshb}/api/logs?start={start}&end={end}&p=-1')
     resp = requests.get(f'{dshb}/api/logs?start={start}&end={end}&p=-1', headers={'Authorization': auth}, verify=False)
     if resp.status_code != 200:
         print(resp)
