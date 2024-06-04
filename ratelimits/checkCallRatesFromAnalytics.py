@@ -2,7 +2,6 @@
 
 import json
 import os
-import getopt
 import sys
 import time
 import requests
@@ -10,11 +9,6 @@ import datetime
 import argparse
 
 scriptName = os.path.basename(__file__)
-
-def printhelp():
-    print(f'{scriptName} --dashboard <dashboard URL> --cred <Dashboard API key or Gateway secret> --start <start epoch second> --end <end epoch second> --apiid <apiid,apiid,apiid...>')
-    print("    prints the number of http response codes issued per second")
-    sys.exit(1)
 
 dshb = ""
 auth = ""
@@ -50,9 +44,6 @@ GMToffset = args.GMToffset
 if end <= start:
     print('[FATAL]--end must be after --start')
 
-def intags(tag, tags):
-    return tag in tags
-
 # filter the results and store them by 10E-6 seconds
 def recordHits(analytics, results):
     for log in analytics:
@@ -80,20 +71,26 @@ def recordHits(analytics, results):
         try:
             timestamp = datetime.datetime.strptime(log['TimeStamp'], "%Y-%m-%dT%H:%M:%S.%fZ")
         except:
-            timestamp = datetime.datetime.strptime(log['TimeStamp'], "%Y-%m-%dT%H:%M:%SZ")
+            try:
+                timestamp = datetime.datetime.strptime(log['TimeStamp'], "%Y-%m-%dT%H:%M:%SZ")
+            except:
+                print(f"[FATAL]Still couldn't pars {log['TimeStamp']=}")
+                sys.exit(1)
         epoch_time = int(timestamp.timestamp()*1_000_000)
         # non-zero latencies come from upstream so 429s should all have 0 latency
         if log["ResponseCode"] == 429 and log["RequestTime"] > 0:
             print(f'[WARN] at {log["RequestTime"]} a 429 had a latency of {log["RequestTime"]}')
         if not epoch_time in results['timestamps']:
             results['timestamps'][epoch_time] = dict()
-        if not log['ResponseCode'] in results['timestamps'][epoch_time]:
-            results['timestamps'][epoch_time][log['ResponseCode']] = 0
-        results['timestamps'][epoch_time][log['ResponseCode']] += 1
+            results['timestamps'][epoch_time]['codes'] = dict()
+            results['timestamps'][epoch_time]['UTC'] = log['TimeStamp']
+        if not log['ResponseCode'] in results['timestamps'][epoch_time]["codes"]:
+            results['timestamps'][epoch_time]["codes"][log['ResponseCode']] = 0
+        results['timestamps'][epoch_time]["codes"][log['ResponseCode']] += 1
 
 # create a list of the events in the last 'per' seconds
 # to make sure we're not missing our rate limit
-def updateHistory(history, timestamp, response_code):
+def updateHistory(history, timestamp, UTC, response_code):
     # delete the records older than args.per seconds old
     delete = dict()
     for i in history['timestamps']:
@@ -101,16 +98,21 @@ def updateHistory(history, timestamp, response_code):
             # need to save this to another dict because we can't change this one underneath the loop
             delete[i] = 1
     # remove the entries in the history dict that are older than the 'per' ago
+    #print(f'{delete=}')
     for i in delete:
-        for response_code in history['timestamps'][i]:
-            # keep a running tally of the number of responses in the per span
-            history['count'] -= history['timestamps'][i][response_code]
+        #print(f'XXX {i} {history["timestamps"][i]=}')
+        for response_code in history['timestamps'][i]["codes"]:
+            # keep a running tally of the number of responses in the per time span
+            history['count'] -= history['timestamps'][i]["codes"][response_code]
+        del history['timestamps'][i]["codes"]
         del history['timestamps'][i]
     if not timestamp in history['timestamps']:
         history['timestamps'][timestamp] = dict()
-    if not response_code in history['timestamps'][timestamp]:
-        history['timestamps'][timestamp][response_code] = 0
-    history['timestamps'][timestamp][response_code] += 1
+        history['timestamps'][timestamp]["codes"] = dict()
+        history['timestamps'][timestamp]["UTC"] = UTC
+    if not response_code in history['timestamps'][timestamp]["codes"]:
+        history['timestamps'][timestamp]["codes"][response_code] = 0
+    history['timestamps'][timestamp]["codes"][response_code] += 1
     # keep a running tally of the number of responses in the per span
     history['count'] += 1
 
@@ -118,13 +120,14 @@ def printHistory(history):
     i = 1
     for epoch_time in sorted(history['timestamps']):
         first = True
-        for response_code in sorted(history['timestamps'][epoch_time].keys()):
+        for response_code in sorted(history['timestamps'][epoch_time]["codes"].keys()):
             if first:
-                print(f'\t{i} {(epoch_time/1_000_000)+GMToffset}: ',end='')
-                print(f'{response_code}: {history["timestamps"][epoch_time][response_code]}', end='')
+                #print(f'\t{i} {history["timestamps"][epoch_time]["UTC"]} {(epoch_time/1_000_000)+GMToffset}: ',end='')
+                print(f'\t{i} {history["timestamps"][epoch_time]["UTC"]} {epoch_time}: ',end='')
+                print(f'{response_code}: {history["timestamps"][epoch_time]["codes"][response_code]}', end='')
                 first = False
             else:
-                print(f', {response_code}: {history["timestamps"][epoch_time][response_code]} ', end='')
+                print(f', {response_code}: {history["timestamps"][epoch_time]["codes"][response_code]} ', end='')
             print()
         i += 1
 
@@ -161,15 +164,17 @@ history['timestamps'] = dict()
 history['count'] = 0
 for epoch_time in sorted(results['timestamps'].keys()):
     first = True
-    for response_code in sorted(results['timestamps'][epoch_time].keys()):
-        updateHistory(history,epoch_time,response_code)
+    for response_code in sorted(results['timestamps'][epoch_time]['codes'].keys()):
+        UTC=results['timestamps'][epoch_time]['UTC']
+        updateHistory(history,epoch_time,UTC,response_code)
         if (response_code == 429 and history["count"] <= args.rate) or (history["count"] > args.rate/args.per):
             if first:
-                print(f'{(epoch_time/1_000_000)+GMToffset}: ',end='')
-                print(f'{response_code}: {results["timestamps"][epoch_time][response_code]}', end='')
+                #print(f'{(epoch_time/1_000_000)+GMToffset}: ',end='')
+                print(f'{epoch_time}: ',end='')
+                print(f'{response_code}: {results["timestamps"][epoch_time]["codes"][response_code]}', end='')
                 first = False
             else:
-                print(f', {response_code}: {results["timestamps"][epoch_time][response_code]} ', end='')
+                print(f', {response_code}: {results["timestamps"][epoch_time]["codes"][response_code]} ', end='')
             print(f' rate: {history["count"]}')
             if args.verbose:
                 printHistory(history)
