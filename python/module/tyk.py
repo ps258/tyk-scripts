@@ -976,15 +976,16 @@ class gateway(tyk):
     def getSystemStatus(self):
         return self.session.get(f'{self.URL}/hello', verify=False)
 
-    # Gateway is up
     def isUp(self):
         try:
             response = self.getSystemStatus()
             # for v3+ where there are some details
             if response.headers.get('content-type') == 'application/json':
                 resp_json = response.json()
-                if 'status' in resp_json:
-                    return resp_json['status'] == "pass"
+                # we must wait until details.redis is present because it should be a pass for all types of deployment
+                # pro, rpc or CE
+                if 'details' in resp_json:
+                    return resp_json['details']['redis']['status'] == "pass"
                 return False
             else:
                 # for earlier when it was just 'hello tikki'
