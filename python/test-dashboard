@@ -11,7 +11,7 @@ SCRIPTDIR=$(
 TM_ADMIN_USER=tyk@admin.com
 TM_ADMIN_PASSWORD=ABC-123
 
-VERSION=${ARGV[1]-"5.0.10"}
+VERSION=${ARGV[1]-"5.0.12"}
 DESC="Python module test deployment"
 . ~/.tyk-sandbox
 
@@ -44,7 +44,7 @@ echo "[INFO]Bootstrapping $TM_DASH_URL"
 bootstrap.py --dashboard $TM_DASH_URL --adminSecret $TM_ADMIN_SECRET --licence $SBX_LICENSE --adminEmail $TM_ADMIN_USER --adminPassword $TM_ADMIN_PASSWORD
 
 sleep 2
-TM_ADMIN_KEY=$(continerAdminkey $TM_CONTAINER)
+TM_ADMIN_KEY=$(sbctl get $TM_CONTAINER key)
 echo "[INFO]$TM_CONTAINER created"
 echo
 if true; then
@@ -88,8 +88,9 @@ else
 fi
 echo
 
-echo -n "[INFO]Waiting up to 20s for gateway to be ready: "
+echo -n "[INFO]Waiting up to 20s for gateway on $TM_GATW_URL to be ready: "
 waitUp.py --gateway $TM_GATW_URL --time 20
+
 if [[ $? -lt 1 ]]; then
   echo OK
 else
@@ -297,7 +298,7 @@ if true; then
     echo FAIL $numberCreated of $numberToCreate created
     exit 1
   fi
-  # Dashboard deleteAllAPIs
+  # Dashboard deleteAllPolicies.py
   echo -n "  [INFO]Delete all Policies: "
   resp=$(deleteAllPolicies.py $URL_AND_CREDENTIAL)
   numberRemaining=$(getPolicies.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
@@ -307,6 +308,16 @@ if true; then
     echo FAIL $numberRemaining left
     exit 1
   fi
+  # Dashboard deleteAllAPIs
+	echo -n "  [INFO]Delete all APIs: "
+	resp=$(deleteAllAPIs.py $URL_AND_CREDENTIAL)
+	numberRemaining=$(getAPIs.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
+	if [[ $numberRemaining -eq 0 ]]; then
+		echo SUCCESS no APIs left
+	else
+		echo FAIL $numberRemaining left
+		exit 1
+	fi
 fi
 
 # Key tests
@@ -356,8 +367,8 @@ if true; then
     echo FAIL
     exit 1
   fi
-  sleep 2
   echo -n "  [INFO]Create a key from policy $POLID for API $APIID: "
+  sleep 2
   resp=$(createKeyFromPolicy.py $URL_AND_CREDENTIAL --policy $POLID)
   if [[ $? -lt 1 ]]; then
     echo "SUCCESS ($resp)"
