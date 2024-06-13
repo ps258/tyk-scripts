@@ -5,51 +5,29 @@
 # arguments are dashboard and dashboard admin secret
 ###############################################################
 
+import argparse
 import json
 import os
-import getopt
 import sys
 sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/module')
 import tyk
 
 scriptName = os.path.basename(__file__)
 
-def printhelp():
-    print(f'{scriptName} --dashboard <dashboard URL> --adminsecret <Dashboard Admin Secret> --orgid <organisation id>')
-    print("    Get the named org")
-    sys.exit(1)
+parser = argparse.ArgumentParser(description=f'{scriptName}: Get the org with the given orgid')
 
-dshb = ""
-verbose = 0
-adminsecret = ""
-orgid = ""
+parser.add_argument('-d', '--dashboard', required=True, dest='dshb', help="URL of the dashboard")
+parser.add_argument('-a', '--adminsecret', required=True, dest='adminsecret', help="Dashboard admin secret")
+parser.add_argument('-o', '--orgid', required=True, dest='orgid', help="Orgid to retrieve")
+parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "adminsecret=", "verbose", "orgid="])
-except getopt.GetoptError as opterr:
-    print(f'Error in option: {opterr}')
-    printhelp()
+args = parser.parse_args()
 
-for opt, arg in opts:
-    if opt == '--help':
-        printhelp()
-    elif opt == '--dashboard':
-        dshb = arg
-    elif opt == '--adminsecret':
-        adminsecret = arg
-    elif opt == '--orgid':
-        orgid = arg
-    elif opt == '--verbose':
-        verbose = 1
+tykInstance = tyk.dashboard(args.dshb, "", args.adminsecret)
 
-if not (dshb and adminsecret and orgid):
-    print(f'dshb = {dshb}, adminsecret = {adminsecret}, orgid = {orgid}')
-    printhelp()
-
-tykInstance = tyk.dashboard(dshb, "", adminsecret)
-
-resp = tykInstance.getOrganisation(orgid)
-organisation = resp.json()
-print(json.dumps(organisation, indent=2))
+resp = tykInstance.getOrganisation(args.orgid)
 if resp.status_code != 200:
     sys.exit(1)
+
+organisation = resp.json()
+print(json.dumps(organisation, indent=2))
