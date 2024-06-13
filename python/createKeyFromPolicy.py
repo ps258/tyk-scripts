@@ -38,7 +38,7 @@ if args.keyName:
 else:
     resp = tykInstance.createKey(key.json())
 
-if verbose:
+if args.verbose:
     print(json.dumps(resp.json(), indent=2))
 else:
     respJSON = resp.json()
