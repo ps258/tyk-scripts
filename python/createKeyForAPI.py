@@ -43,16 +43,16 @@ if args.keyFileName:
 else:
     key = tyk.authKey()
 
-if rate:
+if args.rate:
     key.setRate(args.rate)
     key.setPer(args.per)
 else:
     key.setRate(defaultRate)
     key.setPer(defaultPer)
 
-if apiids:
+if args.apiids:
     for apiid in args.apiids:
-        key.addAPI(args.apiid)
+        key.addAPI(apiid)
 
 if args.verbose:
     print(key)
