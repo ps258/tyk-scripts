@@ -48,7 +48,7 @@ with open(args.templateFile) as APIFile:
                 print(f'[INFO]Creating API with name: {APIjson["name"]}, slug:{APIjson["slug"]}, listen_path {APIjson["proxy"]["listen_path"]}')
 
 resp = tykInstance.createAPI(APIjson)
-print(json.dumps(resp.json(), indent=2))
 if resp.status_code != 200:
     print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
+print(json.dumps(resp.json(), indent=2))
