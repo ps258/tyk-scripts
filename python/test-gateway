@@ -111,6 +111,7 @@ if true; then
 		exit 1
 	fi
 	# Gateway deleteAPI
+	# delete the apis to have an empty dashboard
 	for API in $APIID $APIID2; do
 		echo -n "  [INFO]Delete API $API: "
 		resp=$(deleteAPI.py $URL_AND_CREDENTIAL --apiid $API)
@@ -191,96 +192,176 @@ fi
 
 # Policy tests
 # Gateway createPolicy
-echo "[INFO]Policy checks: "
-echo -n "  [INFO]Create an API to use: "
-resp=$(createAPI.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/API-template-auth.json --name httpbin)
-if [[ $? -lt 1 ]]; then
-  APIID=$(echo $resp | jq -r .key)
-  echo "SUCCESS ($APIID)"
-else
-  echo FAIL
-  exit 1
+if true; then
+	echo "[INFO]Policy checks: "
+	echo -n "  [INFO]Create an API to use: "
+	resp=$(createAPI.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/API-template-auth.json --name httpbin)
+	if [[ $? -lt 1 ]]; then
+		APIID=$(echo $resp | jq -r .key)
+		echo "SUCCESS ($APIID)"
+	else
+		echo FAIL
+		exit 1
+	fi
+	sleep 1
+	echo -n "  [INFO]Create a policy for $APIID: "
+	resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
+	if [[ $? -lt 1 ]]; then
+		POLID=$(echo $resp | jq -r .key)
+		echo "SUCCESS ($POLID)"
+	else
+		echo FAIL
+		exit 1
+	fi
+	sleep 1
+	# Gateway getPolicy
+	echo -n "  [INFO]List Policy $POLID: "
+	resp=$(getPolicy.py $URL_AND_CREDENTIAL --policy $POLID)
+	POLID2=$(echo $resp | jq -r .id)
+	if [[ $POLID = $POLID2 ]]; then
+		echo "SUCCESS ($POLID2)"
+	else
+		echo FAIL
+		exit 1
+	fi
+	# create a second Policy
+	echo -n "  [INFO]Create Second Policy: "
+	resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
+	if [[ $? -lt 1 ]]; then
+		POLID2=$(echo $resp | jq -r .key)
+		echo "SUCCESS ($POLID2)"
+	else
+		echo "FAILED to create second policy"
+		exit 1
+	fi
+	sleep 1
+	echo -n "  [INFO]List both policies: "
+	# Gateway getPolicies
+	if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POLID; then
+		if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POLID2; then
+			echo "SUCCESS ($POLID, $POLID2)"
+		else
+			echo FAIL second policy $POLID2 missing
+			exit 1
+		fi
+	else
+		echo FAIL first policy $POLID missing
+		exit 1
+	fi
+	# Gateway deletePolicy
+	# delete both policies to have none
+	for POL in $POLID $POLID2; do
+		echo -n "  [INFO]Delete Policy $POL: "
+		resp=$(deletePolicy.py $URL_AND_CREDENTIAL --policy $POL)
+		sleep 1
+		if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POL; then
+			echo FAIL $resp
+			# last policy always failes
+			# exit 1
+		else
+			echo SUCCESS
+		fi
+	done
+
+	# Gateway createPolicies
+	numberToCreate=10
+	echo -n "  [INFO]Create Policies: "
+	resp=$(createPolicies.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --number $numberToCreate --apiid $APIID)
+	numberCreated=$(getPolicies.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
+	if [[ $numberCreated -eq $numberToCreate ]]; then
+		echo SUCCESS $numberCreated created
+	else
+		echo FAIL $numberCreated of $numberToCreate created
+		exit 1
+	fi
+	# Gateway deleteAllAPIs
+	echo -n "  [INFO]Delete all Policies: "
+	resp=$(deleteAllPolicies.py $URL_AND_CREDENTIAL)
+	numberRemaining=$(getPolicies.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
+	if [[ $numberRemaining -eq 0 ]]; then
+		echo SUCCESS no Policies left
+	else
+		echo FAIL $numberRemaining left
+		exit 1
+	fi
+  # Gateway deleteAllAPIs
+	echo -n "  [INFO]Delete all APIs: "
+	resp=$(deleteAllAPIs.py $URL_AND_CREDENTIAL)
+	numberRemaining=$(getAPIs.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
+	if [[ $numberRemaining -eq 0 ]]; then
+		echo SUCCESS no APIs left
+	else
+		echo FAIL $numberRemaining left
+		exit 1
+	fi
 fi
-sleep 1
-echo -n "  [INFO]Create a policy for $APIID: "
-resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
-if [[ $? -lt 1 ]]; then
-  POLID=$(echo $resp | jq -r .key)
-  echo "SUCCESS ($POLID)"
-else
-  echo FAIL
-  exit 1
-fi
-sleep 1
-# Gateway getPolicy
-echo -n "  [INFO]List Policy $POLID: "
-resp=$(getPolicy.py $URL_AND_CREDENTIAL --policy $POLID)
-POLID2=$(echo $resp | jq -r .id)
-if [[ $POLID = $POLID2 ]]; then
-  echo "SUCCESS ($POLID2)"
-else
-  echo FAIL
-  exit 1
-fi
-# create a second Policy
-echo -n "  [INFO]Create Second Policy: "
-resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
-if [[ $? -lt 1 ]]; then
-  POLID2=$(echo $resp | jq -r .key)
-  echo "SUCCESS ($POLID2)"
-else
-  echo "FAILED to create second policy"
-  exit 1
-fi
-sleep 1
-echo -n "  [INFO]List both policies: "
-# Gateway getPolicies
-if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POLID; then
-  if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POLID2; then
-    echo "SUCCESS ($POLID, $POLID2)"
+
+# Key tests
+# Gateway createKeyForAPI
+if true; then
+  echo "[INFO]Key checks: "
+  echo -n "  [INFO]Create an API to use: "
+  resp=$(createAPI.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/API-template-auth.json --name httpbin)
+  if [[ $? -lt 1 ]]; then
+    APIID=$(echo $resp | jq -r .ID)
+    echo "SUCCESS ($APIID)"
   else
-    echo FAIL second policy $POLID2 missing
+    echo FAIL
     exit 1
   fi
-else
-  echo FAIL first policy $POLID missing
-  exit 1
-fi
-# Gateway deletePolicy
-# delete both policies to have none
-for POL in $POLID $POLID2; do
-	echo -n "  [INFO]Delete Policy $POL: "
-	resp=$(deletePolicy.py $URL_AND_CREDENTIAL --policy $POL)
-	sleep 1
-	if getPolicies.py $URL_AND_CREDENTIAL | grep -qiw $POL; then
-		echo FAIL $resp
-    # last policy always failes
-		# exit 1
-	else
-		echo SUCCESS
-	fi
-done
-
-#exit
-
-# Gateway createPolicies
-numberToCreate=10
-echo -n "  [INFO]Create Policies: "
-resp=$(createPolicies.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --number $numberToCreate --apiid $APIID)
-numberCreated=$(getPolicies.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
-if [[ $numberCreated -eq $numberToCreate ]]; then
-  echo SUCCESS $numberCreated created
-else
-  echo FAIL $numberCreated of $numberToCreate created
-  exit 1
-fi
-# Gateway deleteAllAPIs
-echo -n "  [INFO]Delete all Policies: "
-resp=$(deleteAllPolicies.py $URL_AND_CREDENTIAL)
-numberRemaining=$(getPolicies.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
-if [[ $numberRemaining -eq 0 ]]; then
-  echo SUCCESS no Policies left
-else
-  echo FAIL $numberRemaining left
-  exit 1
+  echo -n "  [INFO]Create a key for $APIID: "
+  KEY=$(createKeyForAPI.py $URL_AND_CREDENTIAL --apiid $APIID)
+  if [[ $? -lt 1 ]]; then
+    KEY=$(echo $KEY | xargs)
+    echo "SUCCESS ($KEY)"
+  else
+    echo "FAIL ($KEY)"
+    exit 1
+  fi
+  echo -n "  [INFO]Retrieve key: "
+  resp=$(getKey.py $URL_AND_CREDENTIAL --keyid $KEY)
+  if [[ $? -lt 1 ]]; then
+    echo "SUCCESS"
+  else
+    echo FAIL
+    exit 1
+  fi
+  echo -n "  [INFO]Delete key: "
+  resp=$(deleteKey.py $URL_AND_CREDENTIAL --keyid $KEY)
+  if [[ $? -lt 1 ]]; then
+    echo "SUCCESS"
+  else
+    echo FAIL
+    exit 1
+  fi
+  echo -n "  [INFO]Create a policy for $APIID: "
+  resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
+  if [[ $? -lt 1 ]]; then
+    POLID=$(echo $resp | jq -r .Message)
+    echo "SUCCESS ($POLID)"
+  else
+    echo FAIL
+    exit 1
+  fi
+  echo -n "  [INFO]Create a key from policy $POLID for API $APIID: "
+  sleep 2
+  resp=$(createKeyFromPolicy.py $URL_AND_CREDENTIAL --policy $POLID)
+  if [[ $? -lt 1 ]]; then
+    echo "SUCCESS ($resp)"
+    KEY=$resp
+  else
+    echo FAIL $resp
+    exit 1
+  fi
+  echo -n "  [INFO]Counting keys "
+  count=$(getKeys.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
+  echo $count
+  echo -n "  [INFO]Deleting all keys "
+  resp=$(deleteAllKeys.py $URL_AND_CREDENTIAL)
+  count=$(getKeys.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
+  if [[ $count -eq 0 ]]; then
+    echo SUCCESS
+  else
+    echo FAIL $count remain
+  fi
 fi
