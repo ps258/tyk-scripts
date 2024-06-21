@@ -12,7 +12,7 @@ scriptName = os.path.basename(__file__)
 parser = argparse.ArgumentParser(description=f'{scriptName}: Will add any available APIs into the policy named. There is no way to select which APIs are added')
 
 parser.add_argument('-d', '--dashboard', required=True, dest='dshb', help="URL of the dashboard")
-parser.add_argument('-p', '--policy', required=True, dest='policy', help="Policy ID to add APIs to")
+parser.add_argument('-p', '--policy', required=True, dest='policyID', help="Policy ID to add APIs to")
 parser.add_argument('-c', '--cred', required=True, dest='auth', help="Access credential")
 parser.add_argument('-n', '--number', required=True, type=int, dest='toAdd', help="Number of APIs to add to the policy")
 parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
@@ -25,7 +25,7 @@ tykInstance = tyk.dashboard(args.dshb, args.auth)
 policy = tykInstance.getPolicy(args.policyID).json()
 if args.verbose:
     keycount = len(policy["access_rights"])
-    print(f'Policy {policyID} has {keycount} APIs attached')
+    print(f'Policy {args.policyID} has {keycount} APIs attached')
 # get the APIs
 apis = tykInstance.getAPIs()
 #print(json.dumps(apis.json(), indent=2, sort_keys=True))
@@ -69,11 +69,11 @@ for api in apis.json()["apis"]:
         continue
 if addedCount < args.toAdd:
     print(f'Only able to add {addedCount} APIs because because there too fews APIs defined')
-print(f'Policy {policyID} will have a total of {len(policy["access_rights"])} APIs attached')
+print(f'Policy {args.policyID} will have a total of {len(policy["access_rights"])} APIs attached')
 if args.verbose:
     print(json.dumps(policy, indent=2, sort_keys=True))
 print("Uploading policy to dashboard")
-resp = tykInstance.updatePolicy(json.dumps(policy), policyID)
+resp = tykInstance.updatePolicy(json.dumps(policy), args.policyID)
 print(json.dumps(resp.json()))
 if resp.status_code != 200:
     sys.exit(1)
