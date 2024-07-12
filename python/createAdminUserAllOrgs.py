@@ -31,5 +31,5 @@ organisations = tykInstance.getOrganisations().json()
 for org in organisations["organisations"]:
     if args.verbose:
         print(f'[INFO]Creating {args.userEmail} in {org["id"]=}')
-    resp = tykInstance.createAdminUser(args.userEmail, args.userpass, org["id"])
+    resp = tykInstance.createAdminUser(args.userEmail, args.userPassword, org["id"])
     print(json.dumps(resp.json(), indent=2))

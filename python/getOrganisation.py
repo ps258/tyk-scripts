@@ -29,5 +29,4 @@ resp = tykInstance.getOrganisation(args.orgid)
 if resp.status_code != 200:
     sys.exit(1)
 
-organisation = resp.json()
-print(json.dumps(organisation, indent=2))
+print(json.dumps(resp.json(), indent=2))

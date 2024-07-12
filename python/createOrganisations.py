@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser(description=f'{scriptName}: Will create a numbe
 parser.add_argument('-d', '--dashboard', required=True, dest='dshb', help="URL of the dashboard")
 parser.add_argument('-a', '--adminsecret', required=True, dest='adminsecret', help="Dashboard admin secret")
 parser.add_argument('-c', '--cname', required=False, dest='cname', default='portal.cname.com', help="Portal CNAME")
-parser.add_argument('-n', '--name', required=True, dest='onwerName', help="Organisation Name")
+parser.add_argument('-n', '--name', required=True, dest='ownerName', help="Organisation Name")
 parser.add_argument('-N', '--number', required=True, dest='toAdd', type=int, help="Number of orgs to create")
 parser.add_argument('-s', '--slug', required=False, dest='slug', help="Organisation Slug")
 parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
