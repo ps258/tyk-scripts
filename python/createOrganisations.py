@@ -11,13 +11,13 @@ scriptName = os.path.basename(__file__)
 
 parser = argparse.ArgumentParser(description=f'{scriptName}: Will create a number of new orgs with the given org name')
 
-parser.add_argument('-d', '--dashboard', required=True, dest='dshb', help="URL of the dashboard")
-parser.add_argument('-a', '--adminsecret', required=True, dest='adminsecret', help="Dashboard admin secret")
-parser.add_argument('-c', '--cname', required=False, dest='cname', default='portal.cname.com', help="Portal CNAME")
-parser.add_argument('-n', '--name', required=True, dest='ownerName', help="Organisation Name")
-parser.add_argument('-N', '--number', required=True, dest='toAdd', type=int, help="Number of orgs to create")
-parser.add_argument('-s', '--slug', required=False, dest='slug', help="Organisation Slug")
-parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
+parser.add_argument('--dashboard', '-d', required=True, dest='dshb', help="URL of the dashboard")
+parser.add_argument('--adminsecret', '-a', required=True, dest='adminsecret', help="Dashboard admin secret")
+parser.add_argument('--cname', '-c', required=False, dest='cname', default='portal.cname.com', help="Portal CNAME")
+parser.add_argument('--name', '-n', required=True, dest='ownerName', help="Organisation Name")
+parser.add_argument('--number', '-N', required=True, dest='toAdd', type=int, help="Number of orgs to create")
+parser.add_argument('--slug', '-s', required=False, dest='slug', help="Organisation Slug")
+parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 
 args = parser.parse_args()
 

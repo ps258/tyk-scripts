@@ -11,11 +11,11 @@ scriptName = os.path.basename(__file__)
 
 parser = argparse.ArgumentParser(description=f'{scriptName}: Will add any available APIs into the policy named. There is no way to select which APIs are added')
 
-parser.add_argument('-d', '--dashboard', required=True, dest='dshb', help="URL of the dashboard")
-parser.add_argument('-p', '--policy', required=True, dest='policyID', help="Policy ID to add APIs to")
-parser.add_argument('-c', '--cred', required=True, dest='auth', help="Access credential")
-parser.add_argument('-n', '--number', required=True, type=int, dest='toAdd', help="Number of APIs to add to the policy")
-parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
+parser.add_argument('--dashboard', '-d', required=True, dest='dshb', help="URL of the dashboard")
+parser.add_argument('--policy', '-p', required=True, dest='policyID', help="Policy ID to add APIs to")
+parser.add_argument('--cred', '-c', required=True, dest='auth', help="Access credential")
+parser.add_argument('--number', '-n', required=True, type=int, dest='toAdd', help="Number of APIs to add to the policy")
+parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 
 args = parser.parse_args()
 

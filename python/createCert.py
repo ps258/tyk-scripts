@@ -12,12 +12,12 @@ scriptName = os.path.basename(__file__)
 parser = argparse.ArgumentParser(description=f'{scriptName}: Will add the certificate to the certificate store')
 
 DashboardOrGateway = parser.add_mutually_exclusive_group(required=True)
-DashboardOrGateway.add_argument('-d', '--dashboard', dest='dshb', help="URL of the dashboard")
-DashboardOrGateway.add_argument('-g', '--gateway', dest='gatw', help="URL of the gateway")
+DashboardOrGateway.add_argument('--dashboard', '-d', dest='dshb', help="URL of the dashboard")
+DashboardOrGateway.add_argument('--gateway', '-g', dest='gatw', help="URL of the gateway")
 
-parser.add_argument('-c', '--cred', required=True, dest='auth', help="Dashboard API key or Gateway secret")
-parser.add_argument('-C', '--certificate', required=True, dest='certFile', help="PEM format file")
-parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
+parser.add_argument('--cred', '-c', required=True, dest='auth', help="Dashboard API key or Gateway secret")
+parser.add_argument('--certificate', '-C', required=True, dest='certFile', help="PEM format file")
+parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 
 args = parser.parse_args()
 

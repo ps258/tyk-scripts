@@ -17,11 +17,11 @@ scriptName = os.path.basename(__file__)
 
 parser = argparse.ArgumentParser(description=f'{scriptName}: Create an admin user in all orgs in the dashboard instance')
 
-parser.add_argument('-d', '--dashboard', required=True, dest='dshb', help="URL of the dashboard")
-parser.add_argument('-a', '--adminSecret', required=True, dest='adminSecret', help="Dashboard admin secret")
-parser.add_argument('-e', '--userEmail', required=True, dest='userEmail', help="User email address")
-parser.add_argument('-p', '--userPassword', required=True, dest='userPassword', help="User password")
-parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
+parser.add_argument('--dashboard', '-d', required=True, dest='dshb', help="URL of the dashboard")
+parser.add_argument('--adminSecret', '-a', required=True, dest='adminSecret', help="Dashboard admin secret")
+parser.add_argument('--userEmail', '-e', required=True, dest='userEmail', help="User email address")
+parser.add_argument('--userPassword', '-p', required=True, dest='userPassword', help="User password")
+parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 
 args = parser.parse_args()
 

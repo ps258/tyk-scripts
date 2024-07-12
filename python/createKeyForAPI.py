@@ -14,16 +14,16 @@ defaultPer = 60
 parser = argparse.ArgumentParser(description=f'{scriptName}: Will create a new authentication key for the API_ID given or from the json key file given')
 
 DashboardOrGateway = parser.add_mutually_exclusive_group(required=True)
-DashboardOrGateway.add_argument('-d', '--dashboard', dest='dshb', help="URL of the dashboard")
-DashboardOrGateway.add_argument('-g', '--gateway', dest='gatw', help="URL of the gateway")
+DashboardOrGateway.add_argument('--dashboard', '-d', dest='dshb', help="URL of the dashboard")
+DashboardOrGateway.add_argument('--gateway', '-g', dest='gatw', help="URL of the gateway")
 
-parser.add_argument('-a', '--apiid', dest='apiids', nargs='+', help="List of API IDs which the key can access")
-parser.add_argument('-c', '--cred', required=True, dest='auth', help="Dashboard API key or Gateway secret")
-parser.add_argument('-C', '--customKeyName', dest='keyName', help="Custom key name")
-parser.add_argument('-k', '--keyFile', dest='keyFileName', help="JSON key file")
-parser.add_argument('-p', '--per', dest='per', type=int, help="Per period in seconds")
-parser.add_argument('-r', '--rate', dest='rate', type=int, help="Rate: the number of requests allowed in the 'per' period")
-parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
+parser.add_argument('--apiid', '-a', dest='apiids', nargs='+', help="List of API IDs which the key can access")
+parser.add_argument('--cred', '-c', required=True, dest='auth', help="Dashboard API key or Gateway secret")
+parser.add_argument('--customKeyName', '-C', dest='keyName', help="Custom key name")
+parser.add_argument('--keyFile', '-k', dest='keyFileName', help="JSON key file")
+parser.add_argument('--per', '-p', dest='per', type=int, help="Per period in seconds")
+parser.add_argument('--rate', '-r', dest='rate', type=int, help="Rate: the number of requests allowed in the 'per' period")
+parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 
 args = parser.parse_args()
 

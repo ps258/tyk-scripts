@@ -12,14 +12,14 @@ scriptName = os.path.basename(__file__)
 parser = argparse.ArgumentParser(description=f'{scriptName}: Will take the template and increment its name and listen path so that they do not clash, then add it as an API to the dashboard or gateway')
 
 DashboardOrGateway = parser.add_mutually_exclusive_group(required=True)
-DashboardOrGateway.add_argument('-d', '--dashboard', dest='dshb', help="URL of the dashboard")
-DashboardOrGateway.add_argument('-g', '--gateway', dest='gatw', help="URL of the gateway")
+DashboardOrGateway.add_argument('--dashboard', '-d', dest='dshb', help="URL of the dashboard")
+DashboardOrGateway.add_argument('--gateway', '-g', dest='gatw', help="URL of the gateway")
 
-parser.add_argument('-c', '--cred', required=True, dest='auth', help="Dashboard API key or Gateway secret")
-parser.add_argument('-n', '--name', dest='name', help="Base name of API")
-parser.add_argument('-N', '--number', default=1, type=int, dest='toAdd', help="Numer of APIs to generate")
-parser.add_argument('-t', '--template', required=True, dest='templateFile', help="API template file")
-parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
+parser.add_argument('--cred', '-c', required=True, dest='auth', help="Dashboard API key or Gateway secret")
+parser.add_argument('--name', '-n', dest='name', help="Base name of API")
+parser.add_argument('--number', '-N', default=1, type=int, dest='toAdd', help="Numer of APIs to generate")
+parser.add_argument('--template', '-t', required=True, dest='templateFile', help="API template file")
+parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 
 args = parser.parse_args()
 

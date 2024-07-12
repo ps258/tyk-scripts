@@ -10,11 +10,11 @@ import tyk
 scriptName = os.path.basename(__file__)
 
 parser = argparse.ArgumentParser(description=f'{scriptName}: Will create a old portal catalogue entry for the policy given')
-parser.add_argument('-d', '--dashboard', required=True, dest='dshb', help="URL of the dashboard")
-parser.add_argument('-c', '--cred', required=True, dest='auth', help="Dashboard API key")
-parser.add_argument('-p', '--policyId', required=True, dest='policyId', help="Policy ID to publish")
-parser.add_argument('-n', '--noShow', action='store_true', dest='noShow', help="Set show to false")
-parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help="Verbose output")
+parser.add_argument('--dashboard', '-d', required=True, dest='dshb', help="URL of the dashboard")
+parser.add_argument('--cred', '-c', required=True, dest='auth', help="Dashboard API key")
+parser.add_argument('--policyId', '-p', required=True, dest='policyId', help="Policy ID to publish")
+parser.add_argument('--noShow', '-n', action='store_true', dest='noShow', help="Set show to false")
+parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 
 args = parser.parse_args()
 

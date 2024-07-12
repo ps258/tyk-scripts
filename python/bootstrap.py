@@ -12,15 +12,16 @@ scriptName = os.path.basename(__file__)
 adminEmail = "admin@tyk.io"
 adminPassword = "ABC-123"
 portalCNAME = "portal.cname.com"
+waitUp = 10
 
 parser = argparse.ArgumentParser(description=f'{scriptName}: Bootstraps a Pro install (not needed for CE or helm)')
 
-parser.add_argument('-d', '--dashboard', required=True, dest='dshb', help="URL of the dashboard")
-parser.add_argument('-s', '--adminSecret', required=True, dest='adminSecret', help="Dashboard Admin Secret")
-parser.add_argument('-e', '--adminEmail', required=True, default=adminEmail, dest='adminEmail', help="Dashboard Admin email address")
-parser.add_argument('-p', '--adminPassword', required=True, default=adminPassword, dest='adminPassword', help="Dashboard Admin password")
-parser.add_argument('-l', '--licence', required=True, dest='licence', help="Dashboard pro licence")
-parser.add_argument('-c', '--portalCNAME', required=False, default=portalCNAME, dest='portalCNAME', help="Portal CNAME")
+parser.add_argument('--dashboard', '-d', required=True, dest='dshb', help="URL of the dashboard")
+parser.add_argument('--adminSecret', '-s', required=True, dest='adminSecret', help="Dashboard Admin Secret")
+parser.add_argument('--adminEmail', '-e', required=True, default=adminEmail, dest='adminEmail', help="Dashboard Admin email address")
+parser.add_argument('--adminPassword', '-p', required=True, default=adminPassword, dest='adminPassword', help="Dashboard Admin password")
+parser.add_argument('--licence', '-l', required=True, dest='licence', help="Dashboard pro licence")
+parser.add_argument('--portalCNAME', '-c', required=False, default=portalCNAME, dest='portalCNAME', help="Portal CNAME")
 
 args = parser.parse_args()
 
@@ -28,11 +29,11 @@ args = parser.parse_args()
 tykInstance = tyk.dashboard(args.dshb, "", args.adminSecret)
 
 # Bootstrap when the dashboard is up
-if tykInstance.waitUp(10):
+if tykInstance.waitUp(waitUp):
     resp = tykInstance.bootstrap(args.adminEmail, args.adminPassword, args.licence, args.portalCNAME)
     if resp.status_code != 200:
         print(f'[FATAL]Failed to bootstrap. The dashboard returned {resp.status_code}', file=sys.stderr)
         print(json.dumps(resp.json()), file=sys.stderr)
         sys.exit(1)
 else:
-    print(f'[FATAL]Failed to bootstrap. Dashboard ({args.dshb}) did not respond', file=sys.stderr)
+    print(f'[FATAL]Failed to bootstrap. Dashboard ({args.dshb}) was not up after {waitUp}s', file=sys.stderr)
