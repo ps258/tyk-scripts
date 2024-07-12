@@ -1,50 +1,28 @@
 #!/usr/bin/python3
 
+import argparse
 import json
 import os
-import getopt
 import sys
 sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/module')
 import tyk
 
 scriptName = os.path.basename(__file__)
 
-def printhelp():
-    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret>')
-    print("    Will delete ALL keys from the dashboard or gateway")
-    sys.exit(1)
-
-dshb = ""
-gatw = ""
-auth = ""
-verbose = 0
-
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "cred=", "verbose"])
-except getopt.GetoptError as opterr:
-    print(f'Error in option: {opterr}')
-    printhelp()
-
-for opt, arg in opts:
-    if opt == '--help':
-        printhelp()
-    elif opt == '--dashboard':
-        dshb = arg
-    elif opt == '--gateway':
-        gatw = arg
-    elif opt == '--cred':
-        auth = arg
-    elif opt == '--verbose':
-        verbose = 1
-
-if not ((dshb or gatw) and auth):
-    printhelp()
+description = "Delete all the keys from the dashboard or gateway store"
+parser = argparse.ArgumentParser(description=f'{scriptName}: {description}')
+DashboardOrGateway = parser.add_mutually_exclusive_group(required=True)
+DashboardOrGateway.add_argument('--dashboard', '-d', dest='dshb', help="URL of the dashboard")
+DashboardOrGateway.add_argument('--gateway', '-g', dest='gatw', help="URL of the gateway")
+parser.add_argument('--cred', '-c', required=True, dest='auth', help="Dashboard API key or Gateway secret")
+parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
+args = parser.parse_args()
 
 # create a dashboard or gateway object
-if dshb:
-    tykInstance = tyk.dashboard(dshb, auth)
+if args.dshb:
+    tykInstance = tyk.dashboard(args.dshb, args.auth)
 else:
-    tykInstance = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(args.gatw, args.auth)
 
 if not tykInstance.deleteAllKeys():
     sys.exit(1)

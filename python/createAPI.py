@@ -9,7 +9,8 @@ import tyk
 
 scriptName = os.path.basename(__file__)
 
-parser = argparse.ArgumentParser(description=f'{scriptName}: Will take the template, apply the name (if given) then add it as an API to the dashboard or gateway')
+description = "Will take the template, apply the name (if given) then add it as a API to the dashboard or gateway')"
+parser = argparse.ArgumentParser(description=f'{scriptName}: {description}')
 
 DashboardOrGateway = parser.add_mutually_exclusive_group(required=True)
 DashboardOrGateway.add_argument('--dashboard', '-d', dest='dshb', help="URL of the dashboard")

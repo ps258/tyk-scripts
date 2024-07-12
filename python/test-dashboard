@@ -290,7 +290,6 @@ if true; then
   # Dashboard createPolicies
   numberToCreate=10
   echo -n "  [INFO]Create Policies: "
-  echo createPolicies.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --number $numberToCreate --apiid $APIID
   resp=$(createPolicies.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --number $numberToCreate --apiid $APIID)
   numberCreated=$(getPolicies.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
   if [[ $numberCreated -eq $numberToCreate ]]; then

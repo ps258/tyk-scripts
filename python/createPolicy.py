@@ -1,59 +1,33 @@
 #!/usr/bin/python3
 
+import argparse
 import json
 import os
-import getopt
 import sys
 sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/module')
 import tyk
 
 scriptName = os.path.basename(__file__)
 
-def printhelp():
-    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key|Gateway secret> --template <Policy template file> --apiid <apiid> --verbose')
-    print("    Will create policy for the API_ID given")
-    sys.exit(1)
-
-dshb = ""
-gatw = ""
-auth = ""
-templateFile = ""
-apiid = ""
-verbose = 0
-
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "template=", "cred=", "apiid=", "verbose"])
-except getopt.GetoptError as opterr:
-    print(f'Error in option: {opterr}')
-    printhelp()
-
-for opt, arg in opts:
-    if opt == '--help':
-        printhelp()
-    elif opt == '--template':
-        templateFile = arg
-    elif opt == '--dashboard':
-        dshb = arg
-    elif opt == '--gateway':
-        gatw = arg
-    elif opt == '--cred':
-        auth = arg
-    elif opt == '--apiid':
-        apiid = arg
-    elif opt == '--verbose':
-        verbose = 1
-
-if not ((dshb or gatw) and templateFile and auth and apiid):
-    printhelp()
+description = "Will take the template, apply the name (if given) then add it as a policy to the dashboard or gateway"
+parser = argparse.ArgumentParser(description=f'{scriptName}: {description}')
+DashboardOrGateway = parser.add_mutually_exclusive_group(required=True)
+DashboardOrGateway.add_argument('--dashboard', '-d', dest='dshb', help="URL of the dashboard")
+DashboardOrGateway.add_argument('--gateway', '-g', dest='gatw', help="URL of the gateway")
+parser.add_argument('--cred', '-c', required=True, dest='auth', help="Dashboard API key or Gateway secret")
+parser.add_argument('--apiid', '-a', dest='apiid', help="API ID")
+parser.add_argument('--template', '-t', required=True, dest='templateFile', help="API template file")
+parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
+args = parser.parse_args()
 
 # create a new dashboard or gateway object
-if dshb:
-    tykInstance = tyk.dashboard(dshb, auth)
+if args.dshb:
+    tykInstance = tyk.dashboard(args.dshb, args.auth)
 else:
-    tykInstance = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(args.gatw, args.auth)
 
 # read the policy defn
-with open(templateFile) as PolicyFile:
+with open(args.templateFile) as PolicyFile:
     policy = json.load(PolicyFile)
     PolicyFile.close()
 PolicyName = "Policy"
@@ -72,8 +46,8 @@ if policies.status_code == 200:
     while PolicyName+str(i) in allnames:
         i += 1
     policy["name"]=PolicyName+str(i)
-    policy["access_rights"][apiid] = {
-            "api_id": "' + apiid + '",
+    policy["access_rights"][args.apiid] = {
+            "api_id": "' + args.apiid + '",
             "versions": [ "Default" ],
             "allowed_urls": [],
             "restricted_types": [],
@@ -83,7 +57,7 @@ if policies.status_code == 200:
     policy["access_rights_array"].append({
             "allowance_scope": "",
             "allowed_urls": [],
-            "api_id": apiid,
+            "api_id": args.apiid,
             "api_name": "",
             "limit": None,
             "restricted_types": [],
@@ -91,8 +65,8 @@ if policies.status_code == 200:
         })
 else:
     # Just use the existing json
-    policy["access_rights"][apiid] = {
-        "api_id": "' + apiid + '",
+    policy["access_rights"][args.apiid] = {
+        "api_id": "' + args.apiid + '",
         "versions": [ "Default" ],
         "allowed_urls": [],
         "restricted_types": [],
@@ -102,14 +76,14 @@ else:
     policy["access_rights_array"].append({
         "allowance_scope": "",
         "allowed_urls": [],
-        "api_id": apiid,
+        "api_id": args.apiid,
         "api_name": "",
         "limit": None,
         "restricted_types": [],
         "versions": [ "Default" ]
         })
 
-if verbose:
+if args.verbose:
     print(json.dumps(policy, indent=2))
 
 resp = tykInstance.createPolicy(policy)
