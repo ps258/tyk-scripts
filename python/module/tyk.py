@@ -409,10 +409,11 @@ class dashboard(tyk):
     # Dashboard createOrganisations
     def createOrganisations(self, orgDefinition, numberToCreate):
         orgs = self.getOrganisations().json()
-        # create a dictionary of all policy names
         orgSlug = orgDefinition['owner_slug']
         orgOwner = orgDefinition['owner_name']
+        orgCname = orgDefinition['cname']
         allSlugs = dict()
+        # create a dictionary of all organisation names so we can add new ones
         for org in orgs['organisations']:
             allSlugs[org['owner_slug']] = 1
         i = 1
@@ -421,10 +422,10 @@ class dashboard(tyk):
             # work out the next free name (format is name-i)
             while orgSlug+str(i) in allSlugs:
                 i += 1
-            newSlug=orgSlug+str(i)
-            allSlugs[newSlug] = 1
+            allSlugs[orgSlug+str(i)] = 1
             orgDefinition['owner_name']=orgOwner+str(i)
             orgDefinition['owner_slug']=orgSlug+str(i)
+            orgDefinition['cname']=orgCname+str(i)
             print(f'Creating Organisation: {orgDefinition["owner_slug"]}')
             response = self.createOrganisation(json.dumps(orgDefinition))
             print(response.json())
@@ -435,7 +436,7 @@ class dashboard(tyk):
         return numberCreated
 
     # Dashboard deleteOrganisation
-    def getOrganisation(self, orgID):
+    def deleteOrganisation(self, orgID):
         return self.session.delete(f'{self.URL}/admin/organisations/{orgID}', verify=False)
 
 
