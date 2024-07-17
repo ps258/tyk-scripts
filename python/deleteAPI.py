@@ -3,7 +3,6 @@
 import argparse
 import json
 import os
-import getopt
 import sys
 sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/module')
 import tyk
@@ -20,13 +19,14 @@ parser.add_argument('--apiid', '-a', required=True, dest='apiid', help="API ID t
 parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 args = parser.parse_args()
 
-# create a new dashboard or gateway object
+# create a dashboard or gateway object
 if args.dshb:
     tykInstance = tyk.dashboard(args.dshb, args.auth)
 else:
     tykInstance = tyk.gateway(args.gatw, args.auth)
 
 resp = tykInstance.deleteAPI(args.apiid)
-print(json.dumps(resp.json()))
+print(json.dumps(resp.json(), indent=2))
 if resp.status_code != 200:
+    print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
