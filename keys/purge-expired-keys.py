@@ -36,6 +36,9 @@
 
 # Be aware that the database may change between --list and --delete in a live environment
 
+# Because this script doesn't trigger a gateway keyspace update pub/sub it may cause panics when the gateway tries
+# to retrieve a key it believes to exist
+
 ## THIS SCRIPT IS UNSUPPORTED AT ANY LEVEL
 ## THIS SCRIPT IS UNSUPPORTED AT ANY LEVEL
 ## THIS SCRIPT IS UNSUPPORTED AT ANY LEVEL
