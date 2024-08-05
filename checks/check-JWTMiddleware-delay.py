@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# looks for lines like the following which indicate slow JWKs
+# looks in the debug logs for lines like the following which indicate slow JWKs
 # time="Aug 02 11:06:13" level=debug msg=Finished api_id=1234567890 api_name=api1 code=200 mw=JWTMiddleware ns=6010 org_id=66b08f9c411022008d302aec origin=10.0.0.1 path=/listen/path
 
 # it will print the largest delay found in the file as it comes across it.

@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+# attempts to perform an open redirect and reports the results
+# Usage: python open_redirect_test.py <url> <redirect_url>
+
 import sys
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning

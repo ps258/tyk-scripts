@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+# a script to create a specified load.
+# python isn't great at this sort of timing so the script isn't as useful asit might be
+
 import time
 import requests
 import json

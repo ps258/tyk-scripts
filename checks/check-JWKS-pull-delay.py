@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# looks for the time difference between
+# looks in the debug logs for the time difference between
 # level=debug msg="Pulling JWK"
 # and
 # level=debug msg="Caching JWK"
