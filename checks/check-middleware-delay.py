@@ -20,13 +20,13 @@ max_delay = 0
 middleware_search_string = 'mw='
 proxy = False
 
-description = "Will search a gateway debug log file for middleware timings and point out large ones\nThe default behavour is to record the largest delay yet found as it is found but with --threshold you can show any delay greater than the threshold"
+description = "Will search a gateway debug log file for middleware timings and point out large ones. The default behavour is to record the largest delay yet found as it is found but with --threshold you can show any delay greater than the threshold"
 parser = argparse.ArgumentParser(description=f'{scriptName}: {description}')
 
-parser.add_argument('--logs', '-l', dest='logs', nargs='+', help="List of log files to parse")
-parser.add_argument('--mw', '-m', required=False, dest='middleware', help="The middleware name to search for")
-parser.add_argument('--threshold', '-t', default = 0, type = int, required=False, dest='threshold', help="The middleware name to search for")
-parser.add_argument('--proxy', '-p', action='store_true', dest='proxy', help="Include ReverseProxy which will be large")
+parser.add_argument('--logs', '-l', required=True, dest='logs', nargs='+', help="List of log files to parse")
+parser.add_argument('--mw', '-m', required=False, dest='middleware', help="The middleware name to search for. Defaults to all except mw=ReverseProxy")
+parser.add_argument('--threshold', '-t', default = 0, type = int, required=False, dest='threshold', help="Show any record that took more than this many nanoseconds")
+parser.add_argument('--proxy', '-p', action='store_true', dest='proxy', help="Include ReverseProxy, which will be large")
 parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 
 args = parser.parse_args()
