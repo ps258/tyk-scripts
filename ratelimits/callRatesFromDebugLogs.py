@@ -12,7 +12,7 @@ import sys
 
 rates = {}
 
-regex=r'^time=(".*?")\s+level=debug\s+msg=Finished\s+api_id=(.*?)\s+api_name=(".*?")\s+code=(\d{3}).*mw=RateLimitAndQuotaCheck.*origin=(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})\s+path=(.*)$'
+regex=r'time=(\".*?\")\s+level=debug\s+msg=Finished\s+api_id=(\w+?)\s+api_name=(\"*\w+\"*)\s+code=(\d{3}).*mw=RateLimitAndQuotaCheck.*origin=(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})\s+path=(.*)\s*$'
 
 for logfile in sys.argv[1:]:
     with open(logfile, 'r') as f:
