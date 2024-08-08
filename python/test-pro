@@ -64,7 +64,7 @@ URL_AND_CREDENTIAL="--dashboard $TM_DASH_URL --cred $TM_ADMIN_KEY"
 # check that bootstrap succeeded.
 echo "[INFO]Bootstrap checks"
 echo -n " [INFO]Check that org was created: "
-resp=$(getOrganisations.py --dashboard $TM_DASH_URL --adminsecret $TM_ADMIN_SECRET)
+resp=$(getOrganisations.py --dashboard $TM_DASH_URL --adminSecret $TM_ADMIN_SECRET)
 TM_ORG=$(echo $resp | cut -d, -f1)
 if [[ -z $TM_ORG ]]; then
   echo FAIL
