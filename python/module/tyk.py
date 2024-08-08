@@ -442,6 +442,26 @@ class dashboard(tyk):
 
     # Dashboard User functions
 
+    # Dashboard createUser
+    def createUser(self, userFirst, userLast, userEmail, userPass, orgID):
+        headers = {'Content-Type': 'application/json'}
+        userDefinition = {
+                'first_name': userFirst,
+                'last_name': userLast,
+                'email_address': userEmail,
+                'password': userPass,
+                'active': True,
+                'org_id': orgID,
+                'user_permissions': {"log": "read", "analytics": "read", "user_groups": "write", "users": "write", "portal": "write", "websockets": "read", "system": "write", "certs": "write", "policies": "write", "hooks": "write", "idm": "write", "keys": "write", "oauth": "write", "apis": "write"}}
+        createResp = self.session.post(f'{self.URL}/admin/users', data=json.dumps(userDefinition), headers=headers, verify=False)
+        if createResp.status_code != 200:
+            return createResp
+        # need to set the user password immediately
+        userdata = createResp.json()
+        self.setAuthKey(userdata['Meta']['access_key'])
+        resetResp = self.session.post(f'{self.URL}/api/users/{userdata["Meta"]["id"]}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers, verify=False)
+        return createResp
+
     # Dashboard createAdminUser
     def createAdminUser(self, userEmail, userPass, orgID):
         headers = {'Content-Type': 'application/json'}
@@ -459,7 +479,6 @@ class dashboard(tyk):
         # need to set the user password immediately
         userdata = createResp.json()
         self.setAuthKey(userdata['Meta']['access_key'])
-        headers = {'Content-Type': 'application/json'}
         resetResp = self.session.post(f'{self.URL}/api/users/{userdata["Meta"]["id"]}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers, verify=False)
         return createResp
 
