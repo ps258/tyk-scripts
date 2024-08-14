@@ -443,7 +443,7 @@ class dashboard(tyk):
     # Dashboard User functions
 
     # Dashboard createUser
-    def createUser(self, userFirst, userLast, userEmail, userPass, orgID):
+    def createUser(self, userFirst, userLast, userEmail, userPass):
         headers = {'Content-Type': 'application/json'}
         userDefinition = {
                 'first_name': userFirst,
@@ -451,15 +451,14 @@ class dashboard(tyk):
                 'email_address': userEmail,
                 'password': userPass,
                 'active': True,
-                'org_id': orgID,
                 'user_permissions': {"log": "read", "analytics": "read", "user_groups": "write", "users": "write", "portal": "write", "websockets": "read", "system": "write", "certs": "write", "policies": "write", "hooks": "write", "idm": "write", "keys": "write", "oauth": "write", "apis": "write"}}
-        createResp = self.session.post(f'{self.URL}/admin/users', data=json.dumps(userDefinition), headers=headers, verify=False)
+        createResp = self.session.post(f'{self.URL}/api/users', data=json.dumps(userDefinition), headers=headers, verify=False)
         if createResp.status_code != 200:
             return createResp
         # need to set the user password immediately
         userdata = createResp.json()
-        self.setAuthKey(userdata['Meta']['access_key'])
-        resetResp = self.session.post(f'{self.URL}/api/users/{userdata["Meta"]["id"]}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers, verify=False)
+        self.setAuthKey(userdata['Meta'])
+        resetResp = self.session.post(f'{self.URL}/api/users/{userdata["Meta"]}/actions/reset', data='{"new_password":"'+userPass+'"}', headers=headers, verify=False)
         return createResp
 
     # Dashboard createAdminUser
@@ -501,6 +500,16 @@ class dashboard(tyk):
     # Dashboard resetUserPassword
     def resetUserPassword(self, userid, userPass):
         return self.session.post(f'{self.URL}/api/users/{userid}/actions/reset', data='{"new_password":"'+userPass+'"}', verify=False)
+
+    # Dashboard createGroup
+    def createGroup(self, groupName, groupDescription):
+        headers = {'Content-Type': 'application/json'}
+        groupDefinition = {
+                'name': groupName,
+                'description': groupDescription,
+                'active': "true",
+                'user_permissions': {"log": "read", "analytics": "read", "user_groups": "write", "users": "write", "portal": "write", "websockets": "read", "system": "write", "certs": "write", "policies": "write", "hooks": "write", "idm": "write", "keys": "write", "oauth": "write", "apis": "write"}}
+        return self.session.post(f'{self.URL}/api/usergroups', data=json.dumps(groupDefinition), headers=headers, verify=False)
 
 
     # Dashboard Licence functions
