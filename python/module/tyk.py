@@ -205,6 +205,7 @@ class dashboard(tyk):
 
     # Dashboard updateAPI
     def updateAPI(self, APIdefinition, APIid):
+        APIdefinition = self.standardiseAPIformat(APIdefinition)
         if isinstance(APIdefinition, dict):
             APIdefinition = json.dumps(APIdefinition)
         headers = {'Content-Type': 'application/json'}
