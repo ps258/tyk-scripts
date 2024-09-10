@@ -44,6 +44,8 @@ if group:
     resp = tyk.reloadGroup()
 else:
     resp = tyk.reload()
-print(json.dumps(resp.json(), indent=2))
 if resp.status_code != 200:
+    print(f'{resp=}')
     sys.exit(1)
+
+print(json.dumps(resp.json(), indent=2))
