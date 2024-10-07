@@ -28,13 +28,6 @@ args = parser.parse_args()
 tykInstance = tyk.dashboard(args.dshb, "", args.adminSecret)
 
 resp = tykInstance.getOrganisations()
-#if resp.status_code != 200:
-#    print(f'[FATAL]Unable to fetch organisations tyk returned {resp.status_code}', file=sys.stderr)
-#    sys.exit(1)
-#organisations = resp.json()
-#for org in organisations["organisations"]:
-#    if args.verbose:
-#        print(f'[INFO]Creating {args.userEmail} in {org["id"]=}')
 resp = tykInstance.createGroup(args.groupName, args.groupDesc)
 if resp.status_code != 200:
     print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
