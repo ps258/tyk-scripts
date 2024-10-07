@@ -22,6 +22,7 @@ parser.add_argument('--adminEmail', '-e', required=True, default=adminEmail, des
 parser.add_argument('--adminPassword', '-p', required=True, default=adminPassword, dest='adminPassword', help="Dashboard Admin password")
 parser.add_argument('--licence', '-l', required=True, dest='licence', help="Dashboard pro licence")
 parser.add_argument('--portalCNAME', '-c', required=False, default=portalCNAME, dest='portalCNAME', help="Portal CNAME")
+parser.add_argument('--wait', '-w', required=False, default=waitUp, dest='waitUp', help="How long to wait for the db to be ready (s)")
 
 args = parser.parse_args()
 
