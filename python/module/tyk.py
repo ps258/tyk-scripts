@@ -440,6 +440,17 @@ class dashboard(tyk):
     def deleteOrganisation(self, orgID):
         return self.session.delete(f'{self.URL}/admin/organisations/{orgID}', verify=False)
 
+    # Dashboard enable Hybrid
+    def enableHybrid(self, orgID):
+        headers = {'Content-Type': 'application/json'}
+        resp = self.getOrganisation(orgID)
+        if resp.status_code != 200:
+            print(resp.status_code)
+            sys.exit(1)
+        org = resp.json()
+        org["hybrid_enabled"] = True
+        return self.session.put(f'{self.URL}/admin/organisations/{orgID}', data=json.dumps(org), headers=headers, verify=False)
+
 
     # Dashboard User functions
 
