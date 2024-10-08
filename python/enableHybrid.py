@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser(description=f'{scriptName}: Will create enable 
 
 parser.add_argument('--dashboard', '-d', required=True, dest='dshb', help="URL of the dashboard")
 parser.add_argument('--adminSecret', '-a', required=True, dest='adminSecret', help="Dashboard admin secret")
-parser.add_argument('--orgID', '-o', required=True, dest='orgID', help="Orgainisation ID")
+parser.add_argument('--org', '-o', required=True, dest='orgID', help="Orgainisation ID")
 parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 
 args = parser.parse_args()
