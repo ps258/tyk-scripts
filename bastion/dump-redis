@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# Script to dump all the key/value pairs out of redis and formats them with jq if that seems appropriate
+# handy to poke around but will alto take an arguement which is the pattern to search for
+# use "api-key*" for example
+
+DEFAULT_HOST=control-redis
+DEFAULT_PORT=6379
+
+PATH=/scripts:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH
+
+PORT=''
+HOST=''
+PATTERN='*'
+while getopts :a:p:h: arg; do
+  case $arg in
+    h)
+      HOST=$OPTARG
+      ;;
+    p)
+      PORT=$OPTARG
+      ;;
+    a)
+      export REDISCLI_AUTH="$OPTARG"
+      ;;
+    :)
+      echo "[FATAL]Option -$OPTARG requires an arguement."
+      exit 1
+      ;;
+    \?)
+      echo "[FATAL]Invalid option: -$OPTARG"
+      exit 1
+      ;;
+  esac
+done
+
+if [[ -z $HOST ]]; then
+  HOST=$DEFAULT_HOST
+else
+  shift 2
+fi
+if [[ -z $PORT ]]; then
+  PORT=$DEFAULT_PORT
+else
+  shift 2
+fi
+if [[ ! -z $REDISCLI_AUTH ]]; then
+  # remove the next 2 commandline arguments to leave the remaining patterns to search for
+  shift 2
+fi
+
+function dumpRedis {
+  typeset REDIS_KEY_PATTERN
+  REDIS_KEY_PATTERN="$1"
+  for key in $(redis-cli -h $HOST -p $PORT --scan --pattern "$REDIS_KEY_PATTERN" | sort); do
+    type=$(redis-cli -h $HOST -p $PORT type $key)
+    ttl=$(redis-cli -h $HOST -p $PORT ttl $key)
+    echo -n "$key (type:$type) (ttl:$ttl) => "
+    case $type in
+      list)
+        echo
+        redis-cli -h $HOST -p $PORT lrange $key 0 -1 | sed 's/^/  /'
+        ;;
+      hash)
+        redis-cli -h $HOST -p $PORT hgetall $key | sed 's/^/  /'
+        ;;
+      set)
+        echo
+        redis-cli -h $HOST -p $PORT smembers $key
+        ;;
+      zset)
+        echo
+        redis-cli -h $HOST -p $PORT zrange $key 0 -1 withscores | sed 's/^/  /' | awk '/-/ {printf("%s =>  ", $NF)} !/-/ {print $NF}'
+        ;;
+      string)
+        if redis-cli -h $HOST -p $PORT get $key | egrep -q '^{'; then
+          redis-cli -h $HOST -p $PORT get $key | jq .
+        else
+          redis-cli -h $HOST -p $PORT get $key
+        fi
+        ;;
+      *)
+        echo "[WARN]Unknown type $type"
+        redis-cli -h $HOST -p $PORT get $key
+        ;;
+    esac
+  done
+}
+
+dumpRedis "${1:-*}"
+shift
+
+for pattern in "$@"; do
+  dumpRedis "$pattern"
+done
