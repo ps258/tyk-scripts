@@ -9,7 +9,7 @@ import tyk
 
 scriptName = os.path.basename(__file__)
 
-parser = argparse.ArgumentParser(description=f'{scriptName}: Will create enable hybrid mode on the given orgid. Note that a dashboard restart is needed to activate the change')
+parser = argparse.ArgumentParser(description=f'{scriptName}: Will create enable hybrid mode on the given orgid.')
 
 parser.add_argument('--dashboard', '-d', required=True, dest='dshb', help="URL of the dashboard")
 parser.add_argument('--adminSecret', '-a', required=True, dest='adminSecret', help="Dashboard admin secret")
