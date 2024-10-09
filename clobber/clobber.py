@@ -14,8 +14,8 @@ def printhelp():
     print(f'{scriptName} [--setOrgID <orgid>|--api <api.json>|--policy <policy.json>|--key <key.json>] [--mongo <URL>|--redis<IP:port>')
     print("    --setOrgID <orgid> sets the orgid in the mongo collections tyk_analytics/tyk_organisations and tyk_analytics/tyk_analytics_users. There must be only one org defined.")
     print("    --api <api.json> publishes the api directly into the mongodb instance specified with --mongo")
-    print("    --policy <policy.json> publishes the api directly into the mongodb instance specified with --mongo")
-    print("    --key <key.json> publishes the api directly into the mongodb instance specified with --mongo")
+    print("    --policy <policy.json> publishes the policy directly into the mongodb instance specified with --mongo")
+    print("    --key <key.json> publishes the key directly into the redis instance specified with --redis")
     print("    --mongo <mongoURL> the mongo DB connection string")
     print("    --redis <IP:port> the redis IP address and port")
     sys.exit(1)
@@ -41,19 +41,26 @@ for opt, arg in opts:
         newOrgID = arg
         if (apiFile or policyFile or keyFile):
             print("--setOrgID must be run alone")
+            print("Must specify exactly one of --setOrgID --api --policy --key")
             printhelp()
     elif opt == '--api':
         apiFile = arg
         if (policyFile or keyFile or newOrgID):
-            pring("--api must be run alone")
+            print("--api must be run alone")
+            print("Must specify exactly one of --setOrgID --api --policy --key")
+            printhelp()
     elif opt == '--policy':
         policyFile = arg
         if (apiFile or keyFile or newOrgID):
-            pring("--policy must be run alone")
+            print("--policy must be run alone")
+            print("Must specify exactly one of --setOrgID --api --policy --key")
+            printhelp()
     elif opt == '--key':
         keyFile = arg
         if (policyFile or apiFile or newOrgID):
-            pring("--key must be run alone")
+            print("--key must be run alone")
+            print("Must specify exactly one of --setOrgID --api --policy --key")
+            printhelp()
     elif opt == '--mongo':
         mongoConnectionString = arg
     elif opt == '--redis':
@@ -66,7 +73,6 @@ if ((newOrgID or apiFile or policyFile) and not mongoConnectionString):
 if (keyFile and not (redisHost and redisPort)):
     print("Must specify --redis when using --key")
     printhelp()
-
 if not (newOrgID or apiFile or policyFile or keyFile):
     print("Must specify exactly one of --setOrgID --api --policy --key")
     printhelp()
