@@ -11,7 +11,7 @@ SCRIPTDIR=$(
 TM_ADMIN_USER=tyk@admin.com
 TM_ADMIN_PASSWORD=ABC-123
 
-VERSION=${ARGV[1]-"5.0.12"}
+VERSION=${1-"5.0.12"}
 DESC="Python module test deployment"
 . ~/.tyk-sandbox
 
