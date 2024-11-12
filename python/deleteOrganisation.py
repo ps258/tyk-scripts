@@ -30,4 +30,5 @@ for org in args.orgid:
     resp = tykInstance.deleteOrganisation(org)
     print(json.dumps(resp.json(), indent=2))
     if resp.status_code != 200:
+        print(f"[FATAL]Dashboard returned {resp.status_code}")
         sys.exit(1)
