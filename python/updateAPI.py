@@ -1,71 +1,48 @@
 #!/usr/bin/python3
 
+import argparse
 import json
 import os
-import getopt
 import sys
 sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/module')
 import tyk
 
 scriptName = os.path.basename(__file__)
 
-def printhelp():
-    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret> --template <API template file> --apiid <apiid> --verbose')
-    print("    Will take the template and apply it to the APIid given")
-    sys.exit(1)
+description = "Will take the template and apply it to the APIid given"
+parser = argparse.ArgumentParser(description=f'{scriptName}: {description}')
 
-dshb = ""
-gatw = ""
-auth = ""
-templateFile = ""
-verbose = 0
-apiid = ""
+DashboardOrGateway = parser.add_mutually_exclusive_group(required=True)
+DashboardOrGateway.add_argument('--dashboard', '-d', dest='dshb', help="URL of the dashboard")
+DashboardOrGateway.add_argument('--gateway', '-g', dest='gatw', help="URL of the gateway")
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "template=", "dashboard=", "gateway=", "cred=", "apiid=", "verbose"])
-except getopt.GetoptError as opterr:
-    print(f'Error in option: {opterr}')
-    printhelp()
+parser.add_argument('--cred', '-c', required=True, dest='auth', help="Dashboard API key or Gateway secret")
+parser.add_argument('--apiid', '-a', required=True, dest='apiid', help="API ID")
+parser.add_argument('--template', '-t', required=True, dest='templateFile', help="Template to apply")
+parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 
-for opt, arg in opts:
-    if opt == '--help':
-        printhelp()
-    elif opt == '--template':
-        templateFile = arg
-    elif opt == '--dashboard':
-        dshb = arg
-    elif opt == '--gateway':
-        gatw = arg
-    elif opt == '--cred':
-        auth = arg
-    elif opt == '--apiid':
-        apiid = arg
-    elif opt == '--verbose':
-        verbose = 1
-
-if not ((dshb or gatw) and templateFile and auth and apiid):
-    printhelp()
+args = parser.parse_args()
 
 # create a new dashboard or gateway object
-if dshb:
-    tykInstance = tyk.dashboard(dshb, auth)
+if args.dshb:
+    tykInstance = tyk.dashboard(args.dshb, args.auth)
 else:
-    tykInstance = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(args.gatw, args.auth)
 
 # read the API defn
-with open(templateFile) as APIFile:
+with open(args.templateFile) as APIFile:
     APIjson=json.load(APIFile)
     APIFile.close()
 
 # set the api_id in the definition
 if "api_definition" in APIjson:
-    APIjson["api_definition"]["api_id"] = apiid
+    APIjson["api_definition"]["api_id"] = args.apiid
 elif "api_id" in APIjson:
-    APIjson["api_id"] = apiid
+    APIjson["api_id"] = args.apiid
 else:
     print('[FATAL]Unable to find "api_id" to update')
 
-resp = tykInstance.updateAPI(json.dumps(APIjson), apiid)
+resp = tykInstance.updateAPI(json.dumps(APIjson), args.apiid)
 print(json.dumps(resp.json()))
 if resp.status_code != 200:
     print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)

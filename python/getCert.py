@@ -1,57 +1,36 @@
 #!/usr/bin/python3
 
+import argparse
 import json
 import os
-import getopt
 import sys
 sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/module')
 import tyk
 
 scriptName = os.path.basename(__file__)
 
-def printhelp():
-    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --cred <Dashboard API key or Gateway secret> --certid <certid>')
-    print("    Returns the details of the certificate")
-    sys.exit(1)
+description = "Returns the details of the certificate"
+parser = argparse.ArgumentParser(description=f'{scriptName}: {description}')
 
-dshb = ""
-gatw = ""
-auth = ""
-certid = ""
-verbose = 0
+DashboardOrGateway = parser.add_mutually_exclusive_group(required=True)
+DashboardOrGateway.add_argument('--dashboard', '-d', dest='dshb', help="URL of the dashboard")
+DashboardOrGateway.add_argument('--gateway', '-g', dest='gatw', help="URL of the gateway")
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "cred=", "certid=", "verbose"])
-except getopt.GetoptError as opterr:
-    print(f'Error in option: {opterr}')
-    printhelp()
+parser.add_argument('--cred', '-c', required=True, dest='auth', help="Dashboard API key or Gateway secret")
+parser.add_argument('--cert', '-c', required=True, dest='certid', help="ID of the cert to retrieve")
+parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 
-for opt, arg in opts:
-    if opt == '--help':
-        printhelp()
-    elif opt == '--dashboard':
-        dshb = arg
-    elif opt == '--gateway':
-        gatw = arg
-    elif opt == '--cred':
-        auth = arg
-    elif opt == '--certid':
-        certid = arg
-    elif opt == '--verbose':
-        verbose = 1
+args = parser.parse_args()
 
-if not ((dshb or gatw) and auth and certid):
-    printhelp()
-
-# create a new dashboard or gateway object
+# create a dashboard or gateway object
 if dshb:
-    tykInstance = tyk.dashboard(dshb, auth)
+    tykInstance = tyk.dashboard(args.dshb, args.auth)
 else:
-    tykInstance = tyk.gateway(gatw, auth)
+    tykInstance = tyk.gateway(args.gatw, args.auth)
 
 
-resp = tykInstance.getCert(certid)
-print(json.dumps(resp.json(), indent=2))
+resp = tykInstance.getCert(args.certid)
 if resp.status_code != 200:
     print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
+print(json.dumps(resp.json(), indent=2))

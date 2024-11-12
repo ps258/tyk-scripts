@@ -11,9 +11,11 @@ scriptName = os.path.basename(__file__)
 
 description = "Will delete the key with keyid from the dashboard or gateway"
 parser = argparse.ArgumentParser(description=f'{scriptName}: {description}')
+
 DashboardOrGateway = parser.add_mutually_exclusive_group(required=True)
 DashboardOrGateway.add_argument('--dashboard', '-d', dest='dshb', help="URL of the dashboard")
 DashboardOrGateway.add_argument('--gateway', '-g', dest='gatw', help="URL of the gateway")
+
 parser.add_argument('--cred', '-c', required=True, dest='auth', help="Dashboard API key or Gateway secret")
 parser.add_argument('--keyid', '-k', required=True, dest='keyid', help="Certificate ID")
 parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")

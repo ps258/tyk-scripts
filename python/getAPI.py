@@ -32,4 +32,9 @@ resp = tykInstance.getAPI(args.apiid)
 if resp.status_code != 200:
     print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
-print(json.dumps(resp.json(), indent=2))
+
+if args.verbose:
+    print(json.dumps(resp.json(), indent=2))
+else:
+    tykInstance.printAPISummaryHeader()
+    tykInstance.printAPISummary(resp.json())
