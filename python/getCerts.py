@@ -49,7 +49,7 @@ else:
 
 resp = tykInstance.getCerts()
 if resp.status_code != 200:
-    print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
+    print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
 if resp.json()['certs'] is not None:
     for certid in resp.json()['certs']:

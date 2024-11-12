@@ -2,7 +2,6 @@
 
 ###############################################################
 # Reference for calling the dashboard.getOrganisations
-# arguments are dashboard and dashboard admin secret
 ###############################################################
 
 import argparse
@@ -26,7 +25,7 @@ tykInstance = tyk.dashboard(args.dshb, "", args.adminSecret)
 
 resp = tykInstance.getOrganisations()
 if resp.status_code != 200:
-    print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
+    print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
 
 organisations = resp.json()

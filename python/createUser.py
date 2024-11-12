@@ -35,4 +35,5 @@ resp = tykInstance.createUser(args.userFirst, args.userLast, args.userEmail, arg
 if args.verbose:
     print(json.dumps(resp.json(), indent=2))
 if resp.status_code != 200:
+    print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)

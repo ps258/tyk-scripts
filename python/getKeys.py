@@ -48,7 +48,7 @@ else:
 
 resp = tykInstance.getKeysDetailed()
 if resp.status_code != 200:
-    print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
+    print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)
     print(json.dumps(resp.json()))
     sys.exit(1)
 keys = resp.json()

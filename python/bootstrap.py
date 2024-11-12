@@ -33,8 +33,8 @@ tykInstance = tyk.dashboard(args.dshb, "", args.adminSecret)
 if tykInstance.waitUp(waitUp):
     resp = tykInstance.bootstrap(args.adminEmail, args.adminPassword, args.licence, args.portalCNAME)
     if resp.status_code != 200:
-        print(f'[FATAL]Failed to bootstrap. The dashboard returned {resp.status_code}', file=sys.stderr)
+        print(f'[FATAL]{scriptName}: Failed to bootstrap. The dashboard returned {resp.status_code}', file=sys.stderr)
         print(json.dumps(resp.json()), file=sys.stderr)
         sys.exit(1)
 else:
-    print(f'[FATAL]Failed to bootstrap. Dashboard ({args.dshb}) was not up after {waitUp}s', file=sys.stderr)
+    print(f'[FATAL]{scriptName}: Failed to bootstrap. Dashboard ({args.dshb}) was not up after {waitUp}s', file=sys.stderr)

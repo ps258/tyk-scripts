@@ -42,7 +42,7 @@ tykInstance = tyk.dashboard(dshb, auth)
 
 resp = tykInstance.getUsers()
 if resp.status_code != 200:
-    print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
+    print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
 if resp.json()['users'] is not None:
     if verbose:

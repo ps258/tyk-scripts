@@ -37,5 +37,5 @@ orgDef = { "owner_name": args.ownerName, "owner_slug": args.slug, "cname_enabled
 resp = tykInstance.createOrganisation(orgDef)
 print(json.dumps(resp.json()))
 if resp.status_code != 200:
-    print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
+    print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)

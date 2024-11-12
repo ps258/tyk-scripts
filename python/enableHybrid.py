@@ -9,7 +9,7 @@ import tyk
 
 scriptName = os.path.basename(__file__)
 
-parser = argparse.ArgumentParser(description=f'{scriptName}: Will create enable hybrid mode on the given orgid.')
+parser = argparse.ArgumentParser(description=f'{scriptName}: Will enable hybrid mode on the given orgid.')
 
 parser.add_argument('--dashboard', '-d', required=True, dest='dshb', help="URL of the dashboard")
 parser.add_argument('--adminSecret', '-a', required=True, dest='adminSecret', help="Dashboard admin secret")
@@ -24,6 +24,6 @@ tykInstance = tyk.dashboard(args.dshb, "", args.adminSecret)
 # Enable hybrid for the org
 resp = tykInstance.enableHybrid(args.orgID)
 if resp.status_code != 200:
-    print(resp.status_code)
+    print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
 print(json.dumps(resp.json()))

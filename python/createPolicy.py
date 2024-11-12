@@ -34,7 +34,6 @@ PolicyName = "Policy"
 # get the existing Policies
 policies = tykInstance.getPolicies()
 if policies.status_code == 200:
-    #print(f'[FATAL]{scriptName}: Tyk returned {policies.status_code}', file=sys.stderr)
     # create a dictionary of all policy names
     allnames = dict()
     for pol in policies.json()["policies"]:
@@ -90,5 +89,4 @@ resp = tykInstance.createPolicy(policy)
 if resp.status_code != 200:
     print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
-else:
-    print(json.dumps(resp.json(), indent=2))
+print(json.dumps(resp.json(), indent=2))

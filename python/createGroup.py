@@ -30,6 +30,6 @@ tykInstance = tyk.dashboard(args.dshb, "", args.adminSecret)
 resp = tykInstance.getOrganisations()
 resp = tykInstance.createGroup(args.groupName, args.groupDesc)
 if resp.status_code != 200:
-    print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
+    print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
 print(json.dumps(resp.json(), indent=2))

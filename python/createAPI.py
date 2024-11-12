@@ -9,7 +9,7 @@ import tyk
 
 scriptName = os.path.basename(__file__)
 
-description = "Will take the template, apply the name (if given) then add it as a API to the dashboard or gateway')"
+description = "Will take the template, apply the name (if given) then add it as a API to the dashboard or gateway"
 parser = argparse.ArgumentParser(description=f'{scriptName}: {description}')
 
 DashboardOrGateway = parser.add_mutually_exclusive_group(required=True)
@@ -50,6 +50,6 @@ with open(args.templateFile) as APIFile:
 
 resp = tykInstance.createAPI(APIjson)
 if resp.status_code != 200:
-    print(f'[FATAL]Tyk returned {resp.status_code}', file=sys.stderr)
+    print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)
     sys.exit(1)
 print(json.dumps(resp.json(), indent=2))
