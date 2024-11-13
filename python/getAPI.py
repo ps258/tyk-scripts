@@ -22,7 +22,7 @@ parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help
 
 args = parser.parse_args()
 
-# create a new dashboard or gateway object
+# create a dashboard or gateway object
 if args.dshb:
     tykInstance = tyk.dashboard(args.dshb, args.auth)
 else:

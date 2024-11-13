@@ -1,48 +1,33 @@
 #!/usr/bin/python3
 
+import argparse
 import json
 import os
-import getopt
 import sys
 sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/module')
 import tyk
 
 scriptName = os.path.basename(__file__)
 
-dshb = ""
-gatw = ""
 max_wait_time = 10
 
-def printhelp():
-    print(f'{scriptName} [--dashboard <dashboard URL>|--gateway <gateway URL>] --time max_wait_time')
-    print('    Will wait until the dashboard or gateway is up. Waiting at most max_wait_time seconds')
-    sys.exit(1)
+description = f"Will wait until the dashboard or gateway is up. Waiting at most --time seconds (Defaults to {max_wait_time}s)"
+parser = argparse.ArgumentParser(description=f'{scriptName}: {description}')
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dashboard=", "gateway=", "time="])
-except getopt.GetoptError as opterr:
-    print(f'Error in option: {opterr}')
-    printhelp()
+DashboardOrGateway = parser.add_mutually_exclusive_group(required=True)
+DashboardOrGateway.add_argument('--dashboard', '-d', dest='dshb', help="URL of the dashboard")
+DashboardOrGateway.add_argument('--gateway', '-g', dest='gatw', help="URL of the gateway")
 
-for opt, arg in opts:
-    if opt == '--help':
-        printhelp()
-    elif opt == '--dashboard':
-        dshb = arg
-    elif opt == '--gateway':
-        gatw = arg
-    elif opt == '--time':
-        max_wait_time = int(arg)
+parser.add_argument('--time', '-t', default=max_wait_time, dest='max_wait_time', type=int, help="Max wait time")
 
-if not (dshb or gatw):
-    printhelp()
+args = parser.parse_args()
 
 # create a dashboard or gateway object
-if dshb:
-    tykInstance = tyk.dashboard(dshb)
+if args.dshb:
+    tykInstance = tyk.dashboard(args.dshb)
 else:
-    tykInstance = tyk.gateway(gatw)
+    tykInstance = tyk.gateway(args.gatw)
 
-if not tykInstance.waitUp(max_wait_time):
+if not tykInstance.waitUp(args.max_wait_time):
     print(f'[FATAL]Tyk is not up after waiting {max_wait_time}s', file=sys.stderr)
     sys.exit(1)
