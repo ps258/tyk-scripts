@@ -37,7 +37,7 @@ function tidyup {
   echo "[INFO]Tidying up $TMP_FILES"
   rm -rf $TMP_FILES
 }
-#trap tidyup 0 1 2 3 15
+trap tidyup 0 1 2 3 15
 
 TM_ADMIN_SECRET=$(sbctl get $TM_CONTAINER admin_secret)
 TM_DASH_URL=$(sbctl get $TM_CONTAINER dashboard)
