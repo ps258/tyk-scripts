@@ -766,6 +766,7 @@ class gateway(tyk):
             print(response.json())
             if response.status_code != 200:
                 allDeleted = False
+        # reload now
         self.reloadGroup()
         return allDeleted
 
@@ -851,6 +852,7 @@ class gateway(tyk):
             if response.status_code != 200:
                 break
             numberCreated += 1
+        # reload now
         self.reloadGroup()
         return numberCreated
 
@@ -876,17 +878,18 @@ class gateway(tyk):
     def deleteAllPolicies(self):
         allDeleted = True
         policies_response = self.getPolicies()
-        if policies_response == 200:
+        if policies_response.status_code == 200:
             for policy in policies_response.json()['policies']:
                 if ('access_rights' in policy and policy['access_rights'] is not None) or ('access_rights_array' in policy and policy['access_rights_array'] is not None):
                     #print(json.dumps(policy, indent=2))
                     print(f'Deleting policy: {policy["id"]}')
                     response = self.__deletePolicy(policy['id'])
-                    print(json.dumps(response.json()))
                     if response.status_code != 200:
                         allDeleted = False
         else:
             allDeleted = False
+        # reload now
+        self.reloadGroup()
         return allDeleted
 
 
