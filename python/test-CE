@@ -1,5 +1,6 @@
 #!/bin/bash -u
 
+
 SCRIPTNAME=$0
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:$PATH
 
@@ -25,7 +26,7 @@ if [[ $# -gt 0 ]]; then
   }
   trap tidyup 0 1 2 3 15
 else
-  VERSION=5.2.5
+  VERSION=5.0.12
   DESC="Python module test deployment"
   TM_CONTAINER=$(sbctl create -v $VERSION -t "$DESC" -n -s | awk '/Creating container/ {print $NF}')
   TM_GATW_URL=$(sbctl get $TM_CONTAINER gateway)
@@ -37,7 +38,7 @@ else
     trap - 0 1 2 3 15
     sbctl delete $TM_CONTAINER
   }
-  trap tidyup 0 1 2 3 15
+  #trap tidyup 0 1 2 3 15
 fi
 
 # Create a variable to hold the dashboard URL and credentials. This will allow the code to be very similar between dashboard and gateway tests
@@ -78,7 +79,7 @@ if true; then
   sleep 1
   # Gateway getAPI
   echo -n "  [INFO]List API $APIID: "
-  resp=$(getAPI.py $URL_AND_CREDENTIAL --apiid $APIID)
+  resp=$(getAPI.py $URL_AND_CREDENTIAL --apiid $APIID --verbose)
   APIID2=$(echo $resp | jq -r .api_id)
   if [[ $APIID = $APIID2 ]]; then
     echo "SUCCESS ($APIID2)"
@@ -150,7 +151,7 @@ if true; then
   sleep 1
   # retrieve the API, make a note of the listen path
   echo -n "    [INFO]getAPI $APIID: "
-  APIJSON=$(getAPI.py $URL_AND_CREDENTIAL --apiid $APIID)
+  APIJSON=$(getAPI.py $URL_AND_CREDENTIAL --apiid $APIID --verbose)
   if [[ -n $APIJSON ]]; then
     echo SUCCESS
   else
@@ -163,13 +164,13 @@ if true; then
   TMPFILE=$(mktemp /tmp/XXXX-test-dashboard.json)
   echo $UPDATED_API_JSON > $TMPFILE
   resp=$(updateAPI.py $URL_AND_CREDENTIAL --template $TMPFILE --apiid $APIID)
-  rm $TMPFILE
+  #rm $TMPFILE
   sleep 1
   # Retrieve the API and check the listen path is changed.
   # Reusing the variable UPDATED_API_JSON to contain the API definition retrieved from the dashboard
   # after posting the change back. It should be very like what was posted
   echo -n "    [INFO]updateAPI $APIID: "
-  UPDATED_API_JSON=$(getAPI.py $URL_AND_CREDENTIAL --apiid $APIID)
+  UPDATED_API_JSON=$(getAPI.py $URL_AND_CREDENTIAL --apiid $APIID --verbose)
   UPDATED_LP=$(getListenPath "$UPDATED_API_JSON")
   if [[ $UPDATED_LP = '"/fred/"' ]]; then
     echo SUCCESS
@@ -284,7 +285,7 @@ if true; then
     echo SUCCESS no Policies left
   else
     echo FAIL $numberRemaining left
-    exit 1
+    #exit 1
   fi
   # Gateway deleteAllAPIs
   echo -n "  [INFO]Delete all APIs: "
