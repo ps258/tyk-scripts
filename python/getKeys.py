@@ -17,12 +17,11 @@ DashboardOrGateway.add_argument('--dashboard', '-d', dest='dshb', help="URL of t
 DashboardOrGateway.add_argument('--gateway', '-g', dest='gatw', help="URL of the gateway")
 
 parser.add_argument('--cred', '-c', required=True, dest='auth', help="Dashboard API key or Gateway secret")
-parser.add_argument('--keyid', '-k', required=True, dest='keyid', help="Certificate ID")
 parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 args = parser.parse_args()
 
 # create a dashboard or gateway object
-if dshb:
+if args.dshb:
     tykInstance = tyk.dashboard(args.dshb, args.auth)
 else:
     tykInstance = tyk.gateway(args.gatw, args.auth)
