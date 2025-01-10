@@ -21,9 +21,6 @@ parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help
 
 args = parser.parse_args()
 
-if not ((dshb or gatw) and auth and policy):
-    printhelp()
-
 # create a new dashboard or gateway object
 if args.dshb:
     tykInstance = tyk.dashboard(args.dshb, args.auth)
