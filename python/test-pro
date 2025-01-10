@@ -204,7 +204,7 @@ if true; then
     # Reusing the variable UPDATED_API_JSON to contain the API definition retrieved from the dashboard
     # after posting the change back. It should be very like what was posted
     echo -n "    [INFO]updateAPI $APIID: "
-    UPDATED_API_JSON=$(getAPI.py $URL_AND_CREDENTIAL --apiid $APIID)
+    UPDATED_API_JSON=$(getAPI.py $URL_AND_CREDENTIAL --apiid $APIID --verbose)
     UPDATED_LP=$(getListenPath "$UPDATED_API_JSON")
     if [[ $UPDATED_LP = '"/fred/"' ]]; then
       echo SUCCESS
