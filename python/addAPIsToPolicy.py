@@ -43,23 +43,23 @@ for api in apis.json()["apis"]:
             #print(json.dumps(policy["access_rights"], indent=2, sort_keys=True))
             if args.verbose:
                 print(f'Adding {apiid}, {apiName}')
-            policy["access_rights"][apiid] = {
-                "api_name": apiName,
-                "api_id": apiid,
-                "versions": [ "Default" ],
-                "allowed_urls": [],
-                "restricted_types": [],
-                "limit": None,
-                "allowance_scope": ""
-            }
+            #policy["access_rights"][apiid] = {
+            #    "api_name": apiName,
+            #    "api_id": apiid,
+            #    "versions": [ "Default" ],
+            #    "allowed_urls": [],
+            #    "restricted_types": [],
+            #    "limit": None,
+            #    "allowance_scope": ""
+            #}
             policy["access_rights_array"].append({
-                "allowance_scope": "",
-                "allowed_urls": [],
-                "api_id": apiid,
-                "api_name": apiName,
-                "limit": None,
-                "restricted_types": [],
-                "versions": [ "Default" ]
+                #"allowance_scope": "",
+                #"allowed_urls": [],
+                "api_id": apiid
+                #"api_name": apiName,
+                #"limit": None,
+                #"restricted_types": [],
+                #"versions": [ "Default" ]
             })
             addedCount+=1
         else:
@@ -69,7 +69,7 @@ for api in apis.json()["apis"]:
         continue
 if addedCount < args.toAdd:
     print(f'Only able to add {addedCount} APIs because because there too fews APIs defined')
-print(f'Policy {args.policyID} will have a total of {len(policy["access_rights"])} APIs attached')
+print(f'Policy {args.policyID} will have a total of {len(policy["access_rights_array"])} APIs attached')
 if args.verbose:
     print(json.dumps(policy, indent=2, sort_keys=True))
 print("Uploading policy to dashboard")
