@@ -79,6 +79,9 @@ function dumpRedis {
           redis-cli -h $HOST -p $PORT get $key
         fi
         ;;
+      stream)
+        redis-cli -h $HOST -p $PORT XREAD COUNT 100 BLOCK 300 STREAMS $key \$
+        ;;
       *)
         echo "[WARN]Unknown type $type"
         redis-cli -h $HOST -p $PORT get $key
