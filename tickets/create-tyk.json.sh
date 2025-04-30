@@ -4,7 +4,7 @@
 
 echo '{"type": "apidef","files": ['
 first=1
-for apifile in api*.json; do
+for apifile in api*.json oas*.json; do
   if [[ -f $apifile ]]; then
     if [[ $first -ne 1 ]]; then
       echo ,
