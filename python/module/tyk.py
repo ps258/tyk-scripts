@@ -1020,6 +1020,7 @@ class gateway(tyk):
     def getSystemStatus(self):
         return self.session.get(f'{self.URL}/hello', verify=False)
 
+    # Gateway isUp
     def isUp(self):
         try:
             response = self.getSystemStatus()
@@ -1058,6 +1059,10 @@ class gateway(tyk):
         if 'text/plain' in response.headers.get('content-type'):
             return '2.0'
         return '0.0'
+
+    # Gateway purgeOauthTokens
+    def purgeOauthTokens(self):
+        return self.session.delete(f'{self.URL}/tyk/oauth/tokens?scope=lapsed', verify=False)
 
 
 ###################### Auth Key Class ######################
