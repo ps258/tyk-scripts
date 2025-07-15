@@ -76,8 +76,8 @@ def main():
     parser.add_argument('-s', dest='client_secret', help='Client Secret')
     parser.add_argument('-S', dest='gateway_secret', help='Gateway Secret. Needed to purge the expired tokens')
     parser.add_argument('-x', dest='token_ttl', help='Token TTL (s)')
-    parser.add_argument('-r', dest='rps', default=0, help='API call RPS. Leave undefined for as fast as possible')
-    parser.add_argument('-P', dest='purge_interval', help='The interval between token purges (s)')
+    parser.add_argument('-r', dest='rps', default=0, type=int, help='API call RPS. Leave undefined for as fast as possible')
+    parser.add_argument('-P', dest='purge_interval', type=int, help='The interval between token purges (s)')
     parser.add_argument('-h', '--help', action='store_true', help='Show help message')
 
     args = parser.parse_args()
@@ -91,8 +91,6 @@ def main():
     api = re.sub(r'/$', '', args.api)
     # Remove leading slash
     api = re.sub(r'^/', '', api)
-    token_ttl = int(args.token_ttl)
-    purge_interval = int(args.purge_interval)
     rps = int(args.rps)
     
     # Create base64 encoded auth string
@@ -100,17 +98,17 @@ def main():
     auth = base64.b64encode(auth_string.encode()).decode()
 
 
-    next_purge_time = int(time.time()) + purge_interval
+    next_purge_time = int(time.time()) + args.purge_interval
     while True:
 
         # issue a token
-        tokenExpires = int(time.time()) + token_ttl
+        tokenExpires = int(time.time()) + args.token_ttl
         token = generateToken(f"{gateway}/{api}/oauth/token", auth, args.client_id, args.client_secret)
 
         # check if it's time to purge the tokens every time we issue a new one
         if int(time.time()) >= next_purge_time:
             purgeOauthTokens(gateway, args.gateway_secret)
-            next_purge_time = int(time.time()) + purge_interval
+            next_purge_time = int(time.time()) + args.purge_interval
 
         headers = { 'Authorization': f'Bearer {token}' }
         request_count = 0
