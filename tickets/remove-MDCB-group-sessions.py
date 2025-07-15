@@ -61,7 +61,6 @@ def main():
     
     # Use scan_iter to iterate through keys matching the pattern
     group_keys = []
-    #pattern = re.compile(r"tyk-sink-sessions\.group")
     
     # Count for progress reporting
     count = 0
@@ -80,9 +79,9 @@ def main():
         print(f"Error during group key scanning: {e}")
         return
     
-    # if the group_key doesn't have a TTL, check if the session_key exists.
+    # If the group_key doesn't have a TTL, check if the session_key exists.
     # If the corresponding session_key exists then set the group_key TTL to the session_key TTL
-    # If the corresponding session_key doesn't exist then delete the group key
+    # If the corresponding session_key doesn't exist then delete the group_key
     if group_keys:
         for group_key in group_keys:
             nonce = group_key.split("group")[-1]
@@ -97,14 +96,16 @@ def main():
                     if args.live_run:
                         r.expire(group_key, session_key_ttl)
                 else:
+                    # If the corresponding session_key doesn't exist then delete the group_key
                     print(f"Deleting {group_key} because {session_key} is not present")
                     if args.live_run:
                         r.delete(group_key)
             else:
+                # the group_key has a TTL, report the group_key and session_key with TTLs to verify things are right
                 session_key_ttl = r.ttl(session_key)
                 print(f"Group key TTL already set {group_key}:{group_key_ttl} -> {session_key}:{session_key_ttl}")
     else:
-        print("No matching keys found.")
+        print("No matching keys found. This script is for the control plane redis of an MDCB enabled deployement")
 
 if __name__ == "__main__":
     main()
