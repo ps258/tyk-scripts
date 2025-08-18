@@ -20,8 +20,8 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 def help_message():
     script_name = os.path.basename(sys.argv[0])
     print(f"{script_name}: A script to create and use OAuth access tokens")
-    print("[USAGE]:")
-    print(f"{script_name} -g <gateway URL> -a <API listen path> -i <client ID> -s <client Secret> -S <gateway Secret> -x <token TTL (s)> -r <API call rate (s)> -P <OAuth token purge interval (s)")
+    print("[USAGE]: ", end="")
+    print(f"{script_name} -g <gateway URL> -a <API listen path> -i <client ID> -s <client Secret> -S <gateway Secret> -x <token TTL (s)> -r <API call rate (s)> -P <OAuth token purge interval (s)>")
     print("         The Auth token will be created from the client ID and client secret")
 
 def purgeOauthTokens(gateway, gateway_secret):
