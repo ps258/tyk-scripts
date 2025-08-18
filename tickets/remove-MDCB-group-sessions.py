@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+
+# When the data plane gateways don't have a long life lots of records can build up in redis
+# This script tidies up the unused ones and sets a TTL on the used ones so that they will evaporate
+# The related Jira is TT-15281 Session Key Build-up Causing MDCB-Gateway Communication Failures
+# An MDCB restart will remove the in-memory list which causes the symptoms in TT-15281 but the keys will persist in redis
+# This script will tidy those up
+
 import argparse
 import re
 from redis import Redis
