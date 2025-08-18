@@ -77,12 +77,17 @@ def main():
     parser.add_argument('-S', dest='gateway_secret', help='Gateway Secret. Needed to purge the expired tokens')
     parser.add_argument('-x', dest='token_ttl', help='Token TTL (s)')
     parser.add_argument('-r', dest='rps', default=0, type=int, help='API call RPS. Leave undefined for as fast as possible')
-    parser.add_argument('-P', dest='purge_interval', type=int, help='The interval between token purges (s)')
+    parser.add_argument('-P', dest='purge_interval', default=0, type=int, help='The interval between token purges (s). Leave undefined to not purge.')
     parser.add_argument('-h', '--help', action='store_true', help='Show help message')
 
     args = parser.parse_args()
 
-    if args.help or not all([args.gateway, args.client_id, args.client_secret, args.api, args.token_ttl, args.gateway_secret, args.purge_interval]):
+    if args.help or not all([args.gateway, args.client_id, args.client_secret, args.api, args.token_ttl]):
+        help_message()
+        sys.exit(1)
+    
+    if args.purge_interval and not args.gateway_secret:
+        print("[FATAL]: gateway secret must be provided to purge tokens")
         help_message()
         sys.exit(1)
 
@@ -106,9 +111,11 @@ def main():
         token = generateToken(f"{gateway}/{api}/oauth/token", auth, args.client_id, args.client_secret)
 
         # check if it's time to purge the tokens every time we issue a new one
-        if int(time.time()) >= next_purge_time:
-            purgeOauthTokens(gateway, args.gateway_secret)
-            next_purge_time = int(time.time()) + args.purge_interval
+        # only purge if args.purge_interval > 0
+        if args.purge_interval:
+            if int(time.time()) >= next_purge_time:
+                purgeOauthTokens(gateway, args.gateway_secret)
+                next_purge_time = int(time.time()) + args.purge_interval
 
         headers = { 'Authorization': f'Bearer {token}' }
         request_count = 0
