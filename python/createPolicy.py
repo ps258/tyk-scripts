@@ -15,6 +15,7 @@ DashboardOrGateway = parser.add_mutually_exclusive_group(required=True)
 DashboardOrGateway.add_argument('--dashboard', '-d', dest='dshb', help="URL of the dashboard")
 DashboardOrGateway.add_argument('--gateway', '-g', dest='gatw', help="URL of the gateway")
 parser.add_argument('--cred', '-c', required=True, dest='auth', help="Dashboard API key or Gateway secret")
+parser.add_argument('--name', '-n', default="Policy", dest='name', help="Base name of policy")
 parser.add_argument('--apiid', '-a', dest='apiid', help="API ID")
 parser.add_argument('--template', '-t', required=True, dest='templateFile', help="API template file")
 parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
@@ -30,7 +31,7 @@ else:
 with open(args.templateFile) as PolicyFile:
     policy = json.load(PolicyFile)
     PolicyFile.close()
-PolicyName = "Policy"
+PolicyName = args.name
 # get the existing Policies
 policies = tykInstance.getPolicies()
 if policies.status_code == 200:
@@ -41,10 +42,13 @@ if policies.status_code == 200:
         allnames[name] = 1
 
     # find the first available name
-    i = 1
-    while PolicyName+str(i) in allnames:
-        i += 1
-    policy["name"]=PolicyName+str(i)
+    if PolicyName in allnames:
+        i = 1
+        while PolicyName+str(i) in allnames:
+            i += 1
+        policy["name"]=PolicyName+str(i)
+    else:
+        policy["name"]=PolicyName
     policy["access_rights"][args.apiid] = {
             "api_id": "' + args.apiid + '",
             "versions": [ "Default" ],
@@ -64,6 +68,7 @@ if policies.status_code == 200:
         })
 else:
     # Just use the existing json
+    policy["name"]=PolicyName
     policy["access_rights"][args.apiid] = {
         "api_id": "' + args.apiid + '",
         "versions": [ "Default" ],
