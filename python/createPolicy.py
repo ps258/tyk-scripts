@@ -16,7 +16,7 @@ DashboardOrGateway.add_argument('--dashboard', '-d', dest='dshb', help="URL of t
 DashboardOrGateway.add_argument('--gateway', '-g', dest='gatw', help="URL of the gateway")
 parser.add_argument('--cred', '-c', required=True, dest='auth', help="Dashboard API key or Gateway secret")
 parser.add_argument('--name', '-n', default="Policy", dest='name', help="Base name of policy")
-parser.add_argument('--apiid', '-a', dest='apiid', help="API ID")
+parser.add_argument('--apiid', '-a', dest='apiids', nargs='+', help="List of API IDs to be added to the policy")
 parser.add_argument('--template', '-t', required=True, dest='templateFile', help="API template file")
 parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 args = parser.parse_args()
@@ -49,18 +49,19 @@ if policies.status_code == 200:
         policy["name"]=PolicyName+str(i)
     else:
         policy["name"]=PolicyName
-    policy["access_rights"][args.apiid] = {
-            "api_id": "' + args.apiid + '",
+    for apiid in args.apiids:
+        policy["access_rights"][apiid] = {
+            "api_id": "' + apiid + '",
             "versions": [ "Default" ],
             "allowed_urls": [],
             "restricted_types": [],
             "limit": None,
             "allowance_scope": ""
         }
-    policy["access_rights_array"].append({
+        policy["access_rights_array"].append({
             "allowance_scope": "",
             "allowed_urls": [],
-            "api_id": args.apiid,
+            "api_id": apiid,
             "api_name": "",
             "limit": None,
             "restricted_types": [],
@@ -69,23 +70,24 @@ if policies.status_code == 200:
 else:
     # Just use the existing json
     policy["name"]=PolicyName
-    policy["access_rights"][args.apiid] = {
-        "api_id": "' + args.apiid + '",
-        "versions": [ "Default" ],
-        "allowed_urls": [],
-        "restricted_types": [],
-        "limit": None,
-        "allowance_scope": ""
-        }
-    policy["access_rights_array"].append({
-        "allowance_scope": "",
-        "allowed_urls": [],
-        "api_id": args.apiid,
-        "api_name": "",
-        "limit": None,
-        "restricted_types": [],
-        "versions": [ "Default" ]
-        })
+    for apiid in args.apiids:
+        policy["access_rights"][apiid] = {
+            "api_id": "' + apiid + '",
+            "versions": [ "Default" ],
+            "allowed_urls": [],
+            "restricted_types": [],
+            "limit": None,
+            "allowance_scope": ""
+            }
+        policy["access_rights_array"].append({
+            "allowance_scope": "",
+            "allowed_urls": [],
+            "api_id": apiid,
+            "api_name": "",
+            "limit": None,
+            "restricted_types": [],
+            "versions": [ "Default" ]
+            })
 
 if args.verbose:
     print(json.dumps(policy, indent=2))
