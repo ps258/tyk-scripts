@@ -17,10 +17,15 @@ DashboardOrGateway.add_argument('--gateway', '-g', dest='gatw', help="URL of the
 
 parser.add_argument('--cred', '-c', required=True, dest='auth', help="Dashboard API key or Gateway secret")
 parser.add_argument('--customKeyName', '-C', dest='keyName', help="Custom key name")
+parser.add_argument('--number', '-n', type=int, dest='toAdd', default=1, help="Number of keys to create")
 parser.add_argument('--policy', '-p', required=True, dest='policyID', nargs='+', help="List of policy IDs which the key is based on")
 parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 
 args = parser.parse_args()
+
+if args.toAdd > 1 and args.keyName:
+    print("Cannot make more than one copy of a custom key")
+    sys.exit(1)
 
 # create a new dashboard or gateway object
 if args.dshb:
@@ -33,18 +38,19 @@ key = tyk.authKey()
 for pol in args.policyID:
     key.addPolicy(pol)
 
-if args.keyName:
-    resp = tykInstance.createCustomKey(key.json(), args.keyName)
-else:
-    resp = tykInstance.createKey(key.json())
-
-if args.verbose:
-    print(json.dumps(resp.json(), indent=2))
-else:
-    respJSON = resp.json()
-    if "key_id" in respJSON:
-        print(respJSON["key_id"])
+for count in range(0,args.toAdd):
+    if args.keyName:
+        resp = tykInstance.createCustomKey(key.json(), args.keyName)
     else:
-        print(respJSON["key"])
-if resp.status_code != 200:
-    sys.exit(1)
+        resp = tykInstance.createKey(key.json())
+
+    if args.verbose:
+        print(json.dumps(resp.json(), indent=2))
+    else:
+        respJSON = resp.json()
+        if "key_id" in respJSON:
+            print(respJSON["key_id"])
+        else:
+            print(respJSON["key"])
+    if resp.status_code != 200:
+        sys.exit(1)
