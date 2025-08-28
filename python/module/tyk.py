@@ -379,15 +379,21 @@ class dashboard(tyk):
 
     # Dashboard Portal Catalogue functions
 
-    # Dashboard getCatalogue
-    def getCatalogue(self):
+    # Dashboard getPortalCatalogue
+    def getPortalCatalogue(self):
         return self.session.get(f'{self.URL}/api/portal/catalogue', verify=False)
 
-    # Dashboard updateCatalogue
-    def updateCatalogue(self, catalogue):
+    # Dashboard updatePortalCatalogue
+    def updatePortalCatalogue(self, catalogue):
         if isinstance(catalogue, dict):
             catalogue = json.dumps(catalogue)
         return self.session.put(f'{self.URL}/api/portal/catalogue', data=catalogue, verify=False)
+    
+    # Dashboard createPortalPage
+    def createPortalPage(self, page):
+        if isinstance(page, dict):
+            page = json.dumps(page)
+        return self.session.post(f'{self.URL}/api/portal/pages', data=page, verify=False)
 
 
     # Dashboard Organisation functions

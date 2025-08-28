@@ -58,6 +58,6 @@ for api in $(./getAPIs.py --dashboard $DSHB --cred $AUTH | cut -d, -f2 | head -$
 done
 
 for policy in $(./getPolicies.py --dashboard $DSHB --cred $AUTH | cut -d, -f2 | head -$COUNT); do
-  $SCRIPTDIR/createCatalogue.py --dashboard $DSHB --cred $AUTH --policy $policy $SHOW
+  $SCRIPTDIR/createPortalCatalogue.py --dashboard $DSHB --cred $AUTH --policy $policy $SHOW
 done
 

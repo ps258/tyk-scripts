@@ -40,5 +40,5 @@ if not (dshb and auth):
 tykInstance = tyk.dashboard(dshb, auth)
 
 # Get the existing catalogue entries
-catalogue = tykInstance.getCatalogue().json()
+catalogue = tykInstance.getPortalCatalogue().json()
 print(json.dumps(catalogue, indent=2))

@@ -22,7 +22,8 @@ show = not args.noShow
 # create the dashboard connection
 tykInstance = tyk.dashboard(args.dshb, args.auth)
 
-catalogue = tykInstance.getCatalogue().json()
+# The catalogue is a single entity so you have to add the new entry into the existing one
+catalogue = tykInstance.getPortalCatalogue().json()
 # create a dictionary of all entry names
 allnames = dict()
 for policy in catalogue['apis']:
@@ -47,7 +48,6 @@ if args.verbose:
     print('[INFO]JSON being sent')
     print(json.dumps(catalogue, indent=2))
 
-
 print(f'Adding catalogue entry {EntryName+str(i)}')
-resp = tykInstance.updateCatalogue(json.dumps(catalogue))
+resp = tykInstance.updatePortalCatalogue(json.dumps(catalogue))
 print(resp)
