@@ -38,6 +38,9 @@ key = tyk.authKey()
 for pol in args.policyID:
     key.addPolicy(pol)
 
+if args.verbose:
+    print(key)
+
 for count in range(0,args.toAdd):
     if args.keyName:
         resp = tykInstance.createCustomKey(key.json(), args.keyName)

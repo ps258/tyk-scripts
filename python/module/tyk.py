@@ -1072,8 +1072,8 @@ class gateway(tyk):
 
 
 ###################### Auth Key Class ######################
-# mostly for functions to print stuff out
-class authKey(tyk):
+# The base class is the policy class. A key is very similar but with apply_policies added
+class authBase():
     def __init__(self, keyFileName=""):
         if keyFileName:
             with open(keyFileName) as keyFile:
@@ -1083,8 +1083,8 @@ class authKey(tyk):
 
         if not "access_rights" in self.JSON:
             self.JSON["access_rights"] = {}
-        if not "alias" in self.JSON:
-            self.JSON["alias"] = "Created by Pete's python module"
+        if not "access_rights_array" in self.JSON:
+            self.JSON["access_rights_array"] = []
         if not "last_check" in self.JSON:
             self.JSON["last_check"] = 1421674410
         if not "expires" in self.JSON:
@@ -1101,8 +1101,6 @@ class authKey(tyk):
             self.JSON["rate"] = 0
         if not "per" in self.JSON:
             self.JSON["per"] = 60
-        if not "apply_policies" in self.JSON:
-            self.JSON["apply_policies"] = []
         if not "allowance" in self.JSON:
             self.JSON["allowance"] = 0
 
@@ -1134,11 +1132,57 @@ class authKey(tyk):
             "limit": None,
             "allowance_scope": ""
         }
-
-    def addPolicy(self, polid):
-        self.JSON["apply_policies"].append(polid)
+        self.JSON["access_rights_array"].append({
+            "allowance_scope": "",
+            "allowed_urls": [],
+            "api_id": apiid,
+            "api_name": "",
+            "limit": None,
+            "restricted_types": [],
+            "versions": [ "Default" ]
+        })
 
     def json(self):
         return json.dumps(self.JSON)
 
+# AuthKey class is for Authentication keys
+class authKey(authBase):
+
+    def __init__(self, keyFileName=""):
+        super().__init__(keyFileName)
+        if not "apply_policies" in self.JSON:
+            self.JSON["apply_policies"] = []
+        if not "alias" in self.JSON:
+            self.JSON["alias"] = "Key created by python module"
+
+    def addPolicy(self, polid):
+        self.JSON["apply_policies"].append(polid)
+
+    def setAlias(self, alias):
+        self.JSON["alias"] = alias
+
+    def getAlias(self):
+        return self.JSON["alias"]
+
+# policy class
+class policy(authBase):
+
+    def __init__(self, keyFileName=""):
+        super().__init__(keyFileName)
+        if not "name" in self.JSON:
+            self.JSON["name"] = "Policy created by python module"
+        if not "state" in self.JSON:
+            self.JSON["state"] = "active"
+
+    def setName(self, name):
+        self.JSON["name"] = name
+
+    def getName(self, name):
+        return self.JSON["name"]
+
+    def setState(self, state):
+        if state in ("active", "inactive"):
+            self.JSON["state"] = state
+        else:
+            raise ValueError(f"(policy.setState): State can only be 'active' or 'inactive': {state} is not valid")
 

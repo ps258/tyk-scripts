@@ -15,9 +15,9 @@ DashboardOrGateway = parser.add_mutually_exclusive_group(required=True)
 DashboardOrGateway.add_argument('--dashboard', '-d', dest='dshb', help="URL of the dashboard")
 DashboardOrGateway.add_argument('--gateway', '-g', dest='gatw', help="URL of the gateway")
 parser.add_argument('--cred', '-c', required=True, dest='auth', help="Dashboard API key or Gateway secret")
-parser.add_argument('--name', '-n', default="Policy", dest='name', help="Base name of policy")
+parser.add_argument('--name', '-n', default="Default policy name", dest='name', help="Base name of policy")
 parser.add_argument('--apiid', '-a', dest='apiids', nargs='+', help="List of API IDs to be added to the policy")
-parser.add_argument('--template', '-t', required=True, dest='templateFile', help="API template file")
+parser.add_argument('--template', '-t', required=False, dest='templateFile', help="API template file")
 parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 args = parser.parse_args()
 
@@ -28,9 +28,10 @@ else:
     tykInstance = tyk.gateway(args.gatw, args.auth)
 
 # read the policy defn
-with open(args.templateFile) as PolicyFile:
-    policy = json.load(PolicyFile)
-    PolicyFile.close()
+if args.templateFile:
+    policy = tyk.policy(args.templateFile)
+else:
+    policy = tyk.policy()
 PolicyName = args.name
 # get the existing Policies
 policies = tykInstance.getPolicies()
@@ -46,54 +47,21 @@ if policies.status_code == 200:
         i = 1
         while PolicyName+str(i) in allnames:
             i += 1
-        policy["name"]=PolicyName+str(i)
+        policy.setName(PolicyName+str(i))
     else:
-        policy["name"]=PolicyName
+        policy.setName(PolicyName)
     for apiid in args.apiids:
-        policy["access_rights"][apiid] = {
-            "api_id": "' + apiid + '",
-            "versions": [ "Default" ],
-            "allowed_urls": [],
-            "restricted_types": [],
-            "limit": None,
-            "allowance_scope": ""
-        }
-        policy["access_rights_array"].append({
-            "allowance_scope": "",
-            "allowed_urls": [],
-            "api_id": apiid,
-            "api_name": "",
-            "limit": None,
-            "restricted_types": [],
-            "versions": [ "Default" ]
-        })
+        policy.addAPI(apiid)
 else:
     # Just use the existing json
-    policy["name"]=PolicyName
+    policy.setName(PolicyName)
     for apiid in args.apiids:
-        policy["access_rights"][apiid] = {
-            "api_id": "' + apiid + '",
-            "versions": [ "Default" ],
-            "allowed_urls": [],
-            "restricted_types": [],
-            "limit": None,
-            "allowance_scope": ""
-            }
-        policy["access_rights_array"].append({
-            "allowance_scope": "",
-            "allowed_urls": [],
-            "api_id": apiid,
-            "api_name": "",
-            "limit": None,
-            "restricted_types": [],
-            "versions": [ "Default" ]
-            })
+        policy.addAPI(apiid)
 
 if args.verbose:
-    print(json.dumps(policy, indent=2))
+    print(policy)
 
-resp = tykInstance.createPolicy(policy)
+resp = tykInstance.createPolicy(policy.json())
 if resp.status_code != 200:
     print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)
-    sys.exit(1)
 print(json.dumps(resp.json(), indent=2))
