@@ -45,23 +45,41 @@ if args.hmac:
 if args.verbose:
     print(key)
 
-for count in range(0,args.toAdd):
-    if args.keyName:
-        resp = tykInstance.createCustomKey(key.json(), args.keyName)
-    else:
-        resp = tykInstance.createKey(key.json())
-
+if args.keyName:
+    # create a custom key
+    resp = tykInstance.createCustomKey(key.json(), args.keyName)
     respJSON = resp.json()
-    if args.verbose:
-        print(json.dumps(respJSON, indent=2))
-    else:
-        if "key_id" in respJSON:
-            # dashboard
-            print(respJSON["key_id"])
-        else:
-            # gateway
-            print(respJSON["key"])
-    if args.hmac:
-        print(respJSON["data"]["hmac_string"])
     if resp.status_code != 200:
+        print(json.dumps(respJSON, indent=2))
         sys.exit(1)
+    else:
+        if args.verbose:
+            print(json.dumps(respJSON, indent=2))
+        else:
+            if "key_id" in respJSON:
+                # dashboard
+                print(respJSON["key_id"])
+            else:
+                # gateway
+                print(respJSON["key"])
+        if args.hmac:
+            print(respJSON["data"]["hmac_string"])
+else:
+    for count in range(0,args.toAdd):
+        # create a standard key
+        resp = tykInstance.createKey(key.json())
+        respJSON = resp.json()
+        if resp.status_code != 200:
+            print(json.dumps(respJSON, indent=2))
+        else:
+            if args.verbose:
+                print(json.dumps(respJSON, indent=2))
+            else:
+                if "key_id" in respJSON:
+                    # dashboard
+                    print(respJSON["key_id"])
+                else:
+                    # gateway
+                    print(respJSON["key"])
+            if args.hmac:
+                print(respJSON["data"]["hmac_string"])

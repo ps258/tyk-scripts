@@ -66,8 +66,9 @@ if args.keyName:
 else:
     resp = tykInstance.createKey(key.json())
 
+respJSON = resp.json()
 if resp.status_code != 200:
-    print(resp)
+    print(json.dumps(respJSON, indent=2))
     sys.exit(1)
 else:
     respJSON = resp.json()
