@@ -32,31 +32,10 @@ if args.templateFile:
     policy = tyk.policy(args.templateFile)
 else:
     policy = tyk.policy()
-PolicyName = args.name
-# get the existing Policies
-policies = tykInstance.getPolicies()
-if policies.status_code == 200:
-    # create a dictionary of all policy names
-    allnames = dict()
-    for pol in policies.json()["policies"]:
-        name = pol["name"]
-        allnames[name] = 1
 
-    # find the first available name
-    if PolicyName in allnames:
-        i = 1
-        while PolicyName+str(i) in allnames:
-            i += 1
-        policy.setName(PolicyName+str(i))
-    else:
-        policy.setName(PolicyName)
-    for apiid in args.apiids:
-        policy.addAPI(apiid)
-else:
-    # Just use the existing json
-    policy.setName(PolicyName)
-    for apiid in args.apiids:
-        policy.addAPI(apiid)
+policy.setName(args.name)
+for apiid in args.apiids:
+    policy.addAPI(apiid)
 
 if args.verbose:
     print(policy)
