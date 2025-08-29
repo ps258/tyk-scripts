@@ -24,6 +24,7 @@ parser.add_argument('--keyFile', '-k', dest='keyFileName', help="JSON key file")
 parser.add_argument('--per', '-p', dest='per', type=int, help="Per period in seconds")
 parser.add_argument('--rate', '-r', dest='rate', type=int, help="Rate: the number of requests allowed in the 'per' period")
 parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
+parser.add_argument('--hmac', '-H', required=False, dest='hmac', action='store_true', help="HMAC key")
 
 args = parser.parse_args()
 
@@ -54,6 +55,9 @@ if args.apiids:
     for apiid in args.apiids:
         key.addAPI(apiid)
 
+if args.hmac:
+    key.setHMAC()
+
 if args.verbose:
     print(key)
 
@@ -66,13 +70,16 @@ if resp.status_code != 200:
     print(resp)
     sys.exit(1)
 else:
+    respJSON = resp.json()
     if args.verbose:
-        print(json.dumps(resp.json(), indent=2))
+        print(json.dumps(respJSON, indent=2))
     else:
-        if "key_id" in resp.json():
+        if "key_id" in respJSON:
             # dashboard
-            print(json.dumps(resp.json()["key_id"]))
+            print(respJSON["key_id"])
         else:
             # gateway
-            print(json.dumps(resp.json()["key"]))
+            print(respJSON["key"])
+        if args.hmac:
+            print(respJSON["data"]["hmac_string"])
 
