@@ -1103,6 +1103,10 @@ class authBase():
             self.JSON["per"] = 60
         if not "allowance" in self.JSON:
             self.JSON["allowance"] = 0
+        if not "throttle_interval" in self.JSON:
+            self.JSON["throttle_interval"] = -1
+        if not "throttle_retry_limit" in self.JSON:
+            self.JSON["throttle_retry_limit"] = -1
 
     def __str__(self):
         return json.dumps(self.JSON, indent=2, sort_keys=True)
@@ -1126,7 +1130,7 @@ class authBase():
         self.JSON["access_rights"][apiid] = {
             "api_id": apiid,
             "api_name": "",
-            "versions": [ "Default" ],
+            "versions": [ "", "Default" ],
             "allowed_urls": [],
             "restricted_types": [],
             "limit": None,
@@ -1139,8 +1143,15 @@ class authBase():
             "api_name": "",
             "limit": None,
             "restricted_types": [],
-            "versions": [ "Default" ]
+            "versions": [ "", "Default" ]
         })
+
+    def setThrottle(self, interval: int, retryLimit: int):
+        self.JSON["throttle_interval"] = interval
+        self.JSON["throttle_retry_limit"] = retryLimit
+
+    def getThrottle(self):
+        return (self.JSON["throttle_interval"], self.JSON["throttle_retry_limit"])
 
     def json(self):
         return json.dumps(self.JSON)
@@ -1163,6 +1174,9 @@ class authKey(authBase):
 
     def getAlias(self):
         return self.JSON["alias"]
+
+    def setHMAC(self):
+        self.JSON["hmac_enabled"] = True
 
 # policy class
 class policy(authBase):
