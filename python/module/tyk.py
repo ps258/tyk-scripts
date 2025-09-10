@@ -1112,7 +1112,10 @@ class authBase():
         return json.dumps(self.JSON, indent=2, sort_keys=True)
 
     def getRate(self):
-        return self.JSON["rate"]
+        if "rate" in self.JSON:
+            return self.JSON["rate"]
+        else:
+            return 0
 
     def setRate(self, rate):
         self.JSON["rate"] = rate
@@ -1120,7 +1123,10 @@ class authBase():
         return self.JSON["rate"]
 
     def getPer(self):
-        return self.JSON["per"]
+        if "per" in self.JSON:
+            return self.JSON["per"]
+        else:
+            return 0
 
     def setPer(self, per):
         self.JSON["per"] = per
@@ -1151,10 +1157,27 @@ class authBase():
         self.JSON["throttle_retry_limit"] = retryLimit
 
     def getThrottle(self):
-        return (self.JSON["throttle_interval"], self.JSON["throttle_retry_limit"])
+        if "throttle_interval" in self.JSON:
+            throttle_interval = self.JSON["throttle_interval"]
+        else:
+            throttle_interval = 0
+        if "throttle_retry_limit" in self.JSON:
+            throttle_retry_limit = self.JSON["throttle_retry_limit"]
+        else:
+            throttle_retry_limit= 0
+        return (throttle_interval, throttle_retry_limit)
+
+    def setOrgID(self, orgid: str):
+        self.JSON["org_id"] = orgid
+
+    def getOrgID(self, orgid: str):
+        if "org_id" in self.JSON:
+            return self.JSON["org_id"]
+        else:
+            return ""
 
     def json(self):
-        return json.dumps(self.JSON)
+        return self.__str__()
 
 # AuthKey class is for Authentication keys
 class authKey(authBase):
@@ -1173,10 +1196,19 @@ class authKey(authBase):
         self.JSON["alias"] = alias
 
     def getAlias(self):
-        return self.JSON["alias"]
+        if "alias" in self.JSON:
+            return self.JSON["alias"]
+        else:
+            return ""
 
-    def setHMAC(self):
-        self.JSON["hmac_enabled"] = True
+    def setHMAC(self, state: bool):
+        self.JSON["hmac_enabled"] = state
+
+    def getHMAC(self):
+        if "hmac_enabled" in self.JSON:
+            return self.JSON["hmac_enabled"]
+        else:
+            return False
 
 # policy class
 class policy(authBase):
@@ -1192,7 +1224,10 @@ class policy(authBase):
         self.JSON["name"] = name
 
     def getName(self, name):
-        return self.JSON["name"]
+        if "name" in self.JSON:
+            return self.JSON["name"]
+        else:
+            return ""
 
     def setState(self, state):
         if state in ("active", "inactive"):

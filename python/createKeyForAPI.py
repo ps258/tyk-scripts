@@ -22,6 +22,7 @@ parser.add_argument('--cred', '-c', required=True, dest='auth', help="Dashboard 
 parser.add_argument('--customKeyName', '-C', dest='keyName', help="Custom key name")
 parser.add_argument('--keyFile', '-k', dest='keyFileName', help="JSON key file")
 parser.add_argument('--per', '-p', dest='per', type=int, help="Per period in seconds")
+parser.add_argument('--orgid', '-o', dest='orgid', type=str, help="Orgid. Useful when creating keys via the gateway for use with a pro install")
 parser.add_argument('--rate', '-r', dest='rate', type=int, help="Rate: the number of requests allowed in the 'per' period")
 parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 parser.add_argument('--hmac', '-H', required=False, dest='hmac', action='store_true', help="HMAC key")
@@ -56,7 +57,10 @@ if args.apiids:
         key.addAPI(apiid)
 
 if args.hmac:
-    key.setHMAC()
+    key.setHMAC(True)
+
+if args.orgid:
+    key.setOrgID(args.orgid)
 
 if args.verbose:
     print(key)
