@@ -18,7 +18,7 @@ DESC="Python module test deployment"
 function continerAdminkey {
   typeset container
   container=$1
-  sbctl get $container key
+  dsbctl get $container key
 }
 
 function getListenPath {
@@ -27,28 +27,28 @@ function getListenPath {
   echo "$api" | jq .api_definition.proxy.listen_path
 }
 
-TM_CONTAINER=$(sbctl create -v $VERSION -t "$DESC" -n | awk '/Creating container/ {print $NF}')
+TM_CONTAINER=$(dsbctl create -v $VERSION -t "$DESC" -n | awk '/Creating container/ {print $NF}')
 
 TMP_FILES=""
 
 # set a trap to delete the sandbox at exit
 function tidyup {
-  echo "[INFO]Deleting $(sbctl delete $TM_CONTAINER)"
+  echo "[INFO]Deleting $(dsbctl delete $TM_CONTAINER)"
   echo "[INFO]Tidying up $TMP_FILES"
   rm -rf $TMP_FILES
 }
 trap tidyup 0 1 2 3 15
 
-TM_ADMIN_SECRET=$(sbctl get $TM_CONTAINER admin_secret)
-TM_DASH_URL=$(sbctl get $TM_CONTAINER dashboard)
-TM_GATW_URL=$(sbctl get $TM_CONTAINER gateway)
-TM_GATW_SECRET=$(sbctl get $TM_CONTAINER secret)
+TM_ADMIN_SECRET=$(dsbctl get $TM_CONTAINER admin_secret)
+TM_DASH_URL=$(dsbctl get $TM_CONTAINER dashboard)
+TM_GATW_URL=$(dsbctl get $TM_CONTAINER gateway)
+TM_GATW_SECRET=$(dsbctl get $TM_CONTAINER secret)
 
 echo "[INFO]Bootstrapping $TM_DASH_URL"
 bootstrap.py --dashboard $TM_DASH_URL --adminSecret $TM_ADMIN_SECRET --licence $SBX_LICENSE --adminEmail $TM_ADMIN_USER --adminPassword $TM_ADMIN_PASSWORD
 
 sleep 2
-TM_ADMIN_KEY=$(sbctl get $TM_CONTAINER key)
+TM_ADMIN_KEY=$(dsbctl get $TM_CONTAINER key)
 echo "[INFO]$TM_CONTAINER created"
 echo
 if true; then
