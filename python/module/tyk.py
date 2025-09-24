@@ -110,13 +110,13 @@ class tyk:
             print(',')
 
     def printAPISummaryHeader(self):
-        print('# Name; apiid')
+        print('# apiid; name')
 
     def printAPISummary(self, api):
         # handle both forms of classic API
         if "api_definition" in api:
             api = api["api_definition"]
-        print(f'{api["name"]},{api["api_id"]}')
+        print(f'{api["api_id"]},"{api["name"]}"')
 
     def APIid(self, api):
         if "api_definition" in api:
