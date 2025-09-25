@@ -26,7 +26,7 @@ if [[ $# -gt 0 ]]; then
   }
   trap tidyup 0 1 2 3 15
 else
-  VERSION=5.0.12
+  VERSION=5.8.5
   DESC="Python module test deployment"
   TM_CONTAINER=$(dsbctl create -v $VERSION -t "$DESC" -n -s | awk '/Creating container/ {print $NF}')
   TM_GATW_URL=$(dsbctl get $TM_CONTAINER gateway)
@@ -38,7 +38,7 @@ else
     trap - 0 1 2 3 15
     dsbctl delete $TM_CONTAINER
   }
-  #trap tidyup 0 1 2 3 15
+  trap tidyup 0 1 2 3 15
 fi
 
 # Create a variable to hold the dashboard URL and credentials. This will allow the code to be very similar between dashboard and gateway tests
@@ -181,7 +181,7 @@ if true; then
   # Gateway deleteAllAPIs
   echo -n "  [INFO]Delete all APIs: "
   resp=$(deleteAllAPIs.py $URL_AND_CREDENTIAL)
-  sleep 1
+  sleep 4
   numberRemaining=$(getAPIs.py $URL_AND_CREDENTIAL | grep -v \# | wc -l)
   if [[ $numberRemaining -eq 0 ]]; then
     echo SUCCESS no APIs left
@@ -306,7 +306,7 @@ if true; then
   echo -n "  [INFO]Create an API to use: "
   resp=$(createAPI.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/API-template-auth.json --name httpbin)
   if [[ $? -lt 1 ]]; then
-    APIID=$(echo $resp | jq -r .ID)
+    APIID=$(echo $resp | jq -r .key)
     echo "SUCCESS ($APIID)"
   else
     echo FAIL
@@ -340,7 +340,7 @@ if true; then
   echo -n "  [INFO]Create a policy for $APIID: "
   resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
   if [[ $? -lt 1 ]]; then
-    POLID=$(echo $resp | jq -r .Message)
+    POLID=$(echo $resp | jq -r .key)
     echo "SUCCESS ($POLID)"
   else
     echo FAIL
