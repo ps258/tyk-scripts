@@ -66,12 +66,15 @@ class tyk:
         print('# Key; alias; policyID(s); API(s)')
 
     def printKeySummary(self,key):
+        #print(json.dumps(key, indent=2))
         if "key_id" in key:
             print(f'{key["key_id"]};{key["data"]["alias"]}',end='')
-        else:
+        elif "key_hash" in key:
             print(f'{key["key_hash"]};{key["data"]["alias"]}',end='')
+        else:
+            print(f';{key["alias"]}',end='')
         firstPolicy=True
-        if "apply_policies" in key["data"] and key["data"]["apply_policies"] is not None:
+        if "data" in key and "apply_policies" in key["data"] and key["data"]["apply_policies"] is not None:
             for policy in key["data"]["apply_policies"]:
                 if firstPolicy:
                     print(f';{policy}',end='')
@@ -80,7 +83,7 @@ class tyk:
                     print(f',{policy}',end='')
         else:
             print(';',end='')
-        if "access_rights" in key["data"] and key["data"]["access_rights"] is not None:
+        if "data" in key and "access_rights" in key["data"] and key["data"]["access_rights"] is not None:
             firstAPI=True
             for api in key["data"]["access_rights"]:
                 if firstAPI:
