@@ -43,4 +43,7 @@ if args.verbose:
 resp = tykInstance.createPolicy(policy.json())
 if resp.status_code != 200:
     print(f'[FATAL]{scriptName}: Tyk returned {resp.status_code}', file=sys.stderr)
+    if args.verbose:
+        print(json.dumps(resp.json(), indent=2))
+    sys.exit(1)
 print(json.dumps(resp.json(), indent=2))
