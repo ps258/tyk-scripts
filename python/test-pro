@@ -238,7 +238,7 @@ if true; then
     exit 1
   fi
   echo -n "  [INFO]Create a policy for $APIID: "
-  resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
+  resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --name "httpbinpol1" --apiid $APIID)
   if [[ $? -lt 1 ]]; then
     POLID=$(echo $resp | jq -r .Message)
     echo "SUCCESS ($POLID)"
@@ -258,7 +258,7 @@ if true; then
   fi
   # create a second Policy
   echo -n "  [INFO]Create Second Policy: "
-  resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json --apiid $APIID)
+  resp=$(createPolicy.py $URL_AND_CREDENTIAL --template $SCRIPTDIR/policy-template.json  --name "httpbinpol2" --apiid $APIID)
   if [[ $? -lt 1 ]]; then
     POLID2=$(echo $resp | jq -r .Message)
     echo "SUCCESS ($POLID2)"
