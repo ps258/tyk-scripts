@@ -54,14 +54,6 @@ class tyk:
     def getVerify(self):
         return self.session.verify
 
-    def printUserSummaryHeader(self):
-        print('# ID,IsActive,org_id,first_name,last_name,email,IsAdmin,accessKey')
-
-    def printUserSummary(self, user):
-        if not "IsAdmin" in user["user_permissions"]:
-            user["user_permissions"]["IsAdmin"] = "notAdmin"
-        print(f'{user["id"]},{user["active"]},{user["org_id"]},{user["first_name"]},{user["last_name"]},{user["email_address"]},{user["user_permissions"]["IsAdmin"]},{user["access_key"]}')
-
     def printKeySummaryHeader(self):
         print('# Key; alias; policyID(s); API(s)')
 
@@ -142,7 +134,7 @@ class dashboard(tyk):
         self.session.headers.update({'admin-auth': self.adminSecret})
 
     def __str__(self):
-        return f'Dashboard URL: {self.URL}, Auth token: {self.authKey}, Admin Secret: {self.adminSecret}, Description: {self.description} Verify dashboard cert: {self.verify}'
+        return f'Dashboard URL: {self.URL}, Auth token: {self.authKey}, Admin Secret: {self.adminSecret}, Description: {self.description}, Verify dashboard cert: {self.verify}'
 
     def __repr__(self):
         return f'tyk.dashboard("URL={self.URL}", authKey="{self.authKey}", adminSecret="{self.adminSecret}", description="{self.description}", verify={self.verify})'
@@ -155,6 +147,14 @@ class dashboard(tyk):
         self.session.headers.update({'admin-auth': adminSecret})
         return self.adminSecret
 
+    # Dashboard convenience functions
+    def printUserSummaryHeader(self):
+        print('# ID,IsActive,org_id,first_name,last_name,email,IsAdmin,accessKey')
+
+    def printUserSummary(self, user):
+        if not "IsAdmin" in user["user_permissions"]:
+            user["user_permissions"]["IsAdmin"] = "notAdmin"
+        print(f'{user["id"]},{user["active"]},{user["org_id"]},{user["first_name"]},{user["last_name"]},{user["email_address"]},{user["user_permissions"]["IsAdmin"]},{user["access_key"]}')
 
 
     # Dashboard API functions
@@ -1075,6 +1075,25 @@ class gateway(tyk):
     def purgeOauthTokens(self):
         return self.session.delete(f'{self.URL}/tyk/oauth/tokens?scope=lapsed', verify=False)
 
+###################### EDP (portal) CLASS ######################
+class portal(tyk):
+    def __init__(self, URL, authKey = '', adminSecret = 'N/A' , description = 'N/A', verify = False):
+        super().__init__(URL=URL, authKey=authKey, description=description, verify=verify)
+        self.session.headers.update({'Authorization': self.authKey})
+
+    def __str__(self):
+        return f'Portal URL: {self.URL}, Auth token: {self.authKey}, Description: {self.description}, Verify portal cert: {self.verify}'
+
+    def __repr__(self):
+        return f'tyk.portal("URL={self.URL}", authKey="{self.authKey}", description="{self.description}", verify={self.verify})'
+
+    def getAdminSecret(self):
+        return self.adminSecret
+
+    def setAdminSecret(self, adminSecret):
+        self.adminSecret = adminSecret
+        self.session.headers.update({'admin-auth': adminSecret})
+        return self.adminSecret
 
 ###################### Auth Key Class ######################
 # The base class is the policy class. A key is very similar but with apply_policies added
