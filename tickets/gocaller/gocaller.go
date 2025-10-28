@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -19,6 +20,7 @@ func main() {
 		frequency     = flag.Duration("frequency", 1*time.Second, "Frequency of API calls (e.g., 1s, 500ms)")
 		timeout       = flag.Duration("timeout", 60*time.Second, "HTTP client timeout duration (e.g., 30s, 5m, 1h)")
 		printResponse = flag.Bool("print-response", false, "Print the response body from API calls")
+		headers       = flag.String("headers", "", "Custom HTTP headers in format 'Key1:Value1,Key2:Value2' (e.g., 'Authorization:Bearer token,Content-Type:application/json')")
 	)
 
 	flag.Usage = func() {
@@ -31,6 +33,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  %s -url=https://api.example.com/health\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s -url=https://api.example.com/status -threshold=100ms -frequency=2s\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s -url=https://api.example.com/health -timeout=30s\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "  %s -url=https://api.example.com/api -headers='Authorization:Bearer token,Content-Type:application/json'\n", os.Args[0])
 	}
 
 	flag.Parse()
@@ -40,6 +43,22 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error: URL is required\n\n")
 		flag.Usage()
 		os.Exit(1)
+	}
+
+	// Parse headers if provided
+	customHeaders := make(map[string]string)
+	if *headers != "" {
+		headerPairs := strings.Split(*headers, ",")
+		for _, pair := range headerPairs {
+			parts := strings.SplitN(strings.TrimSpace(pair), ":", 2)
+			if len(parts) == 2 {
+				key := strings.TrimSpace(parts[0])
+				value := strings.TrimSpace(parts[1])
+				if key != "" {
+					customHeaders[key] = value
+				}
+			}
+		}
 	}
 
 	// Create HTTP client with configurable timeout and skip SSL verification
@@ -58,6 +77,9 @@ func main() {
 	fmt.Printf("[%s]   Threshold: %v\n", startTimestamp, *threshold)
 	fmt.Printf("[%s]   Frequency: %v\n", startTimestamp, *frequency)
 	fmt.Printf("[%s]   Timeout: %v\n", startTimestamp, *timeout)
+	if len(customHeaders) > 0 {
+		fmt.Printf("[%s]   Headers: %v\n", startTimestamp, customHeaders)
+	}
 	fmt.Printf("[%s]   Bell will ring if calls take longer than %v\n\n", startTimestamp, *threshold)
 
 	// Create ticker for regular API calls
@@ -72,15 +94,15 @@ func main() {
 	var bellMutex sync.Mutex
 
 	// Make initial call immediately
-	makeAPICall(client, *url, *threshold, *printResponse, &callCount, &slowCallCount, &bellTimes, &bellMutex)
+	makeAPICall(client, *url, customHeaders, *threshold, *printResponse, &callCount, &slowCallCount, &bellTimes, &bellMutex)
 
 	// Continue making calls at specified frequency
 	for range ticker.C {
-		makeAPICall(client, *url, *threshold, *printResponse, &callCount, &slowCallCount, &bellTimes, &bellMutex)
+		makeAPICall(client, *url, customHeaders, *threshold, *printResponse, &callCount, &slowCallCount, &bellTimes, &bellMutex)
 	}
 }
 
-func makeAPICall(client *http.Client, url string, threshold time.Duration, printResponse bool, callCount, slowCallCount *int, bellTimes *[]time.Time, bellMutex *sync.Mutex) {
+func makeAPICall(client *http.Client, url string, headers map[string]string, threshold time.Duration, printResponse bool, callCount, slowCallCount *int, bellTimes *[]time.Time, bellMutex *sync.Mutex) {
 	*callCount++
 	currentCallNum := *callCount // Capture the call number for this specific call
 	start := time.Now()
@@ -92,7 +114,18 @@ func makeAPICall(client *http.Client, url string, threshold time.Duration, print
 
 	// Start the HTTP request in a goroutine
 	go func() {
-		resp, err := client.Get(url)
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			errorChan <- err
+			return
+		}
+
+		// Add custom headers
+		for key, value := range headers {
+			req.Header.Set(key, value)
+		}
+
+		resp, err := client.Do(req)
 		if err != nil {
 			errorChan <- err
 		} else {
