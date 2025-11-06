@@ -8,12 +8,14 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -28,23 +30,76 @@ const (
 	serviceVersion     = "1.0.0"
 )
 
-// initTracer initializes OpenTelemetry with gRPC OTLP exporter
-func initTracer(ctx context.Context, collectorEndpoint, serviceName, version string) (*sdktrace.TracerProvider, error) {
-	// Create gRPC connection to OTEL collector
-	conn, err := grpc.DialContext(ctx, collectorEndpoint,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create gRPC connection to collector: %w", err)
+// parseHeaders parses a comma-separated list of key=value pairs into a map
+func parseHeaders(headerStr string) map[string]string {
+	headers := make(map[string]string)
+	if headerStr == "" {
+		return headers
 	}
 
-	// Create OTLP trace exporter
-	traceExporter, err := otlptracegrpc.New(ctx,
-		otlptracegrpc.WithGRPCConn(conn),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create trace exporter: %w", err)
+	pairs := strings.Split(headerStr, ",")
+	for _, pair := range pairs {
+		kv := strings.SplitN(strings.TrimSpace(pair), "=", 2)
+		if len(kv) == 2 {
+			key := strings.TrimSpace(kv[0])
+			value := strings.TrimSpace(kv[1])
+			headers[key] = value
+		}
+	}
+	return headers
+}
+
+// initTracer initializes OpenTelemetry with OTLP exporter (gRPC or HTTP)
+func initTracer(ctx context.Context, collectorEndpoint, protocol, serviceName, version, headersStr string) (*sdktrace.TracerProvider, error) {
+	var traceExporter sdktrace.SpanExporter
+	var err error
+
+	switch protocol {
+	case "grpc":
+		// Create gRPC connection to OTEL collector
+		conn, err := grpc.DialContext(ctx, collectorEndpoint,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithBlock(),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create gRPC connection to collector: %w", err)
+		}
+
+		// Create OTLP trace exporter for gRPC
+		traceExporter, err = otlptracegrpc.New(ctx,
+			otlptracegrpc.WithGRPCConn(conn),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create gRPC trace exporter: %w", err)
+		}
+
+	case "http", "https":
+		// Parse headers for HTTP/HTTPS requests
+		headers := parseHeaders(headersStr)
+
+		// Create OTLP trace exporter for HTTP/HTTPS
+		options := []otlptracehttp.Option{
+			otlptracehttp.WithEndpoint(collectorEndpoint),
+		}
+
+		// Use insecure connection only for HTTP protocol
+		if protocol == "http" {
+			options = append(options, otlptracehttp.WithInsecure())
+		}
+		// For HTTPS, the exporter will use secure connection by default
+
+		// Add headers if provided
+		if len(headers) > 0 {
+			options = append(options, otlptracehttp.WithHeaders(headers))
+		}
+
+		traceExporter, err = otlptracehttp.New(ctx, options...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create %s trace exporter: %w", strings.ToUpper(protocol), err)
+		}
+
+	default:
+		return nil, fmt.Errorf("unsupported protocol: %s (supported: grpc, http, https)", protocol)
 	}
 
 	// Create resource with service information
@@ -216,7 +271,9 @@ func main() {
 	ctx := context.Background()
 
 	// Define command-line flags
-	collectorEndpoint := flag.String("otel-endpoint", "", "OpenTelemetry collector gRPC endpoint (required)")
+	collectorEndpoint := flag.String("otel-endpoint", "", "OpenTelemetry collector endpoint (required)")
+	protocol := flag.String("otel-protocol", "grpc", "Protocol to use for OTEL collector (grpc, http, or https) (default: grpc)")
+	headers := flag.String("otel-headers", "", "HTTP headers for OTEL collector (HTTP only, format: key1=value1,key2=value2)")
 	apiURL := flag.String("api-url", "", "API URL to call (required)")
 	serviceName := flag.String("service-name", defaultServiceName, "Service name for tracing (default: "+defaultServiceName+")")
 	version := flag.String("service-version", serviceVersion, "Service version for tracing (default: "+serviceVersion+")")
@@ -234,10 +291,20 @@ func main() {
 		log.Fatal("Error: -api-url parameter is required")
 	}
 
-	log.Printf("Initializing OpenTelemetry with collector endpoint: %s", *collectorEndpoint)
+	// Validate protocol parameter
+	if *protocol != "grpc" && *protocol != "http" && *protocol != "https" {
+		log.Fatal("Error: -otel-protocol must be either 'grpc', 'http', or 'https'")
+	}
+
+	// Log initialization details
+	if *protocol == "http" && *headers != "" {
+		log.Printf("Initializing OpenTelemetry with collector endpoint: %s (protocol: %s, headers: %s)", *collectorEndpoint, *protocol, *headers)
+	} else {
+		log.Printf("Initializing OpenTelemetry with collector endpoint: %s (protocol: %s)", *collectorEndpoint, *protocol)
+	}
 
 	// Initialize OpenTelemetry
-	tp, err := initTracer(ctx, *collectorEndpoint, *serviceName, *version)
+	tp, err := initTracer(ctx, *collectorEndpoint, *protocol, *serviceName, *version, *headers)
 	if err != nil {
 		log.Fatalf("Failed to initialize tracer: %v", err)
 	}
