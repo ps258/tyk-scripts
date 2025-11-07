@@ -1156,11 +1156,21 @@ class authBase():
         self.JSON["per"] = per
         return self.JSON["per"]
 
+    def setGlobalQuota(self, quota: int, quotaPeriod: int):
+        self.JSON["quota_max"] = quota
+        self.JSON["quota_renewal_rate"] = quotaPeriod
+
+    def setPartitions(self, partitions):
+        # zero the partitions first
+        self.JSON["partitions"] = {}
+        for partition in partitions.split(","):
+            self.JSON["partitions"][partition] = True
+
     def addAPI(self, apiid):
         self.JSON["access_rights"][apiid] = {
             "api_id": apiid,
             "api_name": "",
-            "versions": [ "", "Default" ],
+            "versions": [ "Default" ],
             "allowed_urls": [],
             "restricted_types": [],
             "limit": None,
@@ -1173,8 +1183,13 @@ class authBase():
             "api_name": "",
             "limit": None,
             "restricted_types": [],
-            "versions": [ "", "Default" ]
+            "versions": [ "Default" ]
         })
+
+    def _addAPI(self, apiid):
+        self.JSON["access_rights"][apiid] = {
+            "versions": [ "Default" ]
+        }
 
     def setThrottle(self, interval: int, retryLimit: int):
         self.JSON["throttle_interval"] = interval

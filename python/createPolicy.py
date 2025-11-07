@@ -18,6 +18,11 @@ parser.add_argument('--cred', '-c', required=True, dest='auth', help="Dashboard 
 parser.add_argument('--name', '-n', default="Default policy name", dest='name', help="Base name of policy")
 parser.add_argument('--apiid', '-a', dest='apiids', nargs='+', help="List of API IDs to be added to the policy")
 parser.add_argument('--template', '-t', required=False, dest='templateFile', help="API template file")
+parser.add_argument('--rate', '-r', default=-1, type=int, dest='rate', help="Set the rate limit")
+parser.add_argument('--per', '-p', default=-1, type=int, dest='rateper', help="Set the rate limit period")
+parser.add_argument('--quota', '-q', default=-1, type=int, dest='quotamax', help="Set the global quota")
+parser.add_argument('--quotaperiod', '-R', default=-1, type=int, dest='quotaPeriod', help="Set the global quota renewal rate")
+parser.add_argument('--partitions', '-P', default="", type=str, dest='partitions', help="Enable partitions. eg. quota,rate_limit,complexity,acl,per_api")
 parser.add_argument('--verbose', '-v', action='store_true', dest='verbose', help="Verbose output")
 args = parser.parse_args()
 
@@ -36,6 +41,24 @@ else:
 policy.setName(args.name)
 for apiid in args.apiids:
     policy.addAPI(apiid)
+
+if args.quotamax > -1:
+    if args.quotaPeriod > -1:
+        policy.setGlobalQuota(args.quotamax,args.quotaPeriod)
+    else:
+        print('[FATAL]--quotaPeriod must be specified when --quota is')
+        sys.exit(1)
+
+if args.rate > -1:
+    if args.rateper > -1:
+        policy.setRate(args.rate)
+        policy.setPer(args.rateper)
+    else:
+        print('[FATAL]--per must be specified when --rate is')
+        sys.exit(1)
+
+if args.partitions != "":
+    policy.setPartitions(args.partitions)
 
 if args.verbose:
     print(policy)
