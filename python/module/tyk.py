@@ -270,10 +270,10 @@ class dashboard(tyk):
         return self.session.post(f'{self.URL}/api/portal/policies', data=policyDefinition, headers=headers, verify=False)
 
     # Dashboard createPolicies
-    def createPolicies(self, policyDefinition, APIid, numberToCreate):
-        policies = self.getPolicies().json()
+    def createPolicies(self, policyDefinition, numberToCreate):
         # create a dictionary of all policy names
-        PolicyName = policyDefinition['name']
+        policies = self.getPolicies().json()
+        PolicyName = policyDefinition.getName()
         allnames = dict()
         for policy in policies['policies']:
             allnames[policy['name']] = 1
@@ -285,10 +285,9 @@ class dashboard(tyk):
                 i += 1
             newname=PolicyName+str(i)
             allnames[newname] = 1
-            policyDefinition['name']=PolicyName+str(i)
-            policyDefinition['access_rights_array'] = json.loads('[{ "api_id": "' + APIid + '", "versions": [ "Default" ], "allowed_urls": [], "restricted_types": [], "limit": null, "allowance_scope": "" }]')
-            print(f'Creating policy: {policyDefinition["name"]}')
-            response = self.createPolicy(json.dumps(policyDefinition))
+            policyDefinition.setName(PolicyName+str(i))
+            print(f'Creating policy: {policyDefinition.getName()}')
+            response = self.createPolicy(policyDefinition.json())
             #print(response.json())
             # if a call fails, stop and return the number of successes
             if response.status_code != 200:
@@ -1262,7 +1261,7 @@ class policy(authBase):
     def setName(self, name):
         self.JSON["name"] = name
 
-    def getName(self, name):
+    def getName(self):
         if "name" in self.JSON:
             return self.JSON["name"]
         else:
@@ -1273,4 +1272,10 @@ class policy(authBase):
             self.JSON["state"] = state
         else:
             raise ValueError(f"(policy.setState): State can only be 'active' or 'inactive': {state} is not valid")
+
+    def getState(self):
+        if state in self.JSON:
+            return self.JSON["state"] 
+        else:
+            return "Undefined"
 
