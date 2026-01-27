@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"flag"
@@ -8,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -30,6 +32,18 @@ const (
 	serviceVersion     = "1.0.0"
 )
 
+// headerFlags is a custom type to support multiple -H/--header flags
+type headerFlags []string
+
+func (h *headerFlags) String() string {
+	return strings.Join(*h, ", ")
+}
+
+func (h *headerFlags) Set(value string) error {
+	*h = append(*h, value)
+	return nil
+}
+
 // parseHeaders parses a comma-separated list of key=value pairs into a map
 func parseHeaders(headerStr string) map[string]string {
 	headers := make(map[string]string)
@@ -43,6 +57,37 @@ func parseHeaders(headerStr string) map[string]string {
 		if len(kv) == 2 {
 			key := strings.TrimSpace(kv[0])
 			value := strings.TrimSpace(kv[1])
+			headers[key] = value
+		}
+	}
+	return headers
+}
+
+// parseHeaderFlags parses header strings in the format "Key: Value" or "Key=Value" into a map
+func parseHeaderFlags(headerList []string) map[string]string {
+	headers := make(map[string]string)
+	if len(headerList) == 0 {
+		return headers
+	}
+
+	for _, header := range headerList {
+		// Support both "Key: Value" (curl style) and "Key=Value" formats
+		var key, value string
+		if strings.Contains(header, ":") {
+			parts := strings.SplitN(header, ":", 2)
+			if len(parts) == 2 {
+				key = strings.TrimSpace(parts[0])
+				value = strings.TrimSpace(parts[1])
+			}
+		} else if strings.Contains(header, "=") {
+			parts := strings.SplitN(header, "=", 2)
+			if len(parts) == 2 {
+				key = strings.TrimSpace(parts[0])
+				value = strings.TrimSpace(parts[1])
+			}
+		}
+
+		if key != "" {
 			headers[key] = value
 		}
 	}
@@ -161,7 +206,7 @@ func NewAPIClient(serviceName string) *APIClient {
 }
 
 // CallAPI makes an HTTP request to the specified API with tracing
-func (c *APIClient) CallAPI(ctx context.Context, method, url string, body io.Reader) (*http.Response, error) {
+func (c *APIClient) CallAPI(ctx context.Context, method, url string, body io.Reader, customHeaders map[string]string) (*http.Response, error) {
 	// Create a span for the API call
 	ctx, span := c.tracer.Start(ctx, fmt.Sprintf("API Call: %s %s", method, url))
 	defer span.End()
@@ -183,6 +228,11 @@ func (c *APIClient) CallAPI(ctx context.Context, method, url string, body io.Rea
 	// Set content type if body is provided
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
+	}
+
+	// Add custom headers to the request
+	for key, value := range customHeaders {
+		req.Header.Set(key, value)
 	}
 
 	// The otelhttp.Transport will automatically inject tracing headers
@@ -212,8 +262,14 @@ func (c *APIClient) CallAPI(ctx context.Context, method, url string, body io.Rea
 
 // BusinessLogic represents some business logic that calls external APIs
 // Each API call will create its own independent trace
-func (c *APIClient) BusinessLogic(baseCtx context.Context, apiURL string, numCalls int, delayBetweenCalls time.Duration) error {
+func (c *APIClient) BusinessLogic(baseCtx context.Context, apiURL string, numCalls int, delayBetweenCalls time.Duration, customHeaders map[string]string, requestData []byte) error {
 	log.Printf("Starting business logic operation with %d calls and %v delay between calls...", numCalls, delayBetweenCalls)
+
+	// Determine HTTP method based on whether data is provided
+	method := "GET"
+	if len(requestData) > 0 {
+		method = "POST"
+	}
 
 	for i := 1; i <= numCalls; i++ {
 		// Create a new root context for each API call to ensure separate traces
@@ -228,8 +284,15 @@ func (c *APIClient) BusinessLogic(baseCtx context.Context, apiURL string, numCal
 			attribute.String("delay_between_calls", delayBetweenCalls.String()),
 		)
 
-		log.Printf("Making GET request %d/%d to %s", i, numCalls, apiURL)
-		resp, err := c.CallAPI(callCtx, "GET", apiURL, nil)
+		// Prepare request body if data is provided
+		var body io.Reader
+		if len(requestData) > 0 {
+			body = bytes.NewReader(requestData)
+			callSpan.SetAttributes(attribute.Int("request.body.size", len(requestData)))
+		}
+
+		log.Printf("Making %s request %d/%d to %s", method, i, numCalls, apiURL)
+		resp, err := c.CallAPI(callCtx, method, apiURL, body, customHeaders)
 		if err != nil {
 			callSpan.RecordError(err)
 			callSpan.End()
@@ -271,6 +334,7 @@ func main() {
 	ctx := context.Background()
 
 	// Define command-line flags
+	var apiHeaders headerFlags
 	collectorEndpoint := flag.String("otel-endpoint", "", "OpenTelemetry collector endpoint (required)")
 	protocol := flag.String("otel-protocol", "grpc", "Protocol to use for OTEL collector (grpc, http, or https) (default: grpc)")
 	headers := flag.String("otel-headers", "", "HTTP headers for OTEL collector (HTTP only, format: key1=value1,key2=value2)")
@@ -279,6 +343,9 @@ func main() {
 	version := flag.String("service-version", serviceVersion, "Service version for tracing (default: "+serviceVersion+")")
 	numCalls := flag.Int("num-calls", 1, "Number of API calls to make (default: 1)")
 	delayBetweenCalls := flag.Duration("delay", 0, "Delay between API calls (e.g., 1s, 500ms, 2m) (default: 0)")
+	dataFile := flag.String("D", "", "File containing data to send with requests (will use POST method)")
+	flag.Var(&apiHeaders, "H", "HTTP header for API requests (format: 'Key: Value' or 'Key=Value'). Can be specified multiple times.")
+	flag.Var(&apiHeaders, "header", "HTTP header for API requests (format: 'Key: Value' or 'Key=Value'). Can be specified multiple times.")
 
 	// Parse command-line flags
 	flag.Parse()
@@ -294,6 +361,17 @@ func main() {
 	// Validate protocol parameter
 	if *protocol != "grpc" && *protocol != "http" && *protocol != "https" {
 		log.Fatal("Error: -otel-protocol must be either 'grpc', 'http', or 'https'")
+	}
+
+	// Read data file if provided
+	var requestData []byte
+	if *dataFile != "" {
+		var err error
+		requestData, err = os.ReadFile(*dataFile)
+		if err != nil {
+			log.Fatalf("Error: failed to read data file '%s': %v", *dataFile, err)
+		}
+		log.Printf("Loaded %d bytes from data file: %s", len(requestData), *dataFile)
 	}
 
 	// Log initialization details
@@ -318,11 +396,17 @@ func main() {
 		}
 	}()
 
+	// Parse API headers
+	customHeaders := parseHeaderFlags(apiHeaders)
+	if len(customHeaders) > 0 {
+		log.Printf("Using custom API headers: %v", customHeaders)
+	}
+
 	// Create API client
 	client := NewAPIClient(*serviceName)
 
 	// Execute business logic - each call will create its own independent trace
-	if err := client.BusinessLogic(ctx, *apiURL, *numCalls, *delayBetweenCalls); err != nil {
+	if err := client.BusinessLogic(ctx, *apiURL, *numCalls, *delayBetweenCalls, customHeaders, requestData); err != nil {
 		log.Fatalf("Business logic failed: %v", err)
 	}
 
