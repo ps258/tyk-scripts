@@ -157,7 +157,7 @@ class dashboard(tyk):
         print(f'{user["id"]},{user["active"]},{user["org_id"]},{user["first_name"]},{user["last_name"]},{user["email_address"]},{user["user_permissions"]["IsAdmin"]},{user["access_key"]}')
 
 
-    # Dashboard API functions
+    # Dashboard Classic API functions
 
     # Dashboard getAPI
     def getAPI(self, APIid):
@@ -245,6 +245,13 @@ class dashboard(tyk):
             APIdefinition = APIDict
         return APIdefinition
 
+    # Dashboard OAS API functions
+
+    # Dashboard createOASAPI
+    def createOASAPI(self, OASAPIdefinition):
+        headers = {'Content-Type': 'application/x-yaml'}
+        print(f"{headers=}, {OASAPIdefinition=}")
+        return self.session.post(f'{self.URL}/api/apis/oas', data=OASAPIdefinition, headers=headers, verify=False)
 
     # Dashboard Policy functions
     # Dashboard getPolicy
