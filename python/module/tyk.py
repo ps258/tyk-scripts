@@ -3,6 +3,7 @@
 # USE AT YOUR OWN RISK
 
 import json
+import yaml
 import requests
 import time
 import uuid
@@ -185,6 +186,7 @@ class dashboard(tyk):
         # create a dictionary of all API names
         apis = self.getAPIs().json()
         APIName = APIdefinition['api_definition']['name']
+        APIListen = APIdefinition['api_definition']['proxy']['listen_path']
         allnames = dict()
         for api in apis['apis']:
             allnames[api['api_definition']['name']] = 1
@@ -198,7 +200,8 @@ class dashboard(tyk):
             allnames[newname] = 1
             APIdefinition['api_definition']['name'] = newname
             APIdefinition['api_definition']['slug'] = newname
-            APIdefinition['api_definition']['proxy']['listen_path'] = '/'+newname+'/'
+            #APIdefinition['api_definition']['proxy']['listen_path'] = '/'+newname+'/'
+            APIdefinition['api_definition']['proxy']['listen_path'] = APIListen + str(i) + '/'
             print(f'Adding API {APIdefinition["api_definition"]["name"]}, {APIdefinition["api_definition"]["proxy"]["listen_path"]}')
             response = self.__createAPI(json.dumps(APIdefinition))
             #print(response.json())
@@ -247,11 +250,57 @@ class dashboard(tyk):
 
     # Dashboard OAS API functions
 
+    # Dashboard __createOASAPI
+    def __createOASAPI(self, OASAPIdefinition):
+        headers = {'Content-Type': 'application/x-yaml'}
+        return self.session.post(f'{self.URL}/api/apis/oas', data=OASAPIdefinition, headers=headers, verify=False)
+
     # Dashboard createOASAPI
     def createOASAPI(self, OASAPIdefinition):
-        headers = {'Content-Type': 'application/x-yaml'}
-        print(f"{headers=}, {OASAPIdefinition=}")
-        return self.session.post(f'{self.URL}/api/apis/oas', data=OASAPIdefinition, headers=headers, verify=False)
+        # make sure that the OAS API definition doesn't have an org, ad dbID or an id and that it's a string
+        if isinstance(OASAPIdefinition, str):
+            OASAPIdefinition = yaml.safe_load(OASAPIdefinition)
+        if OASAPIdefinition['x-tyk-api-gateway']['info']['dbId']:
+            del OASAPIdefinition['x-tyk-api-gateway']['info']['dbId']
+        if OASAPIdefinition['x-tyk-api-gateway']['info']['id']:
+            del OASAPIdefinition['x-tyk-api-gateway']['info']['id']
+        if OASAPIdefinition['x-tyk-api-gateway']['info']['orgId']:
+            del OASAPIdefinition['x-tyk-api-gateway']['info']['orgId']
+        OASAPIdefinition = yaml.dump(OASAPIdefinition)
+        #print(OASAPIdefinition)
+        return self.__createOASAPI(OASAPIdefinition)
+
+    # Dashboard createOASAPIs
+    def createOASAPIs(self, OASAPIdefinition, numberToCreate):
+        # OASAPIdefinition needs to be a dict so that we can look inside it
+        if isinstance(OASAPIdefinition, str):
+            OASAPIdefinition = yaml.safe_load(OASAPIdefinition)
+        # create a dictionary of all API names
+        apis = self.getAPIs().json()
+        APIName = OASAPIdefinition["x-tyk-api-gateway"]["info"]["name"]
+        APIListen = OASAPIdefinition["x-tyk-api-gateway"]["server"]["listenPath"]["value"]
+        allnames = dict()
+        for api in apis['apis']:
+            allnames[api['api_definition']['name']] = 1
+        i = 1
+        numberCreated = 0
+        while numberCreated < numberToCreate:
+            # work out the next free name (format is name-i)
+            while APIName+str(i) in allnames:
+                i += 1
+            newname=APIName+str(i)
+            allnames[newname] = 1
+            OASAPIdefinition["x-tyk-api-gateway"]["info"]["name"] = newname
+            OASAPIdefinition["x-tyk-api-gateway"]["server"]["listenPath"]["value"] = APIListen + str(i) + '/'
+            print(f'Adding OAS API {OASAPIdefinition["x-tyk-api-gateway"]["info"]["name"]}, listenPath: {OASAPIdefinition["x-tyk-api-gateway"]["server"]["listenPath"]["value"]}')
+            response = self.createOASAPI(yaml.dump(OASAPIdefinition))
+            #print(response.json())
+            # if a call fails, stop and return the number of successes
+            if response.status_code != 200:
+                break
+            numberCreated += 1
+        return numberCreated
+
 
     # Dashboard Policy functions
     # Dashboard getPolicy
@@ -704,6 +753,7 @@ class gateway(tyk):
     # Gateway getAPIs
     def getAPIs(self):
         response = self.session.get(f'{self.URL}/tyk/apis', verify=False)
+        print(response)
         body_json = {}
         body_json['apis'] = response.json()
         response._content = json.dumps(body_json).encode()
