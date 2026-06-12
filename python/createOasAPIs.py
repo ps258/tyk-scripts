@@ -37,9 +37,10 @@ with open(args.templateFile) as APIFile:
         # if we've been given a name then apply that
         if 'x-tyk-api-gateway' in APIyaml:
             APIyaml["x-tyk-api-gateway"]["info"]["name"] = args.name
-            APIyaml["x-tyk-api-gateway"]["server"]["listenPath"]["value"] = '/'+args.name+'/'
+            if not APIyaml["x-tyk-api-gateway"]["server"]["listenPath"]["value"]:
+                APIyaml["x-tyk-api-gateway"]["server"]["listenPath"]["value"] = '/'+args.name+'/'
             if args.verbose:
-                print(f'[INFO]Creating API with name: {APIyaml["x-tyk-api-gateway"]["info"]["name"]}, slug: , listenPath: {APIyaml["x-tyk-api-gateway"]["server"]["listenPath"]["value"]}')
+                print(f'[INFO]Creating {toAdd} OAS APIs based on name: {APIyaml["x-tyk-api-gateway"]["info"]["name"]}, listenPath: {APIyaml["x-tyk-api-gateway"]["server"]["listenPath"]["value"]}')
         else:
             print(f"[FATAL]x-tyk-api-gateway not present in {APIFile}")
             sys.exit(1)
