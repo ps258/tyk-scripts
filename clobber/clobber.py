@@ -9,10 +9,14 @@ import pymongo        # pip3 install pymongo
 from bson import ObjectId
 
 scriptName = os.path.basename(__file__)
+mongoDatabase = "tyk_analytics"
 
 def printhelp():
     print(f'{scriptName} [--setOrgID <orgid>|--api <api.json>|--policy <policy.json>|--key <key.json>] [--mongo <URL>|--redis<IP:port>')
-    print("    --setOrgID <orgid> sets the orgid in the mongo collections tyk_analytics/tyk_organisations and tyk_analytics/tyk_analytics_users. There must be only one org defined.")
+    print(f"    --database The mongo database (not the connection string, the database) to use, Defaults to '{mongoDatabase}'")
+    print(f"    --setOrgID <orgid> sets the orgid in the mongo collections {mongoDatabase}/tyk_organisations and {mongoDatabase}/tyk_analytics_users. There must be only one org in the existing install.")
+    print("    --analytics sets the orgid in the mongo analytics collections")
+    print("    --policiesApis sets the orgid in all of the APIs and policies")
     print("    --api <api.json> publishes the api directly into the mongodb instance specified with --mongo")
     print("    --policy <policy.json> publishes the policy directly into the mongodb instance specified with --mongo")
     print("    --key <key.json> publishes the key directly into the redis instance specified with --redis")
@@ -27,9 +31,11 @@ keyFile = ""
 mongoConnectionString = ""
 redisHost = ""
 redisPort = ""
+updateAnalytics = False
+updateAPIsPolicies = False
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "setOrgID=", "api=", "policy=", "key=", "mongo=", "redis="])
+    opts, args = getopt.getopt(sys.argv[1:], "", ["help", "setOrgID=", "api=", "policy=", "key=", "mongo=", "redis=", "database=", "analytics", "policiesApis"])
 except getopt.GetoptError as opterr:
     print(f'Error in option: {opterr}')
     printhelp()
@@ -66,6 +72,12 @@ for opt, arg in opts:
     elif opt == '--redis':
         redisIPandPort = arg
         redisHost,redisPort = arg.split(':')
+    elif opt == '--database':
+        mongoDatabase = arg
+    elif opt == '--analytics':
+        updateAnalytics = True
+    elif opt == '--policiesApis':
+        updateAPIsPolicies = True
 
 if ((newOrgID or apiFile or policyFile) and not mongoConnectionString):
     print("Must specify --mongo when using --setOrgID or --api or --policy")
@@ -76,19 +88,22 @@ if (keyFile and not (redisHost and redisPort)):
 if not (newOrgID or apiFile or policyFile or keyFile):
     print("Must specify exactly one of --setOrgID --api --policy --key")
     printhelp()
+if (updateAnalytics or updateAPIsPolicies) and not newOrgID:
+    print("Must provide a new organisation id if updating analytics or APIs and policies")
+    printhelp()
 
 if mongoConnectionString:
     # we're doing something with mongo
     mongoClient = pymongo.MongoClient(mongoConnectionString)
-    if "tyk_analytics" in mongoClient.list_database_names():
-        tykDB = mongoClient["tyk_analytics"]
+    if mongoDatabase in mongoClient.list_database_names():
+        tykDB = mongoClient[mongoDatabase]
         collections = tykDB.list_collection_names()
         if newOrgID:    # Update org and users to new orgid
             if not "tyk_organisations" in collections:
-                print(f"'tyk_organisations' not found in 'tyk_analytics' in {mongoConnectionString}")
+                print(f"'tyk_organisations' not found in '{mongoDatabase}' in {mongoConnectionString}")
                 sys.exit(1)
             if not "tyk_analytics_users" in collections:
-                print(f"'tyk_analytics_users' not found in 'tyk_analytics' in {mongoConnectionString}")
+                print(f"'tyk_analytics_users' not found in '{mongoDatabase}' in {mongoConnectionString}")
                 sys.exit(1)
             # Fetch the org, checking that there's only one
             tyk_organisations = tykDB["tyk_organisations"]
@@ -99,24 +114,41 @@ if mongoConnectionString:
                 print(f"Must be exactly 1 organisation. Found {orgCount}")
                 sys.exit(1)
             oldOrgID = org["_id"]
+            oldOrgIDstr = str(org["_id"])
 
             # create a copy of the existing org, but with the new orgid
-            print(f"Copying Org {oldOrgID} to {newOrgID}")
+            print(f"Copying Org {oldOrgIDstr} to {newOrgID}")
             org["_id"] = ObjectId(newOrgID)
             tyk_organisations.insert_one(org)
 
             # Delete the old organisation entry
-            print(f"Removing old Org {oldOrgID}")
+            print(f"Removing old Org {oldOrgIDstr}")
             tyk_organisations.delete_one({"_id": oldOrgID})
 
             # update the users to the new orgid
             print(f"Migrating users to {newOrgID}")
             tyk_analytics_users = tykDB["tyk_analytics_users"]
-            oldOrgUsersQuery = { "orgid": f"{oldOrgID}" }
+            oldOrgUsersQuery = { "orgid": f"{oldOrgIDstr}" }
             users = tyk_analytics_users.find(oldOrgUsersQuery)
             for user in users:
-                print(f"Found user {user['emailaddress']} in org {oldOrgID}. You will need to reset their access key")
+                print(f"Found user {user['emailaddress']} in org {oldOrgIDstr}. You will need to reset their access key")
             tyk_analytics_users.update_many(oldOrgUsersQuery, { "$set": { "orgid": newOrgID } })
+            if updateAnalytics:
+                for analyticsCollection in [ "tyk_analytics", "tyk_analytics_aggregates", f"z_tyk_analyticz_{oldOrgIDstr}", f"z_tyk_analyticz_aggregate_{oldOrgIDstr}" ]:
+                    if analyticsCollection in collections:
+                        print(f"Updating {analyticsCollection} with {newOrgID}")
+                        tyk_analytics = tykDB[analyticsCollection]
+                        tyk_analytics.update_many(oldOrgUsersQuery, { "$set": { "orgid": newOrgID } })
+                for analyticsCollection in [ f"z_tyk_analyticz_{oldOrgIDstr}", f"z_tyk_analyticz_aggregate_{oldOrgIDstr}" ]:
+                    if analyticsCollection in collections:
+                        print(f"Renaming collection {analyticsCollection} to {analyticsCollection.replace(oldOrgIDstr, newOrgID)}")
+                        tykDB[analyticsCollection].rename(analyticsCollection.replace(oldOrgIDstr, newOrgID))
+            if updateAPIsPolicies:
+                oldOrgUsersQuery = { "org_id": f"{oldOrgIDstr}" }
+                for collection in [ "tyk_apis", "tyk_policies"]:
+                    if collection in collections:
+                        print(f"Updating org_id in {collection}")
+                        tykDB[collection].update_many(oldOrgUsersQuery, { "$set": { "org_id": newOrgID } })
         if apiFile:
             # this isn't really worth doing since there are too many things that are base64 encoded.
             # you would need to read in the API, replace all the text strings with base64 ones
@@ -136,7 +168,7 @@ if mongoConnectionString:
             tyk_policies = tykDB["tyk_policies"]
             tyk_policies.insert_one(policy)
     else:
-        print(f"'tyk_analytics' DB not found in {mongoConnectionString}")
+        print(f"'{mongoDatabase}' DB not found in {mongoConnectionString}")
         sys.exit(1)
 
 elif redisIPandPort:
