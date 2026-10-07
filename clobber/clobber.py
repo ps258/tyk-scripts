@@ -134,11 +134,39 @@ if mongoConnectionString:
                 print(f"Found user {user['emailaddress']} in org {oldOrgIDstr}. You will need to reset their access key")
             tyk_analytics_users.update_many(oldOrgUsersQuery, { "$set": { "orgid": newOrgID } })
             if updateAnalytics:
-                for analyticsCollection in [ "tyk_analytics", "tyk_analytics_aggregates", f"z_tyk_analyticz_{oldOrgIDstr}", f"z_tyk_analyticz_aggregate_{oldOrgIDstr}" ]:
+                # Analytics records also carry the orgid in an "org-<orgid>" tag, so update pipelines (MongoDB 4.2+) are used to rewrite that too
+                oldOrgTag = f"org-{oldOrgIDstr}"
+                newOrgTag = f"org-{newOrgID}"
+                # raw records: tags is an array of strings
+                rawAnalyticsUpdate = [ { "$set": {
+                    "orgid": newOrgID,
+                    "tags": { "$cond": [ { "$isArray": "$tags" },
+                        { "$map": { "input": "$tags", "as": "t", "in": { "$cond": [ { "$eq": [ "$$t", oldOrgTag ] }, newOrgTag, "$$t" ] } } },
+                        "$tags" ] } } } ]
+                # aggregate records: tags is a map keyed by tag (with identifier and humanidentifier set to the tag)
+                # and lists.tags is an array of the same objects
+                aggregateAnalyticsUpdate = [ { "$set": {
+                    "orgid": newOrgID,
+                    "tags": { "$cond": [ { "$eq": [ { "$type": "$tags" }, "object" ] },
+                        { "$arrayToObject": { "$map": { "input": { "$objectToArray": "$tags" }, "as": "t", "in": { "$cond": [ { "$eq": [ "$$t.k", oldOrgTag ] },
+                            { "k": newOrgTag, "v": { "$mergeObjects": [ "$$t.v", { "identifier": newOrgTag, "humanidentifier": newOrgTag } ] } },
+                            "$$t" ] } } } },
+                        "$tags" ] },
+                    "lists.tags": { "$cond": [ { "$isArray": "$lists.tags" },
+                        { "$map": { "input": "$lists.tags", "as": "t", "in": { "$cond": [ { "$eq": [ "$$t.identifier", oldOrgTag ] },
+                            { "$mergeObjects": [ "$$t", { "identifier": newOrgTag, "humanidentifier": newOrgTag } ] },
+                            "$$t" ] } } },
+                        "$lists.tags" ] } } } ]
+                analyticsCollections = {
+                    "tyk_analytics": rawAnalyticsUpdate,
+                    f"z_tyk_analyticz_{oldOrgIDstr}": rawAnalyticsUpdate,
+                    "tyk_analytics_aggregates": aggregateAnalyticsUpdate,
+                    f"z_tyk_analyticz_aggregate_{oldOrgIDstr}": aggregateAnalyticsUpdate }
+                for analyticsCollection, analyticsUpdate in analyticsCollections.items():
                     if analyticsCollection in collections:
                         print(f"Updating {analyticsCollection} with {newOrgID}")
-                        tyk_analytics = tykDB[analyticsCollection]
-                        tyk_analytics.update_many(oldOrgUsersQuery, { "$set": { "orgid": newOrgID } })
+                        result = tykDB[analyticsCollection].update_many(oldOrgUsersQuery, analyticsUpdate)
+                        print(f"    {result.modified_count} records updated")
                 for analyticsCollection in [ f"z_tyk_analyticz_{oldOrgIDstr}", f"z_tyk_analyticz_aggregate_{oldOrgIDstr}" ]:
                     if analyticsCollection in collections:
                         print(f"Renaming collection {analyticsCollection} to {analyticsCollection.replace(oldOrgIDstr, newOrgID)}")
@@ -149,6 +177,11 @@ if mongoConnectionString:
                     if collection in collections:
                         print(f"Updating org_id in {collection}")
                         tykDB[collection].update_many(oldOrgUsersQuery, { "$set": { "org_id": newOrgID } })
+                # OAS APIs also hold the orgid inside the OAS document
+                if "tyk_apis" in collections:
+                    oasOrgIDField = "oas_doc.x-tyk-api-gateway.info.orgId"
+                    print(f"Updating {oasOrgIDField} in tyk_apis")
+                    tykDB["tyk_apis"].update_many({ oasOrgIDField: oldOrgIDstr }, { "$set": { oasOrgIDField: newOrgID } })
         if apiFile:
             # this isn't really worth doing since there are too many things that are base64 encoded.
             # you would need to read in the API, replace all the text strings with base64 ones
